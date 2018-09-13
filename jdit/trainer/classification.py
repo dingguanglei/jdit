@@ -36,21 +36,25 @@ class ClassificationTrainer(SupTrainer):
 
             self.output = self.net(self.input)
 
-            train_log = self._train_iteration(self.opt, self.compute_loss, tag="LOSS")
+            train_log = self._train_iteration(self.opt, self.compute_loss, tag="Train")
             time_log = self.timer.leftTime(iteration, self.train_nsteps, iter_timer.elapsed_time())
-            self.loger.record("===> Epoch[{}]({}/{}): {}\t{}".format(
+            self.loger.record("Epoch[{}]({}/{}): {},{}".format(
                 self.current_epoch, iteration, self.train_nsteps, train_log, time_log))
 
             if iteration == 1:
                 self._watch_images(show_imgs_num=3, tag="Train")
 
-    def _train_iteration(self, opt, compute_loss_fc, tag="LOSS_D"):
+    def _train_iteration(self, opt, compute_loss_fc, tag="Train"):
         opt.zero_grad()
         loss, var_dic = compute_loss_fc()
         loss.backward()
         opt.step()
         self.watcher.scalars(var_dict=var_dic, global_step=self.step, tag="Train")
-        train_log ="{}: {:.4f}".format(tag, loss.cpu().detach().item())
+        train_log = tag
+        for key, value in var_dic.items():
+            train_log += ",%s,%4f" % (key, value)
+        # train_log = "{}: {:.4f}".format(tag, loss.cpu().detach().item())
+        print(train_log)
         return train_log
 
     @abstractmethod
@@ -109,6 +113,10 @@ class ClassificationTrainer(SupTrainer):
 
         self.watcher.scalars(self.step, tag="Valid", var_dict=avg_dic)
         self.net.train()
+
+        train_log = "Valid"
+        for key, value in avg_dic.items():
+            train_log += ",%s,%4f" % (key, value)
 
     def get_data_from_loader(self, batch_data, use_onehot=True):
         input_cpu, labels = batch_data[0], batch_data[1]

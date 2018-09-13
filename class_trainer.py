@@ -13,8 +13,8 @@ class FashingClassTrainer(ClassificationTrainer):
     verbose = False
     mode = "L"
     num_class = 10
-    every_epoch_checkpoint = 1
-    every_epoch_changelr = 1
+    every_epoch_checkpoint = 10
+    every_epoch_changelr = 5
     def __init__(self, nepochs, gpu_ids, net, opt,
                  train_loader, test_loader=None, cv_loader=None):
         super(FashingClassTrainer, self).__init__(nepochs, gpu_ids, net, opt,
@@ -62,15 +62,15 @@ if __name__ == '__main__':
     # os.environ["CUDA_VISIBLE_DEVICES"] = "2,3"
     print('===> Check directories')
 
-    gpus = []
+    gpus = [0]
     depth = 64
 
-    batchSize = 32
+    batchSize = 256
 
-    nepochs = 30
+    nepochs = 50
 
     lr = 1e-3
-    lr_decay = 0.92
+    lr_decay = 0.9
     weight_decay = 2e-5
     momentum = 0
     betas = (0.9, 0.999)

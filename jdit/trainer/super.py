@@ -64,11 +64,6 @@ class SupTrainer(object):
     def mv_inplace(self, source_to, targert):
         targert.data.resize_(source_to.size()).copy_(source_to)
 
-    #
-    # def leftTime(self, current, total, one_cost):
-    #     left = total - current
-    #     return self.timer.timLog("LeftTime:", left * one_cost)
-
     @abstractmethod
     def checkPoint(self):
         pass
@@ -133,7 +128,7 @@ class Timer(object):
 
     def leftTime(self, current, total, one_cost):
         left = total - current
-        return self.timLog("LeftTime:", left * one_cost)
+        return self.timLog("LeftTime", left * one_cost)
 
 
 class Watcher(object):
