@@ -23,7 +23,7 @@ class SupTrainer(object):
     def __init__(self, nepochs, log="log", gpu_ids=()):
         self.watcher = Watcher(log)
         self.timer = Timer()
-        self.loger = Loger(log,self.log_file_name,self.verbose)
+        self.loger = Loger(log, self.log_file_name, self.verbose)
         self.use_gpu = True if (len(gpu_ids) > 0) and torch.cuda.is_available() else False
         self.input = Variable()
         self.ground_truth = Variable()
@@ -33,7 +33,6 @@ class SupTrainer(object):
         self.nepochs = nepochs
         self.current_epoch = 1
         self.step = 0
-
 
         for dir in self.dirs:
             if not os.path.exists(dir):
@@ -189,13 +188,14 @@ class Watcher(object):
             img.save(filename)
         buildDir(["plots"])
 
-    def graph(self, net, input_shape=None, *input):
+    def graph(self, net, input_shape=None, use_gpu=False, *input):
         if hasattr(net, 'module'):
             net = net.module
         if input_shape is not None:
             assert (isinstance(input_shape, tuple) or isinstance(input_shape, list)), \
                 "param 'input_shape' should be list or tuple."
-            input_tensor = torch.autograd.Variable(torch.ones(input_shape), requires_grad=True)
+            input_tensor = torch.ones(input_shape).cuda() if use_gpu else torch.ones(input_shape)
+            input_tensor = torch.autograd.Variable(input_tensor, requires_grad=True)
             res = net(input_tensor)
             del res
             self.writer.add_graph(net, input_tensor)

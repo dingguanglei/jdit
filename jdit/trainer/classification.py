@@ -22,7 +22,7 @@ class ClassificationTrainer(SupTrainer):
         self.test_nsteps = len(test_loader)
         self.labels = Variable()
         if self.use_gpu:
-            self.labels = self.input.cuda()
+            self.labels = self.labels.cuda()
 
     def train_epoch(self):
         for iteration, batch in tqdm(enumerate(self.train_loader, 1)):
@@ -54,7 +54,7 @@ class ClassificationTrainer(SupTrainer):
         for key, value in var_dic.items():
             train_log += ",%s,%4f" % (key, value)
         # train_log = "{}: {:.4f}".format(tag, loss.cpu().detach().item())
-        print(train_log)
+        # print(train_log)
         return train_log
 
     @abstractmethod

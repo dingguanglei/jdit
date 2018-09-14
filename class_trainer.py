@@ -14,7 +14,7 @@ class FashingClassTrainer(ClassificationTrainer):
     mode = "L"
     num_class = 10
     every_epoch_checkpoint = 10
-    every_epoch_changelr = 5
+    every_epoch_changelr = 2
     def __init__(self, nepochs, gpu_ids, net, opt,
                  train_loader, test_loader=None, cv_loader=None):
         super(FashingClassTrainer, self).__init__(nepochs, gpu_ids, net, opt,
@@ -23,7 +23,7 @@ class FashingClassTrainer(ClassificationTrainer):
                                                   cv_loader=cv_loader)
 
 
-        self.watcher.graph(net, (4, 1, 32, 32))
+        self.watcher.graph(net,(4, 1, 32, 32),self.use_gpu)
 
 
 
@@ -63,14 +63,14 @@ if __name__ == '__main__':
     print('===> Check directories')
 
     gpus = [0]
-    depth = 64
-
+    depth = 128
+    # d128 469934
     batchSize = 256
 
     nepochs = 50
 
     lr = 1e-3
-    lr_decay = 0.9
+    lr_decay = 0.94
     weight_decay = 2e-5
     momentum = 0
     betas = (0.9, 0.999)
@@ -90,5 +90,5 @@ if __name__ == '__main__':
     print('===> Building optimizer')
     opt = Optimizer(net.parameters(), lr, lr_decay, weight_decay, momentum, betas, opt_name)
     print('===> Training')
-    Trainer = FashingClassTrainer(nepochs, gpus, net, opt, testLoader, testLoader, testLoader)
+    Trainer = FashingClassTrainer(nepochs, gpus, net, opt, trainLoader, testLoader, testLoader)
     Trainer.train()
