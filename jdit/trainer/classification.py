@@ -117,6 +117,7 @@ class ClassificationTrainer(SupTrainer):
         train_log = "Valid"
         for key, value in avg_dic.items():
             train_log += ",%s,%4f" % (key, value)
+        self.loger.record(train_log)
 
     def get_data_from_loader(self, batch_data, use_onehot=True):
         input_cpu, labels = batch_data[0], batch_data[1]
