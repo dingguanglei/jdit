@@ -50,7 +50,7 @@ class SupTrainer(object):
             time_log = self.timer.leftTime(epoch, self.nepochs, self.timer.elapsed_time())
             self.loger.record(time_log)
             if isinstance(self.every_epoch_changelr, int):
-                is_change_lr = self.current_epoch == self.every_epoch_changelr
+                is_change_lr = (self.current_epoch % self.every_epoch_changelr) == 0
             else:
                 is_change_lr = self.current_epoch in self.every_epoch_changelr
             if is_change_lr:

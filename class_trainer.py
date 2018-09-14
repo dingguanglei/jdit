@@ -6,7 +6,7 @@ from jdit.model import Model
 from jdit.optimizer import Optimizer
 from jdit.dataset import get_fashion_mnist_dataloaders
 
-from mypackage.model.Tnet import NLayer_D, TWnet_G, NThickLayer_D, NThickClassLayer_D
+from mypackage.model.Tnet import NLayer_D, TWnet_G, NThickLayer_D, NThickClassLayer_D,NNormalClassLayer_D
 
 
 class FashingClassTrainer(ClassificationTrainer):
@@ -64,10 +64,18 @@ if __name__ == '__main__':
 
     gpus = [0]
     depth = 128
+    # TC12
     # d128 469934
+    # d64  235950 T ACC,0.925781 V ACC,0.906851
+    # d32  118958 T ACC,0.925781 V ACC,0.898137
+    # d16  60462  T ACC,0.890625 V ACC,0.880309
     batchSize = 256
-
-    nepochs = 50
+    # normal
+    # d128 2706314
+    # d64  697802 T ACC,1.000000 V ACC,0.915164
+    # d32  185066 T ACC,1.000000 V ACC,0.909255
+    # d16  51578  T ACC,1.000000 V ACC,0.901242
+    nepochs = 51
 
     lr = 1e-3
     lr_decay = 0.94
@@ -83,8 +91,8 @@ if __name__ == '__main__':
 
     print('===> Building model')
 
-    model_net = NThickClassLayer_D(depth=depth)
-
+    # model_net = NThickClassLayer_D(depth=depth)
+    model_net = NNormalClassLayer_D(depth=depth)
     net = Model(model_net, gpu_ids=gpus, use_weights_init=True)
 
     print('===> Building optimizer')
