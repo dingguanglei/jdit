@@ -71,7 +71,7 @@ if __name__ == '__main__':
     # d16  60462  T ACC,0.890625 V ACC,0.880309
     batchSize = 256
     # normal
-    # d128 2706314
+    # d128 2706314T ACC,1.000000 V ACC,0.914263
     # d64  697802 T ACC,1.000000 V ACC,0.915164
     # d32  185066 T ACC,1.000000 V ACC,0.909255
     # d16  51578  T ACC,1.000000 V ACC,0.901242
@@ -91,8 +91,8 @@ if __name__ == '__main__':
 
     print('===> Building model')
 
-    # model_net = NThickClassLayer_D(depth=depth)
-    model_net = NNormalClassLayer_D(depth=depth)
+    model_net = NThickClassLayer_D(depth=depth)
+    # model_net = NNormalClassLayer_D(depth=depth)
     net = Model(model_net, gpu_ids=gpus, use_weights_init=True)
 
     print('===> Building optimizer')
