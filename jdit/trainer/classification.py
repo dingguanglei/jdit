@@ -111,7 +111,7 @@ class ClassificationTrainer(SupTrainer):
         for key in avg_dic.keys():
             avg_dic[key] = avg_dic[key] / self.cv_nsteps
 
-        self.watcher.scalars(self.step, tag="Valid", var_dict=avg_dic)
+        self.watcher.scalars(var_dict=avg_dic, global_step=self.step, tag="Valid" )
         self.net.train()
 
         train_log = "Valid"
