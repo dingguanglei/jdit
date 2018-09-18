@@ -6,6 +6,9 @@ from jdit.model import Model
 from jdit.optimizer import Optimizer
 from jdit.dataset import get_fashion_mnist_dataloaders
 
+
+from mypackage.model.resnet import ResNet18,TResNet18
+from mypackage.tricks import gradPenalty,spgradPenalty
 from mypackage.model.Tnet import NLayer_D, TWnet_G, NThickLayer_D, NThickClassLayer_D,NNormalClassLayer_D
 
 
@@ -32,6 +35,8 @@ class FashingClassTrainer(ClassificationTrainer):
         # Input: (N,C) where C = number of classes
         # Target: (N) where each value is 0≤targets[i]≤C−1
         # ground_truth = self.ground_truth.long().squeeze()
+        # var_dic["GP"] = gp =gradPenalty()
+        # var_dic["SGP"] = gp = spgradPenalty(self.net,self.input,self.input)
         var_dic["CEP"] = loss = CrossEntropyLoss()(self.output, self.labels.squeeze().long())
 
         _, predict = torch.max(self.output.detach(), 1)  # 0100=>1  0010=>2
@@ -75,6 +80,12 @@ if __name__ == '__main__':
     # d64  697802 T ACC,1.000000 V ACC,0.915164
     # d32  185066 T ACC,1.000000 V ACC,0.909255
     # d16  51578  T ACC,1.000000 V ACC,0.901242
+
+    # resnet 18
+    # 2776522 T ACC,1.000000 V ACC,0.931490
+    # tres 18  15epoch
+    # d16 229902 T ACC,0.976562 V ACC 0.911358
+    # d32 481046
     nepochs = 51
 
     lr = 1e-3
@@ -87,13 +98,15 @@ if __name__ == '__main__':
 
     torch.backends.cudnn.benchmark = True
     print('===> Build dataset')
+
     trainLoader, testLoader = get_fashion_mnist_dataloaders(batch_size=batchSize)
 
     print('===> Building model')
 
-    model_net = NThickClassLayer_D(depth=depth)
+    # model_net = NThickClassLayer_D(depth=depth)
     # model_net = NNormalClassLayer_D(depth=depth)
-    net = Model(model_net, gpu_ids=gpus, use_weights_init=True)
+    # net = Model(model_net, gpu_ids=gpus, use_weights_init=True)
+    net = Model(TResNet18, gpu_ids=gpus, use_weights_init=False)
 
     print('===> Building optimizer')
     opt = Optimizer(net.parameters(), lr, lr_decay, weight_decay, momentum, betas, opt_name)
