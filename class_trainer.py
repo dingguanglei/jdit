@@ -7,7 +7,7 @@ from jdit.optimizer import Optimizer
 from jdit.dataset import get_fashion_mnist_dataloaders
 
 
-from mypackage.model.resnet import ResNet18,TResNet18
+from mypackage.model.resnet import ResNet18,Tresnet18
 from mypackage.tricks import gradPenalty,spgradPenalty
 from mypackage.model.Tnet import NLayer_D, TWnet_G, NThickLayer_D, NThickClassLayer_D,NNormalClassLayer_D
 
@@ -74,7 +74,7 @@ if __name__ == '__main__':
     # d64  235950 T ACC,0.925781 V ACC,0.906851
     # d32  118958 T ACC,0.925781 V ACC,0.898137
     # d16  60462  T ACC,0.890625 V ACC,0.880309
-    batchSize = 256
+    batchSize = 32
     # normal
     # d128 2706314T ACC,1.000000 V ACC,0.914263
     # d64  697802 T ACC,1.000000 V ACC,0.915164
@@ -86,6 +86,10 @@ if __name__ == '__main__':
     # tres 18  15epoch
     # d16 229902 T ACC,0.976562 V ACC 0.911358
     # d32 481046
+    # 11071162
+    # d16 m8 7163578
+    # d16 m4 6512314
+    # d8  m16 2120930
     nepochs = 51
 
     lr = 1e-3
@@ -106,7 +110,7 @@ if __name__ == '__main__':
     # model_net = NThickClassLayer_D(depth=depth)
     # model_net = NNormalClassLayer_D(depth=depth)
     # net = Model(model_net, gpu_ids=gpus, use_weights_init=True)
-    net = Model(TResNet18, gpu_ids=gpus, use_weights_init=False)
+    net = Model(Tresnet18(depth = 8, mid_channels= 16), gpu_ids=gpus, use_weights_init=True)
 
     print('===> Building optimizer')
     opt = Optimizer(net.parameters(), lr, lr_decay, weight_decay, momentum, betas, opt_name)

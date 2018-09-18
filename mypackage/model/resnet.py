@@ -149,22 +149,18 @@ def Tconv3x3(in_planes, out_planes, mid_channels=32, stride=1, use_group=True):
         pad_list = [1, 2, 2, 4] * (out_planes // 4)
         dilation_list = [1, 1, 2, 2] * (out_planes // 4)
         groups_list = []
-        if use_group:
-            for i in range(out_planes // 4):
-                groups_list = groups_list + [1, 1, 1, 1] * (i + 1)
-        else:
-            groups_list = groups_list * (out_planes // 4)
     else:
         knl_list = [4, 6, 4, 6] * (out_planes // 4)
         strd_list = 2
         pad_list = [1, 2, 1, 2] * (out_planes // 4)
-        dilation_list = [1, 1, 1, 1]
+        dilation_list = [1, 1, 1, 1] * (out_planes // 4)
         groups_list = []
-        if use_group:
-            for i in range(out_planes // 4):
-                groups_list = groups_list + [1, 1, 1, 1] * (i + 1)
-        else:
-            groups_list = groups_list * (out_planes // 4)
+
+    if use_group:
+        for i in range(out_planes // 4):
+            groups_list = groups_list + [1, 1, 1, 1] * (i + 1)
+    else:
+        groups_list = [1, 1, 1, 1] * (out_planes // 4)
 
     thickConv2d = ThickVarietyConv2d(in_planes, mid_channels, out_planes,
                                      knl_list=knl_list,
@@ -182,9 +178,9 @@ class TBasicBlock(nn.Module):
     def __init__(self, in_planes, out_planes, mid_channels=32, stride=1, downsample=None):
         super(TBasicBlock, self).__init__()
         self.conv1 = Tconv3x3(in_planes, out_planes, mid_channels, stride)
-        self.bn1 = nn.BatchNorm2d(in_planes)
+        self.bn1 = nn.BatchNorm2d(out_planes)
         self.relu = nn.LeakyReLU(0.1)
-        self.conv2 = Tconv3x3(in_planes, out_planes)
+        self.conv2 = Tconv3x3(out_planes, out_planes)
         self.bn2 = nn.BatchNorm2d(out_planes)
         self.downsample = downsample
         self.stride = stride
@@ -216,41 +212,32 @@ class TResNet(nn.Module):
 
         self.conv1 = Tconv3x3(1, depth, mid_channels, stride=1, use_group=False)
         self.bn1 = nn.BatchNorm2d(depth)
-        self.relu = nn.LeakyReLU()
+        self.relu = nn.LeakyReLU(0.1)
 
         # self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
-        self.layer1 = self._make_layer(block, depth * 1, layers[0])
-        self.layer2 = self._make_layer(block, depth * 2, layers[1], stride=2)
-        self.layer3 = self._make_layer(block, depth * 4, layers[2], stride=2)
+        self.layer1 = self._make_layer(block, depth * 1, depth * 1, layers[0])
+        self.layer2 = self._make_layer(block, depth * 1, depth * 2, layers[1], stride=2)
+        self.layer3 = self._make_layer(block, depth * 2, depth * 4, layers[2], stride=2)
         # self.layer4 = self._make_layer(block, 512, layers[3], stride=2)
 
         self.avgpool = nn.AvgPool2d(8)
         self.fc = nn.Linear(depth * 4, num_classes)
 
-        # for m in self.modules():
-        #     if isinstance(m, nn.Conv2d):
-        #         n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
-        #         m.weight.data.normal_(0, math.sqrt(2. / n))
-        #     elif isinstance(m, nn.BatchNorm2d):
-        #         m.weight.data.fill_(1)
-        #         m.bias.data.zero_()
-
-    def _make_layer(self, block, depth, num_blocks, stride=1):
+    def _make_layer(self, block, in_planes, out_planes, num_blocks, stride=1):
         downsample = None
-        out_depth = None
+
         if stride != 1:
-            out_depth = depth * 2
             downsample = nn.Sequential(
-                nn.Conv2d(depth, out_depth,
+                nn.Conv2d(in_planes, out_planes,
                           kernel_size=1, stride=stride, bias=False),
-                nn.BatchNorm2d(depth),
+                nn.BatchNorm2d(out_planes),
             )
 
         layers = []
-        layers.append(block(depth, out_depth, self.mid_channels, stride=1, downsample=downsample))
+        layers.append(block(in_planes, out_planes, self.mid_channels, stride, downsample=downsample))
         # self.inplanes = planes * block.expansion
         for i in range(1, num_blocks):
-            layers.append(block(out_depth, out_depth, self.mid_channels, stride=1))
+            layers.append(block(out_planes, out_planes, self.mid_channels, stride=1))
 
         return nn.Sequential(*layers)
 
@@ -295,3 +282,8 @@ def resnet18(pretrained=False, **kwargs):
 ResNet18 = resnet18(False)
 
 TResNet18 = TResNet(TBasicBlock, [2, 2, 2])
+
+
+def Tresnet18(depth, mid_channels):
+    TResNet18 = TResNet(TBasicBlock, [2, 2, 2], 10, depth, mid_channels)
+    return TResNet18

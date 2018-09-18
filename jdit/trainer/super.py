@@ -96,6 +96,13 @@ class Loger(object):
         if self.verbose:
             print(msg)
 
+    def record(self, *msgs):
+        msg = "\t".join(msgs)+ "\n"
+        for i in msg:
+            self.logf.write(i)
+        if self.verbose:
+            print(msg)
+
     def close(self):
         self.logf.close()
 
@@ -132,13 +139,14 @@ class Timer(object):
 
 class Watcher(object):
     def __init__(self, logdir="log"):
+        self.logdir = logdir
         self.writer = SummaryWriter(log_dir=logdir)
 
     def netParams(self, network, global_step):
         for name, param in network.named_parameters():
             if "bias" in name:
                 continue
-            self.writer.add_histogram(name, param.clone().cpu().data.numpy(), global_step, bins="auto")
+            self.writer.add_histogram(name, param.clone().cpu().data.numpy(), global_step)
 
     def _torch_to_np(self, torch):
         if isinstance(torch, list) and len(torch) == 1:
@@ -204,6 +212,7 @@ class Watcher(object):
             self.writer.add_graph(net, *input)
 
     def close(self):
+        self.writer.export_scalars_to_json("%s/scalers.json" % self.logdir)
         self.writer.close()
 
 
