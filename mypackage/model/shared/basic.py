@@ -239,12 +239,20 @@ class ThickVarietyConv2d(Module):
                                                    padding, dilation, groups, bias))
 
     def getKernelSuparams(self, params, index):
-        if isinstance(params, int) or isinstance(params, bool):
+        """
+        list or tuple and length must grater than 1.
+        :param params:
+        :param index:
+        :return:
+        """
+        is_list = (isinstance(params, list) or isinstance(params, tuple)) and (len(params)>1)
+        # is_scalar = isinstance(params, int) or isinstance(params, bool) or (is_list and len(params)==1)
+        if not is_list:
             param = params
-        elif isinstance(params, list) or isinstance(params, tuple):
-            param = params[index]
         else:
-            raise NameError('params can only be `int` ,`list` or `tuple`. but %s were given. ' % type(params))
+            param = params[index]
+        # else:
+        #     raise NameError('params can only be `int` ,`list` or `tuple`. but %s were given. ' % type(params))
         return param
 
     def forward(self, input):

@@ -130,7 +130,7 @@ class Model(object):
         save(self.model.state_dict(), model_weights_path)
         save(self.model, model_path)
         checkPoint_log = "Checkpoint saved !"
-        print(checkPoint_log)
+        # print(checkPoint_log)
 
         return checkPoint_log
 

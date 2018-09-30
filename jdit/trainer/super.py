@@ -96,15 +96,68 @@ class Loger(object):
         if self.verbose:
             print(msg)
 
-    def record(self, *msgs):
-        msg = "\t".join(msgs)+ "\n"
-        for i in msg:
-            self.logf.write(i)
-        if self.verbose:
-            print(msg)
+        # def record(self, *msgs):
+        #     msg = "\t".join(msgs)+ "\n"
+        #     for i in msg:
+        #         self.logf.write(i)
+        #     if self.verbose:
+        #         print(msg)
 
     def close(self):
         self.logf.close()
+
+
+class ProcesLoger(object):
+    def __init__(self, logdir="log", filename="training_log.xlsx", verbose=True):
+        # self.logf = open(logdir + "/" + filename, "a")
+        self.logfn = logdir + "/" + filename
+        self.verbose = verbose
+        self.index = 1
+
+
+    def record(self, msg_dic, sheet_name, step, epoch):
+        # TODO:a new method to write down scalars and visualization
+        from openpyxl import Workbook
+        from openpyxl.compat import range
+        from openpyxl.utils import get_column_letter
+        wb = Workbook()
+        sheet = wb.create_sheet(title=sheet_name)
+
+        header_index = 1
+        header_list = ["step", "epoch"]
+
+        msg_dic.update({"step": step})
+        msg_dic.update({"epoch": epoch})
+        _ = sheet.cell(row=header_index, column=1, value="step")
+        _ = sheet.cell(row=header_index, column=2, value="epoch")
+        for key, value in msg_dic.items():
+            # 如果添加了新特特征，则新建列
+            if key not in header_list:
+                header_list.append(key)
+                key_colomn = len(header_list)
+                _ = sheet.cell(row=header_index, column=key_colomn, value=key)
+            else:
+                key_colomn = header_list.index(key)+1
+
+            _ = sheet.cell(row=self.index, column=key_colomn, value=value)
+        self.index += 1
+
+        # 最后，将以上操作保存到指定的Excel文件中
+        wb.save(filename=self.logfn)
+
+    # def close(self):
+    # self.logf.close()
+
+
+def test():
+    lg = ProcesLoger(logdir="../../log")
+    lg.record({"a": 1, "b": 2}, "test", 2, 1)
+    lg.record({"a": 2, "b": 4}, "test", 3, 1)
+    lg.record({"a": 3, "b": 56, "c": 123}, "test", 3, 1)
+
+
+if __name__ == '__main__':
+    test()
 
 
 class Timer(object):

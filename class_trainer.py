@@ -6,18 +6,20 @@ from jdit.model import Model
 from jdit.optimizer import Optimizer
 from jdit.dataset import get_fashion_mnist_dataloaders
 
-
-from mypackage.model.resnet import ResNet18,Tresnet18
-from mypackage.tricks import gradPenalty,spgradPenalty
-from mypackage.model.Tnet import NLayer_D, TWnet_G, NThickLayer_D, NThickClassLayer_D,NNormalClassLayer_D
+from mypackage.model.densnet import denseNet, TdenseNet
+from mypackage.model.resnet import ResNet18, Tresnet18
+from mypackage.tricks import gradPenalty, spgradPenalty
+from mypackage.model.Tnet import NLayer_D, TWnet_G, NThickLayer_D, NThickClassLayer_D, NNormalClassLayer_D
+from mypackage.tricks import jcbClamp
 
 
 class FashingClassTrainer(ClassificationTrainer):
     verbose = False
     mode = "L"
     num_class = 10
-    every_epoch_checkpoint = 10
-    every_epoch_changelr = 2
+    every_epoch_checkpoint = 2
+    every_epoch_changelr = 1
+
     def __init__(self, nepochs, gpu_ids, net, opt,
                  train_loader, test_loader=None, cv_loader=None):
         super(FashingClassTrainer, self).__init__(nepochs, gpu_ids, net, opt,
@@ -25,11 +27,25 @@ class FashingClassTrainer(ClassificationTrainer):
                                                   test_loader=test_loader,
                                                   cv_loader=cv_loader)
 
+        self.watcher.graph(net, (4, 1, 32, 32), self.use_gpu)
+        self.last_cep = 100
 
-        self.watcher.graph(net,(4, 1, 32, 32),self.use_gpu)
-
-
-
+    # def compute_loss(self):
+    #     var_dic = {}
+    #     # Input: (N,C) where C = number of classes
+    #     # Target: (N) where each value is 0≤targets[i]≤C−1
+    #     # ground_truth = self.ground_truth.long().squeeze()
+    #     # var_dic["GP"] = gp =gradPenalty()
+    #     # var_dic["SGP"] = gp = spgradPenalty(self.net,self.input,self.input)
+    #     var_dic["CEP"] = loss = CrossEntropyLoss()(self.output, self.labels.squeeze().long())
+    #
+    #     _, predict = torch.max(self.output.detach(), 1)  # 0100=>1  0010=>2
+    #     total = predict.size(0) * 1.0
+    #     labels = self.labels.squeeze().long()
+    #     correct = predict.eq(labels).cpu().sum().float()
+    #     acc = correct / total
+    #     var_dic["ACC"] = acc
+    #     return loss, var_dic
     def compute_loss(self):
         var_dic = {}
         # Input: (N,C) where C = number of classes
@@ -37,7 +53,12 @@ class FashingClassTrainer(ClassificationTrainer):
         # ground_truth = self.ground_truth.long().squeeze()
         # var_dic["GP"] = gp =gradPenalty()
         # var_dic["SGP"] = gp = spgradPenalty(self.net,self.input,self.input)
-        var_dic["CEP"] = loss = CrossEntropyLoss()(self.output, self.labels.squeeze().long())
+        var_dic["CEP"] = cep = CrossEntropyLoss()(self.output, self.labels.squeeze().long())
+        var_dic["JC"] = jc = jcbClamp(self.net, self.input, 20, 1, 1, True)
+        var_dic["CEP/CEP"] =cep_cep =  cep / self.last_cep** 2 * 10
+        var_dic["JCP"] = jcp = cep_cep  * jc
+        var_dic["LOSS"] = loss = cep + jcp
+        self.last_cep = cep.detach()
 
         _, predict = torch.max(self.output.detach(), 1)  # 0100=>1  0010=>2
         total = predict.size(0) * 1.0
@@ -52,7 +73,11 @@ class FashingClassTrainer(ClassificationTrainer):
         # Input: (N,C) where C = number of classes
         # Target: (N) where each value is 0≤targets[i]≤C−1
         # ground_truth = self.ground_truth.long().squeeze()
-        var_dic["CEP"] = loss = CrossEntropyLoss()(self.output, self.labels.squeeze().long())
+        var_dic["CEP"] = cep = CrossEntropyLoss()(self.output, self.labels.squeeze().long())
+        var_dic["JC"] = jc = jcbClamp(self.net, self.input, 20, 1, 1, True)
+        var_dic["JCP"] = jcp = ((cep / self.last_cep) ** 2) * jc
+        var_dic["LOSS"] = loss = cep + jcp
+        self.last_cep = cep.detach()
 
         _, predict = torch.max(self.output.detach(), 1)  # 0100=>1  0010=>2
         total = predict.size(0) * 1.0
@@ -64,17 +89,17 @@ class FashingClassTrainer(ClassificationTrainer):
 
 
 if __name__ == '__main__':
-    # os.environ["CUDA_VISIBLE_DEVICES"] = "2,3"
+    os.environ["CUDA_VISIBLE_DEVICES"] = "2,3"
     print('===> Check directories')
 
-    gpus = [0]
-    depth = 128
+    gpus = [0,1]
+    # depth = 128
     # TC12
     # d128 469934 T ACC,0.933594 V ACC,0.908854
     # d64  235950 T ACC,0.925781 V ACC,0.906851
     # d32  118958 T ACC,0.925781 V ACC,0.898137
     # d16  60462  T ACC,0.890625 V ACC,0.880309
-    batchSize = 32
+    batchSize = 256
     # normal
     # d128 2706314T ACC,1.000000 V ACC,0.914263
     # d64  697802 T ACC,1.000000 V ACC,0.915164
@@ -90,15 +115,15 @@ if __name__ == '__main__':
     # d16 m8 7163578
     # d16 m4 6512314
     # d8  m16 2120930
-    nepochs = 51
+    nepochs = 101
 
     lr = 1e-3
     lr_decay = 0.94
-    weight_decay = 2e-5
+    weight_decay = 2e-3  # 2e-5
     momentum = 0
     betas = (0.9, 0.999)
 
-    opt_name = "Adam"
+    opt_name = "RMSprop"
 
     torch.backends.cudnn.benchmark = True
     print('===> Build dataset')
@@ -110,8 +135,14 @@ if __name__ == '__main__':
     # model_net = NThickClassLayer_D(depth=depth)
     # model_net = NNormalClassLayer_D(depth=depth)
     # net = Model(model_net, gpu_ids=gpus, use_weights_init=True)
-    net = Model(Tresnet18(depth = 8, mid_channels= 16), gpu_ids=gpus, use_weights_init=True)
+    # -----------------------------------
+    # net = Model(Tresnet18(depth = 8, mid_channels= 16), gpu_ids=gpus, use_weights_init=True)
+    net = Model(Tresnet18(depth=24, mid_channels=16), gpu_ids=gpus, use_weights_init=True)
+    # net = Model(ResNet18, gpu_ids=gpus, use_weights_init=True)
 
+    # -----------------------------------
+    # net = Model(denseNet(growthRate=12,depth=60), gpu_ids=gpus, use_weights_init=True)
+    # net = Model(TdenseNet(growthRate = 8, depth=19, mid_channels=16), gpu_ids=gpus, use_weights_init=True)# 9,9,9,4
     print('===> Building optimizer')
     opt = Optimizer(net.parameters(), lr, lr_decay, weight_decay, momentum, betas, opt_name)
     print('===> Training')
