@@ -3,7 +3,7 @@ from torch.nn import Module, Sequential, Conv2d, BatchNorm2d, InstanceNorm2d, Le
     Tanh, Dropout, ReLU, MaxPool2d, AvgPool2d, ModuleList, Parameter, Softmax, LayerNorm, GroupNorm, ConvTranspose2d
 import torch
 from .spectral_normalization import SpectralNorm
-
+from torch.nn.utils import spectral_norm
 
 class downsampleBlock(Module):
     def __init__(self, channel_in_out, ksp=(3, 1, 1), pool_type="Max", active_type="ReLU",
@@ -196,11 +196,18 @@ class ConvUnit(ModuleList):
         super(ConvUnit, self).__init__()
         self.add_module("conv1",
                         Conv2d(in_channels, mid_channels, kernel_size, stride, padding, dilation, groups, bias))
+        # self.add_module("bn",BatchNorm2d(mid_channels))
         self.add_module("act", LeakyReLU(0.1))
         self.add_module("conv2", Conv2d(mid_channels, 1, 1, 1, 0, dilation=1, groups=1, bias=True))
+        # self.add_module("conv1_sn",
+        #                 spectral_norm(Conv2d(in_channels, mid_channels, kernel_size, stride, padding, dilation, groups, bias)))
+        # self.add_module("act", LeakyReLU(0.1))
+        # self.add_module("conv2", Conv2d(mid_channels, 1, 1, 1, 0, dilation=1, groups=1, bias=True))
 
     def forward(self, input):
         out = self.conv1(input)
+        # out = self.conv1_sn(input)
+        # out = self.bn(out)
         out = self.act(out)
         out = self.conv2(out)
         return out

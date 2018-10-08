@@ -223,7 +223,7 @@ def Tconv3x3(in_planes, out_planes, mid_channels=32, stride=1, use_group=True, t
 class TBasicBlock(nn.Module):
     expansion = 1
 
-    def __init__(self, in_planes, out_planes, mid_channels=32, stride=1, downsample=None, type="normal"):
+    def __init__(self, in_planes, out_planes, mid_channels=32, stride=1, downsample=None, type="normal",drop_rate = 0.2):
         super(TBasicBlock, self).__init__()
         self.conv1 = Tconv3x3(in_planes, out_planes, mid_channels, stride, type=type)
         self.bn1 = nn.BatchNorm2d(out_planes)
@@ -232,7 +232,7 @@ class TBasicBlock(nn.Module):
         self.bn2 = nn.BatchNorm2d(out_planes)
         self.downsample = downsample
         self.stride = stride
-        self.drop2d = nn.Dropout2d(p=0.2)
+        self.drop2d = nn.Dropout2d(drop_rate)
     def forward(self, x):
         residual = x
 
@@ -265,15 +265,15 @@ class TResNet(nn.Module):
         self.relu = nn.LeakyReLU(0.1)
 
         # self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
-        self.layer1 = self._make_layer(block, depth * 1, depth * 1, layers[0], stride=1, type="normal")
-        self.layer2 = self._make_layer(block, depth * 1, depth * 2, layers[1], stride=2, type="decomposition")
-        self.layer3 = self._make_layer(block, depth * 2, depth * 4, layers[2], stride=2, type="decomposition")
+        self.layer1 = self._make_layer(block, depth * 1, depth * 1, layers[0], stride=1, type="normal",drop_rate = 0.2)
+        self.layer2 = self._make_layer(block, depth * 1, depth * 2, layers[1], stride=2, type="decomposition",drop_rate = 0.2)
+        self.layer3 = self._make_layer(block, depth * 2, depth * 4, layers[2], stride=2, type="decomposition",drop_rate = 0.2)
         # self.layer4 = self._make_layer(block, 512, layers[3], stride=2)
 
         self.avgpool = nn.AvgPool2d(8)
         self.fc = nn.Linear(depth * 4, num_classes)
 
-    def _make_layer(self, block, in_planes, out_planes, num_blocks, stride=1, type="normal"):
+    def _make_layer(self, block, in_planes, out_planes, num_blocks, stride=1, type="normal",drop_rate = 0.2):
         downsample = None
 
         if stride != 1:
@@ -284,10 +284,10 @@ class TResNet(nn.Module):
             )
 
         layers = []
-        layers.append(block(in_planes, out_planes, self.mid_channels, stride, downsample=downsample, type=type))
+        layers.append(block(in_planes, out_planes, self.mid_channels, stride, downsample=downsample, type=type,drop_rate=drop_rate))
         # self.inplanes = planes * block.expansion
         for i in range(1, num_blocks):
-            layers.append(block(out_planes, out_planes, self.mid_channels, stride=1, type=type))
+            layers.append(block(out_planes, out_planes, self.mid_channels, stride=1, type=type,drop_rate=drop_rate))
 
         return nn.Sequential(*layers)
 
