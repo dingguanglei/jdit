@@ -9,7 +9,7 @@ from tqdm import *
 class ClassificationTrainer(SupTrainer):
     num_class = None
 
-    def __init__(self,log, nepochs, gpu_ids, net, opt, dataset):
+    def __init__(self, log, nepochs, gpu_ids, net, opt, dataset):
         super(ClassificationTrainer, self).__init__(nepochs, log, gpu_ids=gpu_ids)
         self.net = net
         self.opt = opt
@@ -29,9 +29,6 @@ class ClassificationTrainer(SupTrainer):
         self.loger.regist_config(dataset)
         self.loger.regist_config(self)
 
-        self.loger.regist_config(net)
-        self.loger.regist_config(dataset)
-        self.loger.regist_config(self)
 
     def train_epoch(self):
         for iteration, batch in tqdm(enumerate(self.train_loader, 1)):
@@ -59,8 +56,7 @@ class ClassificationTrainer(SupTrainer):
         loss.backward()
         opt.step()
         self.watcher.scalars(var_dict=var_dic, global_step=self.step, tag="Train")
-        self.loger.write(self.step, self.current_epoch, var_dic, tag)
-
+        self.loger.write(self.step, self.current_epoch, var_dic, tag, header=self.step <= 1)
 
     @abstractmethod
     def compute_loss(self):
@@ -116,12 +112,8 @@ class ClassificationTrainer(SupTrainer):
             avg_dic[key] = avg_dic[key] / self.valid_nsteps
 
         self.watcher.scalars(var_dict=avg_dic, global_step=self.step, tag="Valid")
-        self.loger.write(self.step, self.current_epoch, avg_dic, "Valid")
+        self.loger.write(self.step, self.current_epoch, avg_dic, "Valid", header=self.current_epoch <= 1)
         self.net.train()
-        # train_log = "Valid"
-        # for key, value in avg_dic.items():
-        #     train_log += ",%s,%4f" % (key, value)
-        # self.loger.record(train_log)
 
     def get_data_from_loader(self, batch_data, use_onehot=True):
         input_cpu, labels = batch_data[0], batch_data[1]
@@ -143,16 +135,13 @@ class ClassificationTrainer(SupTrainer):
         pass
 
     def change_lr(self):
-        self.opt.do_lr_decay(self.net.parameters())
-        # self.loger.record(lr_log)
+        self.opt.do_lr_decay()
 
     def checkPoint(self):
         self.net.checkPoint("classmodel", self.current_epoch)
-        # self.loger.record("checkPoint!")
 
     def update_config_info(self):
         self.loger.regist_config(self.opt, self.current_epoch)
-
 
     @property
     def configure(self):

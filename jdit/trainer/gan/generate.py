@@ -172,8 +172,8 @@ class GanTrainer(SupTrainer):
         self.netG.train()
 
     def change_lr(self):
-        self.optD.do_lr_decay(self.netD.parameters())
-        self.optG.do_lr_decay(self.netG.parameters())
+        self.optD.do_lr_decay()
+        self.optG.do_lr_decay()
 
     def checkPoint(self):
         self.netG.checkPoint("classmodel", self.current_epoch)

@@ -73,13 +73,10 @@ if __name__ == '__main__':
 
     opt_name = "RMSprop"
     # opt_name = "Adam"
-    torch.backends.cudnn.benchmark = True
+
     print('===> Build dataset')
-
-    # trainLoader, testLoader = get_fashion_mnist_dataloaders(batch_size=batchSize)
     mnist = Fashion_mnist(batch_size=batchSize)
-
-    # trainLoader, validLoader = mnist.train_loader, mnist.valid_loader
+    torch.backends.cudnn.benchmark = True
     print('===> Building model')
 
     # model_net = NThickClassLayer_D(depth=depth)
@@ -89,10 +86,8 @@ if __name__ == '__main__':
     # net = Model(Tresnet18(depth = 8, mid_channels= 16), gpu_ids=gpus, use_weights_init=True)
     net = Model(Tresnet18(depth=16, mid_channels=16), gpu_ids=gpus, init_method="kaiming")
     # net = Model(ResNet18, gpu_ids=gpus, use_weights_init=True)
-
     # -----------------------------------
-    # net = Model(denseNet(growthRate=12,depth=60), gpu_ids=gpus, use_weights_init=True)
-    # net = Model(TdenseNet(growthRate = 8, depth=19, mid_channels=16), gpu_ids=gpus, use_weights_init=True)# 9,9,9,4
+
     print('===> Building optimizer')
     opt = Optimizer(net.parameters(), lr, lr_decay, weight_decay, momentum, betas, opt_name)
     print('===> Training')

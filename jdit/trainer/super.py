@@ -150,17 +150,7 @@ class Loger(object):
             # 没有改变
             pass
 
-    # def save_config(self):
-    #     if len(self.regist_list) ==0:
-    #         return
-    #     for name in self.regist_list:
-    #         path = self.logdir + "/" + name + ".csv"
-    #         config_list = self.__dict__[name]
-    #         for i, dic in enumerate(config_list, 1):
-    #             pdg = pd.DataFrame.from_dict(dic, orient="index").transpose()
-    #             pdg.to_csv(path, mode="w", encoding="utf-8", index=False, header=i <= 1)
-
-    def write(self, step, current_epoch, msg_dic, filename):
+    def write(self, step, current_epoch, msg_dic, filename, header = True):
         if msg_dic is None:
             return
         else:
@@ -171,7 +161,7 @@ class Loger(object):
         dic = dict({"step": step, "current_epoch": current_epoch})
         dic.update(msg_dic)
         pdg = pd.DataFrame.from_dict(dic, orient="index").transpose()
-        pdg.to_csv(path, mode="a", encoding="utf-8", index=False, header=step <= 1)
+        pdg.to_csv(path, mode="a", encoding="utf-8", index=False, header=header)
 
     def clear_regist(self):
         for var in self.regist_list:

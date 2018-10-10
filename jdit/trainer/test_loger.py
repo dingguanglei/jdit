@@ -13,7 +13,7 @@ class TestLoger(TestCase):
         opt = Optimizer(param, lr=0.999, weight_decay=0.03, momentum=0.5, betas=(0.1, 0.4), opt_name="RMSprop")
         log.regist_config(1, opt)
         print(log.__dict__["Optimizer"])
-        opt.do_lr_decay(param)
+        opt.do_lr_decay()
         log.regist_config(2, opt)
         print(log.__dict__["Optimizer"])
         log.regist_config(3, opt)
