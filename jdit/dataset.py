@@ -2,7 +2,7 @@ from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 import psutil
 from abc import ABCMeta, abstractmethod
-import os
+
 
 class Dataloaders_factory(metaclass=ABCMeta):
 
@@ -32,8 +32,16 @@ class Dataloaders_factory(metaclass=ABCMeta):
         self.buildLoaders()
 
     def buildLoaders(self):
+        """
+        The previous function `self.buildDatasets()` has create datasets.
+            self.dataset_train
+            self.dataset_valid
+            self.dataset_test (may be created)
+            use them to create loaders
+        :return:
+        """
         assert self.dataset_train is not None, "`self.dataset_train` can't be `None`"
-        assert self.dataset_valid is not None, "`self.dataset_test` can't be `None`"
+        assert self.dataset_valid is not None, "`self.dataset_valid` can't be `None`"
         # Create dataloaders
         self.train_loader = DataLoader(self.dataset_train, batch_size=self.batch_size, shuffle=self.shuffle)
         self.valid_loader = DataLoader(self.dataset_valid, batch_size=self.batch_size, shuffle=self.shuffle)
@@ -95,7 +103,7 @@ class Fashion_mnist(Dataloaders_factory):
         super(Fashion_mnist, self).__init__(root, batch_size, num_workers)
 
     def buildDatasets(self):
-        self.dataset_train = datasets.FashionMNIST(self.root, train=False, download=True,
+        self.dataset_train = datasets.FashionMNIST(self.root, train=True, download=True,
                                                    transform=transforms.Compose(self.train_transform_list))
         self.dataset_valid = datasets.FashionMNIST(self.root, train=False, download=True,
                                                    transform=transforms.Compose(self.valid_transform_list))

@@ -1,5 +1,5 @@
-import torch
-from torch.autograd import Variable
+# import torch
+# from torch.autograd import Variable
 from torch.nn import CrossEntropyLoss
 from .super import *
 from abc import abstractmethod
@@ -15,11 +15,13 @@ class ClassificationTrainer(SupTrainer):
         self.opt = opt
         self.predict = None
         self.train_loader = dataset.train_loader
-        self.test_loader = dataset.test_loader
         self.valid_loader = dataset.valid_loader
-        self.valid_nsteps = dataset.train_nsteps
-        self.train_nsteps = dataset.valid_nsteps
+        self.test_loader = dataset.test_loader
+
+        self.train_nsteps = dataset.train_nsteps
+        self.valid_nsteps = dataset.valid_nsteps
         self.test_nsteps = dataset.test_nsteps
+
         self.labels = Variable()
         if self.use_gpu:
             self.labels = self.labels.cuda()

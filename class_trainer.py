@@ -4,21 +4,21 @@ from torch.nn import CrossEntropyLoss
 from jdit.trainer.classification import ClassificationTrainer
 from jdit.model import Model
 from jdit.optimizer import Optimizer
-from jdit.dataset import get_fashion_mnist_dataloaders, Cifar10, Fashion_mnist
+from jdit.dataset import Cifar10, Fashion_mnist
 
-from mypackage.model.densnet import denseNet, TdenseNet
+# from mypackage.model.densnet import denseNet, TdenseNet
 from mypackage.model.resnet import ResNet18, Tresnet18
-from mypackage.tricks import gradPenalty, spgradPenalty
-from mypackage.model.Tnet import NLayer_D, TWnet_G, NThickLayer_D, NThickClassLayer_D, NNormalClassLayer_D
-from mypackage.tricks import jcbClamp
+# from mypackage.tricks import gradPenalty, spgradPenalty
+# from mypackage.model.Tnet import NLayer_D, TWnet_G, NThickLayer_D, NThickClassLayer_D, NNormalClassLayer_D
+# from mypackage.tricks import jcbClamp
 
 
 class FashingClassTrainer(ClassificationTrainer):
     verbose = False
     mode = "L"
     num_class = 10
-    every_epoch_checkpoint = 2
-    every_epoch_changelr = 1
+    every_epoch_checkpoint = 20  #2
+    every_epoch_changelr = 10   #1
 
     def __init__(self, log, nepochs, gpu_ids, net, opt, dataset):
         super(FashingClassTrainer, self).__init__(log, nepochs, gpu_ids, net, opt, dataset)
@@ -66,7 +66,7 @@ if __name__ == '__main__':
     nepochs = 101
 
     lr = 1e-3
-    lr_decay = 0.94  # 0.94
+    lr_decay = 0.9  # 0.94
     weight_decay = 0  # 2e-5
     momentum = 0
     betas = (0.9, 0.999)
@@ -77,7 +77,7 @@ if __name__ == '__main__':
     print('===> Build dataset')
 
     # trainLoader, testLoader = get_fashion_mnist_dataloaders(batch_size=batchSize)
-    mnist = Fashion_mnist()
+    mnist = Fashion_mnist(batch_size=batchSize)
 
     # trainLoader, validLoader = mnist.train_loader, mnist.valid_loader
     print('===> Building model')
@@ -87,7 +87,7 @@ if __name__ == '__main__':
     # net = Model(model_net, gpu_ids=gpus, use_weights_init=True)
     # -----------------------------------
     # net = Model(Tresnet18(depth = 8, mid_channels= 16), gpu_ids=gpus, use_weights_init=True)
-    net = Model(Tresnet18(depth=24, mid_channels=16), gpu_ids=gpus, init_method="kaiming")
+    net = Model(Tresnet18(depth=16, mid_channels=16), gpu_ids=gpus, init_method="kaiming")
     # net = Model(ResNet18, gpu_ids=gpus, use_weights_init=True)
 
     # -----------------------------------

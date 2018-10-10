@@ -8,7 +8,7 @@ from torch import Tensor
 from torch.autograd import Variable
 from torchvision.utils import make_grid
 from abc import ABCMeta, abstractmethod
-from tqdm import *
+from tqdm import tqdm
 import pandas as pd
 
 
@@ -20,6 +20,7 @@ class SupTrainer(object):
     __metaclass__ = ABCMeta
 
     def __init__(self, nepochs, log, gpu_ids=()):
+
         self.timer = Timer()
         self.watcher = Watcher(log)
         self.loger = Loger(log)
@@ -112,7 +113,7 @@ class Loger(object):
     def _buildDir(self):
         if not os.path.exists(self.logdir):
             print("%s directory is not found. Build now!" % dir)
-            os.mkdir(self.logdir)
+            os.makedirs(self.logdir)
 
     def regist_config(self, opt_model_data, flag=None, flag_name="epoch", config_filename=None):
         """
@@ -137,7 +138,7 @@ class Loger(object):
             # 若已经注册过config，比对最后一次结果，如果不同，则写入，相同无操作。
             self.__dict__[config_filename].append(config_dic)
             pdg = pd.DataFrame.from_dict(config_dic, orient="index").transpose()
-            pdg.to_csv(path, mode="w", encoding="utf-8", index=False, header=False)
+            pdg.to_csv(path, mode="a", encoding="utf-8", index=False, header=False)
 
         elif config_filename not in self.__dict__.keys():
             # 若没有注册过，注册该config
@@ -291,4 +292,4 @@ class Watcher(object):
         for dir in dirs:
             if not os.path.exists(dir):
                 print("%s directory is not found. Build now!" % dir)
-                os.mkdir(dir)
+                os.makedirs(dir)
