@@ -38,7 +38,7 @@ print('===> Building model')
 
 model_net = NThickClassLayer_D(depth=depth)
 
-net = Model(model_net, gpu_ids=gpus, use_weights_init=True)
+net = Model(model_net, gpu_ids=gpus, init_method=True)
 net.loadModel()
 print('===> Building optimizer')
 opt = Optimizer(net.parameters(), lr, lr_decay, weight_decay, momentum, betas, opt_name)

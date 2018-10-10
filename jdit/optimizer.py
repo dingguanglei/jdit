@@ -1,11 +1,9 @@
 # coding=utf-8
 
-import torch
 from torch.optim import Adam, RMSprop
 
-
 class Optimizer(object):
-    def __init__(self, params, lr=1e-3, lr_decay=0.92, weight_decay=2e-5, momentum=0, betas=(0.9, 0.999),
+    def __init__(self, params, lr=1e-3, lr_decay=0.92, weight_decay=2e-5, momentum=0., betas=(0.9, 0.999),
                  opt_name="Adam"):
         self.lr = lr
         self.lr_decay = lr_decay
@@ -28,9 +26,9 @@ class Optimizer(object):
         if reset_lr is not None:
             self.lr = reset_lr
         self._reset_method(params)
-        lr_log = "lr:%f \t lr_decay:%f" % (self.lr, self.lr_decay)
+        # lr_log = "lr:%f \t lr_decay:%f" % (self.lr, self.lr_decay)
 
-        return lr_log
+        # return lr_log
 
     def _reset_method(self, params):
 
@@ -41,10 +39,23 @@ class Optimizer(object):
         else:
             raise ValueError('%s is not a optimizer method!' % self.opt_name)
 
+    @property
+    def configure(self):
+        config_dic = dict()
+        config_dic["opt_name"] = self.opt.__class__.__name__
+        config_dic.update(self.opt.defaults)
+        config_dic["lr_decay"] = self.lr_decay
+        return config_dic
+
 
 # def test():
 #     param = [torch.ones(3, 3, requires_grad=True)] * 5
 #
-#     opt = Optimizer(param)
-#     opt.do_lr_decay(param, reset_lr=0.2, reset_lr_decay=0.3)
+#     opt = Optimizer(param,lr=0.999,weight_decay=0.03,momentum=0.5,betas=(0.1,0.4),opt_name="RMSprop")
+#     print(opt.configure)
+#     opt.do_lr_decay(param)
+#     print(opt.configure)
+#     opt.do_lr_decay(param, reset_lr=0.232, reset_lr_decay=0.3)
+#     print(opt.configure)
 #     opt.do_lr_decay(param, reset_lr=0.2)
+#     print(opt.configure)

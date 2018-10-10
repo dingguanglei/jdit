@@ -9,21 +9,21 @@ from torch.autograd import Variable
 from torchvision.utils import make_grid
 from abc import ABCMeta, abstractmethod
 from tqdm import *
+import pandas as pd
 
 
 class SupTrainer(object):
-    dirs = ["plots", "plots/Test", "plots/Train", "plots/Valid", "checkpoint"]
     every_epoch_checkpoint = 10
     every_epoch_changelr = 0
     verbose = True
     mode = "L"
-    log_file_name = "training_log.txt"
     __metaclass__ = ABCMeta
 
-    def __init__(self, nepochs, log="log", gpu_ids=()):
-        self.watcher = Watcher(log)
+    def __init__(self, nepochs, log, gpu_ids=()):
         self.timer = Timer()
-        self.loger = Loger(log, self.log_file_name, self.verbose)
+        self.watcher = Watcher(log)
+        self.loger = Loger(log)
+
         self.use_gpu = True if (len(gpu_ids) > 0) and torch.cuda.is_available() else False
         self.input = Variable()
         self.ground_truth = Variable()
@@ -34,21 +34,18 @@ class SupTrainer(object):
         self.current_epoch = 1
         self.step = 0
 
-        for dir in self.dirs:
-            if not os.path.exists(dir):
-                print("%s directory is not found. Build now!" % dir)
-                os.mkdir(dir)
 
     def train(self):
         START_EPOCH = 1
         for epoch in tqdm(range(START_EPOCH, self.nepochs + 1)):
             self.current_epoch = epoch
             self.timer.reset_start()
+            self.update_config_info()
             self.train_epoch()
             self.valid()
             # self.watcher.netParams(self.netG, epoch)
-            time_log = self.timer.leftTime(epoch, self.nepochs, self.timer.elapsed_time())
-            self.loger.record(time_log)
+            self.timer.leftTime(epoch, self.nepochs, self.timer.elapsed_time())
+
             if isinstance(self.every_epoch_changelr, int):
                 is_change_lr = (self.current_epoch % self.every_epoch_changelr) == 0
             else:
@@ -62,6 +59,16 @@ class SupTrainer(object):
 
     def mv_inplace(self, source_to, targert):
         targert.data.resize_(source_to.size()).copy_(source_to)
+
+    def update_config_info(self):
+        """
+        to register the model and optim config info.
+            self.loger.regist_config(self.current_epoch, opt)
+            self.loger.regist_config(self.current_epoch, model)
+        :return:
+        """
+        # self.loger.regist_config(self,self.current_epoch)
+        pass
 
     @abstractmethod
     def checkPoint(self):
@@ -85,79 +92,89 @@ class SupTrainer(object):
     def make_predict(self):
         pass
 
+    @property
+    def configure(self):
+        config_dict = dict()
+        config_dict["every_epoch_checkpoint"] = self.every_epoch_checkpoint
+        config_dict["every_epoch_changelr"] = self.every_epoch_changelr
+        config_dict["image_mode"] = self.mode
+        config_dict["nepochs"] = int(self.nepochs)
+
+        return config_dict
+
 
 class Loger(object):
-    def __init__(self, logdir="log", filename="training_log.txt", verbose=True):
-        self.logf = open(logdir + "/" + filename, "a")
-        self.verbose = verbose
+    def __init__(self, logdir="log"):
+        self.logdir = logdir
+        self.regist_list = []
+        self._buildDir()
 
-    def record(self, msg):
-        self.logf.write(msg + "\n")
-        if self.verbose:
-            print(msg)
+    def _buildDir(self):
+        if not os.path.exists(self.logdir):
+            print("%s directory is not found. Build now!" % dir)
+            os.mkdir(self.logdir)
 
-        # def record(self, *msgs):
-        #     msg = "\t".join(msgs)+ "\n"
-        #     for i in msg:
-        #         self.logf.write(i)
-        #     if self.verbose:
-        #         print(msg)
+    def regist_config(self, opt_model_data, flag=None, flag_name="epoch", config_filename=None):
+        """
+        get obj's configure. flag is time point, usually use `epoch`.
+        obj_name default is 'opt_model_data' class name.
+        If you pass two same class boj, you should give each of them a unique `obj_name`
+        :param opt_model_data: Optm, Model or  dataset
+        :param flag: time point such as `epoch`
+        :param flag_name: name of flag `epoch`
+        :param config_filename: default is 'opt_model_data' class name
+        :return:
+        """
+        if config_filename is None:
+            config_filename = opt_model_data.__class__.__name__
+        if flag is not None:
+            config_dic = dict({flag_name: flag})
+        else:
+            config_dic = dict()
+        path = self.logdir + "/" + config_filename + ".csv"
+        config_dic.update(opt_model_data.configure)
+        if config_filename in self.__dict__.keys() and self.__dict__[config_filename][-1] != config_dic:
+            # 若已经注册过config，比对最后一次结果，如果不同，则写入，相同无操作。
+            self.__dict__[config_filename].append(config_dic)
+            pdg = pd.DataFrame.from_dict(config_dic, orient="index").transpose()
+            pdg.to_csv(path, mode="w", encoding="utf-8", index=False, header=False)
 
-    def close(self):
-        self.logf.close()
+        elif config_filename not in self.__dict__.keys():
+            # 若没有注册过，注册该config
+            self.regist_list.append(config_filename)
+            self.__dict__[config_filename] = [config_dic]
+            pdg = pd.DataFrame.from_dict(config_dic, orient="index").transpose()
+            pdg.to_csv(path, mode="w", encoding="utf-8", index=False, header=True)
+        else:
+            # 没有改变
+            pass
 
+    # def save_config(self):
+    #     if len(self.regist_list) ==0:
+    #         return
+    #     for name in self.regist_list:
+    #         path = self.logdir + "/" + name + ".csv"
+    #         config_list = self.__dict__[name]
+    #         for i, dic in enumerate(config_list, 1):
+    #             pdg = pd.DataFrame.from_dict(dic, orient="index").transpose()
+    #             pdg.to_csv(path, mode="w", encoding="utf-8", index=False, header=i <= 1)
 
-class ProcesLoger(object):
-    def __init__(self, logdir="log", filename="training_log.xlsx", verbose=True):
-        # self.logf = open(logdir + "/" + filename, "a")
-        self.logfn = logdir + "/" + filename
-        self.verbose = verbose
-        self.index = 1
+    def write(self, step, current_epoch, msg_dic, filename):
+        if msg_dic is None:
+            return
+        else:
+            for key, value in msg_dic.items():
+                if hasattr(value, "item"):
+                    msg_dic[key] = value.detach().cpu().item()
+        path = self.logdir + "/" + filename + ".csv"
+        dic = dict({"step": step, "current_epoch": current_epoch})
+        dic.update(msg_dic)
+        pdg = pd.DataFrame.from_dict(dic, orient="index").transpose()
+        pdg.to_csv(path, mode="a", encoding="utf-8", index=False, header=step <= 1)
 
-
-    def record(self, msg_dic, sheet_name, step, epoch):
-        # TODO:a new method to write down scalars and visualization
-        from openpyxl import Workbook
-        from openpyxl.compat import range
-        from openpyxl.utils import get_column_letter
-        wb = Workbook()
-        sheet = wb.create_sheet(title=sheet_name)
-
-        header_index = 1
-        header_list = ["step", "epoch"]
-
-        msg_dic.update({"step": step})
-        msg_dic.update({"epoch": epoch})
-        _ = sheet.cell(row=header_index, column=1, value="step")
-        _ = sheet.cell(row=header_index, column=2, value="epoch")
-        for key, value in msg_dic.items():
-            # 如果添加了新特特征，则新建列
-            if key not in header_list:
-                header_list.append(key)
-                key_colomn = len(header_list)
-                _ = sheet.cell(row=header_index, column=key_colomn, value=key)
-            else:
-                key_colomn = header_list.index(key)+1
-
-            _ = sheet.cell(row=self.index, column=key_colomn, value=value)
-        self.index += 1
-
-        # 最后，将以上操作保存到指定的Excel文件中
-        wb.save(filename=self.logfn)
-
-    # def close(self):
-    # self.logf.close()
-
-
-def test():
-    lg = ProcesLoger(logdir="../../log")
-    lg.record({"a": 1, "b": 2}, "test", 2, 1)
-    lg.record({"a": 2, "b": 4}, "test", 3, 1)
-    lg.record({"a": 3, "b": 56, "c": 123}, "test", 3, 1)
-
-
-if __name__ == '__main__':
-    test()
+    def clear_regist(self):
+        for var in self.regist_list:
+            self.__dict__.pop(var)
 
 
 class Timer(object):
@@ -191,9 +208,10 @@ class Timer(object):
 
 
 class Watcher(object):
-    def __init__(self, logdir="log"):
+    def __init__(self, logdir):
         self.logdir = logdir
         self.writer = SummaryWriter(log_dir=logdir)
+        self._buildDir([logdir])
 
     def netParams(self, network, global_step):
         for name, param in network.named_parameters():
@@ -222,6 +240,8 @@ class Watcher(object):
         # :param mode: color mode ,default :'L'
         # :param mean: do Normalize. if input is (-1, 1).this should be -1. to convert to (0,1)
         # :param std: do Normalize. if input is (-1, 1).this should be 2. to convert to (0,1)
+        self._buildDir(["%s/plots/%s" % (self.logdir, i) for i in title_list])
+
         out = None
         batchSize = len(imgs_torch_list[0])
         show_nums = batchSize if show_imgs_num == -1 else min(show_imgs_num, batchSize)
@@ -245,9 +265,8 @@ class Watcher(object):
 
         for img, title in zip(imgs_stack, title_list):
             img = transforms.ToPILImage()(img).convert(mode)
-            filename = "plots/%s/E%03d_%s_.png" % (tag, global_step, title)
+            filename = "%s/plots/%s/E%03d_%s_.png" % (self.logdir, tag, global_step, title)
             img.save(filename)
-        buildDir(["plots"])
 
     def graph(self, net, input_shape=None, use_gpu=False, *input):
         if hasattr(net, 'module'):
@@ -268,9 +287,8 @@ class Watcher(object):
         self.writer.export_scalars_to_json("%s/scalers.json" % self.logdir)
         self.writer.close()
 
-
-def buildDir(dirs=("plots", "plots/Test", "plots/Train", "plots/Valid", "checkpoint")):
-    for dir in dirs:
-        if not os.path.exists(dir):
-            print("%s directory is not found. Build now!" % dir)
-            os.mkdir(dir)
+    def _buildDir(self, dirs):
+        for dir in dirs:
+            if not os.path.exists(dir):
+                print("%s directory is not found. Build now!" % dir)
+                os.mkdir(dir)

@@ -6,10 +6,16 @@ from torchvision.models import Inception3
 
 
 class Model(object):
-    def __init__(self, proto_model=None, gpu_ids=(), use_weights_init=True, show_structure=False):
+    def __init__(self, proto_model=None, gpu_ids=(), init_method="kaiming", show_structure=False):
+        assert isinstance(gpu_ids, list) or isinstance(gpu_ids, tuple)
         self.model = None
+        self.gpu_ids = gpu_ids
+        self.weights_init = None
+        self.init_fc = None
+        self.num_params = 0
+
         if proto_model is not None:
-            self.define(proto_model, gpu_ids, use_weights_init, show_structure)
+            self.define(proto_model, gpu_ids, init_method, show_structure)
 
     def __call__(self, *args, **kwargs):
         return self.model(*args, **kwargs)
@@ -17,29 +23,41 @@ class Model(object):
     def __getattr__(self, item):
         return getattr(self.model, item)
 
-    def define(self, proto_model, gpu_ids, use_weights_init=True, show_structure=False):
+
+
+    def define(self, proto_model, gpu_ids, init_method, show_structure):
         """define network, according to CPU, GPU and multi-GPUs.
 
         :param proto_model: Network, type of module.
         :param gpu_ids: Using GPUs' id, type of tuple. If not use GPU, pass '()'.
-        :param use_weights_init: If init weights ( method of Hekaiming init).
+        :param init_method: init weights method("kaiming") or `False` don't use any init.
         :return: Network
         """
         # assert isinstance(Module, net), "type %s is not 'mudule' type"% type(net)
         self.print_network(proto_model, show_structure)
+        self.num_params = 0
+        self.model_name =  proto_model.__class__.__name__
+        for param in proto_model.parameters():
+            self.num_params += param.numel()
         gpu_available = torch.cuda.is_available()
-        model_name = type(proto_model)
+
         if (len(gpu_ids) == 1) & gpu_available:
             proto_model = proto_model.cuda(gpu_ids[0])
-            print("%s model use GPU(%d)!" % (model_name, gpu_ids[0]))
+            print("%s model use GPU(%d)!" % (self.model_name, gpu_ids[0]))
         elif (len(gpu_ids) > 1) & gpu_available:
             proto_model = DataParallel(proto_model.cuda(), gpu_ids)
-            print("%s dataParallel use GPUs%s!" % (model_name, gpu_ids))
+            print("%s dataParallel use GPUs%s!" % (self.model_name, gpu_ids))
         else:
-            print("%s model use CPU!" % (model_name))
+            print("%s model use CPU!" % (self.model_name))
 
-        if use_weights_init:
-            proto_model.apply(self._weightsInit)
+        if init_method:
+            if init_method == 'kaiming':
+                self.init_fc = init.kaiming_normal_
+            elif init_method == "xavier":
+                self.init_fc = init.xavier_normal_
+            else:
+                self.init_fc = init_method
+            proto_model.apply(self.weightsInit)
             print("apply weight init!")
         self.model = proto_model
 
@@ -50,7 +68,7 @@ class Model(object):
         :param show_structure: if show network's structure. default: false
         :return:
         """
-        model_name = type(net)
+        model_name = net.__class__.__name__
         num_params = 0
         structure = str(net)
         for param in net.parameters():
@@ -60,9 +78,9 @@ class Model(object):
 
         prepare_net_log = '%s Total number of parameters: %d' % (model_name, num_params)
         print(prepare_net_log)
-        return structure +"\n"+ prepare_net_log
+        return structure + "\n" + prepare_net_log
 
-    def _weightsInit(self, m):
+    def weightsInit(self, m):
         if (m is None) or (not hasattr(m, "weight")):
             return
 
@@ -70,13 +88,13 @@ class Model(object):
             m.bias.data.zero_()
 
         if isinstance(m, Conv2d):
-            init.kaiming_normal_(m.weight)
+            self.init_fc(m.weight)
             # m.bias.data.zero_()
         elif isinstance(m, Linear):
-            init.kaiming_normal_(m.weight)
+            self.init_fc(m.weight)
             # m.bias.data.zero_()
         elif isinstance(m, ConvTranspose2d):
-            init.kaiming_normal_(m.weight)
+            self.init_fc(m.weight)
             # m.bias.data.zero_()
         elif isinstance(m, InstanceNorm2d):
             init.normal_(m.weight, 1.0, 0.02)
@@ -129,16 +147,33 @@ class Model(object):
         model_path = "%s/Weights_%s_%d.pth" % (root, model_name, epoch)
         save(self.model.state_dict(), model_weights_path)
         save(self.model, model_path)
-        checkPoint_log = "Checkpoint saved !"
+        # checkPoint_log = "Checkpoint saved !"
         # print(checkPoint_log)
 
-        return checkPoint_log
+        # return checkPoint_log
+
+    @property
+    def configure(self):
+        config_dic = dict()
+        config_dic["model_name"] = self.model.__class__.__name__
+        config_dic["init_method"] = self.init_fc.__name__
+        config_dic["gpus"] = len(self.gpu_ids)
+        config_dic["total_params"] = self.num_params
+        config_dic["structure"] = []
+        for item in  self.model._modules.items():
+            config_dic["structure"].append(str(item))
+        return config_dic
 
 
-# def test():
-#     net_G = Model(Inception3(4))
-#     net_G.checkPoint("test_model", 32)
-#     net_G.loadPoint("test_model", 32)
-#     net_G = Model()
-#     net_G.loadPoint("test_model", 32)
-
+# def Test():
+# net_G = Model(Inception3(4))
+# g = net_G.configure
+# print(g)
+# import pandas as pd
+# pdg = pd.DataFrame.from_dict(g,orient="index")
+#
+# pdg.to_csv("test.csv")
+# net_G.checkPoint("test_model", 32)
+# net_G.loadPoint("test_model", 32)
+# net_G = Model()
+# net_G.loadPoint("test_model", 32)

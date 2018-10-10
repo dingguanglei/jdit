@@ -2,23 +2,22 @@ from ..super import *
 
 
 class GanTrainer(SupTrainer):
-    def __init__(self, nepochs, gpu_ids, netG, netD, optG, optD, train_loader, test_loader=None,
-                 cv_loader=None,
+    def __init__(self, log, nepochs, gpu_ids, netG, netD, optG, optD, dataset,
                  d_turn=1):
-        super(GanTrainer, self).__init__(nepochs, gpu_ids=gpu_ids)
+        super(GanTrainer, self).__init__(nepochs, log, gpu_ids=gpu_ids)
         self.netG = netG
         self.netD = netD
         self.optG = optG
         self.optD = optD
-        # self.lossG = lossG
-        # self.lossD = lossD
+
         self.fake = None
-        self.train_loader = train_loader
-        self.test_loader = test_loader
-        self.cv_loader = cv_loader
-        self.cv_nsteps = len(cv_loader)
-        self.train_nsteps = len(train_loader)
-        self.test_nsteps = len(test_loader)
+        self.train_loader = dataset.train_loader
+        self.test_loader = dataset.test_loader
+        self.valid_loader = dataset.valid_loader
+        self.valid_nsteps = dataset.train_nsteps
+        self.train_nsteps = dataset.valid_nsteps
+        self.test_nsteps = dataset.test_nsteps
+
         self.d_turn = d_turn
 
     def train_epoch(self):
@@ -40,8 +39,8 @@ class GanTrainer(SupTrainer):
 
             timsg = self.timer.leftTime(self.step, self.train_nsteps, iter_timer.elapsed_time())
 
-            self.loger.record("===> Epoch[{}]({}/{}): {}\t{} \t{}".format(
-                self.current_epoch, iteration, self.train_nsteps, d_log, g_log, timsg))
+            # self.loger.record("===> Epoch[{}]({}/{}): {}\t{} \t{}".format(
+            #     self.current_epoch, iteration, self.train_nsteps, d_log, g_log, timsg))
 
             if iteration == 1:
                 self._watch_images(show_imgs_num=3, tag="Train")
@@ -81,7 +80,7 @@ class GanTrainer(SupTrainer):
         avg_dic = {}
         self.netG.eval()
         self.netD.eval()
-        for iteration, batch in enumerate(self.cv_loader, 1):
+        for iteration, batch in enumerate(self.valid_loader, 1):
             input_cpu, ground_truth_cpu = self.get_data_from_loader(batch)
             self.mv_inplace(input_cpu, self.input)  # input data
             self.mv_inplace(ground_truth_cpu, self.ground_truth)  # real data
@@ -95,7 +94,7 @@ class GanTrainer(SupTrainer):
                     avg_dic[key] += dic[key]
 
         for key in avg_dic.keys():
-            avg_dic[key] = avg_dic[key] / self.cv_nsteps
+            avg_dic[key] = avg_dic[key] / self.valid_nsteps
 
         self.watcher.scalars(self.step, tag="Valid", var_dict=avg_dic)
         self._watch_images(show_imgs_num=4, tag="Valid")

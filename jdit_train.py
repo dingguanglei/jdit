@@ -89,10 +89,10 @@ if __name__ == '__main__':
     # model_d_net = NLayer_D(depth=d_depth, norm_type="instance", use_sigmoid=False, use_liner=False)
     model_d_net = NThickLayer_D(depth=d_depth)
     net_G = Model(model_g_net,
-                  gpu_ids=gpus, use_weights_init=True)
+                  gpu_ids=gpus, init_method=True)
 
     net_D = Model(model_d_net,
-                  gpu_ids=gpus, use_weights_init=True)
+                  gpu_ids=gpus, init_method=True)
 
     print('===> Building optimizer')
     optG = Optimizer(net_G.parameters(), lr, lr_decay, weight_decay, momentum, betas, d_opt_name)
