@@ -84,7 +84,7 @@ if __name__ == '__main__':
     # net = Model(model_net, gpu_ids=gpus, use_weights_init=True)
     # -----------------------------------
     # net = Model(Tresnet18(depth = 8, mid_channels= 16), gpu_ids=gpus, use_weights_init=True)
-    net = Model(Tresnet18(depth=16, mid_channels=16), gpu_ids=gpus, init_method="kaiming")
+    net = Model(Tresnet18(depth=24, mid_channels=16), gpu_ids=gpus, init_method="kaiming")
     # net = Model(ResNet18, gpu_ids=gpus, use_weights_init=True)
     # -----------------------------------
 

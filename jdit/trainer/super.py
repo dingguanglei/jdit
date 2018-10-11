@@ -35,7 +35,6 @@ class SupTrainer(object):
         self.current_epoch = 1
         self.step = 0
 
-
     def train(self):
         START_EPOCH = 1
         for epoch in tqdm(range(START_EPOCH, self.nepochs + 1)):
@@ -126,21 +125,28 @@ class Loger(object):
         :param config_filename: default is 'opt_model_data' class name
         :return:
         """
+
         if config_filename is None:
             config_filename = opt_model_data.__class__.__name__
-        if flag is not None:
-            config_dic = dict({flag_name: flag})
-        else:
-            config_dic = dict()
-        path = self.logdir + "/" + config_filename + ".csv"
-        config_dic.update(opt_model_data.configure)
-        if config_filename in self.__dict__.keys() and self.__dict__[config_filename][-1] != config_dic:
-            # 若已经注册过config，比对最后一次结果，如果不同，则写入，相同无操作。
-            self.__dict__[config_filename].append(config_dic)
-            pdg = pd.DataFrame.from_dict(config_dic, orient="index").transpose()
-            pdg.to_csv(path, mode="a", encoding="utf-8", index=False, header=False)
 
-        elif config_filename not in self.__dict__.keys():
+        config_dic = dict({})
+        if flag is not None:
+            config_dic.update({flag_name: flag})
+        config_dic.update(opt_model_data.configure)
+
+        path = self.logdir + "/" + config_filename + ".csv"
+        is_registed = config_filename in self.__dict__.keys()
+        if is_registed:
+            # 已经注册过config
+            last_config_set = set(self.__dict__[config_filename][-1].items())
+            current_config_set = set(opt_model_data.configure.items())
+            if current_config_set.issubset(last_config_set):
+                # 若已经注册过config，比对最后一次结果，如果不同，则写入，相同无操作。
+                self.__dict__[config_filename].append(config_dic)
+                pdg = pd.DataFrame.from_dict(config_dic, orient="index").transpose()
+                pdg.to_csv(path, mode="a", encoding="utf-8", index=False, header=False)
+
+        elif not is_registed:
             # 若没有注册过，注册该config
             self.regist_list.append(config_filename)
             self.__dict__[config_filename] = [config_dic]
@@ -150,7 +156,7 @@ class Loger(object):
             # 没有改变
             pass
 
-    def write(self, step, current_epoch, msg_dic, filename, header = True):
+    def write(self, step, current_epoch, msg_dic, filename, header=True):
         if msg_dic is None:
             return
         else:
