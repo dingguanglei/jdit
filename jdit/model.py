@@ -1,7 +1,7 @@
 # coding=utf-8
 import torch, os
 from torch.nn import init, Conv2d, Linear, ConvTranspose2d, InstanceNorm2d, BatchNorm2d, DataParallel
-from torch import save, load, Tensor
+from torch import save, load
 # from torchvision.models import Inception3
 
 
@@ -107,9 +107,9 @@ class Model(object):
 
     def loadModel(self, model_path, model_weights_path, gpu_ids=(), is_eval=True):
         print("load model uses CPU...")
-        model = torch.load(model_path, map_location=lambda storage, loc: storage)
+        model = load(model_path, map_location=lambda storage, loc: storage)
         print("load weights uses CPU...")
-        weights = torch.load(model_weights_path, map_location=lambda storage, loc: storage)
+        weights =load(model_weights_path, map_location=lambda storage, loc: storage)
 
         if hasattr(model, "module"):
             print("deal with dataparallel and extract module...")

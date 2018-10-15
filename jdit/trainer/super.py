@@ -140,7 +140,7 @@ class Loger(object):
             # 已经注册过config
             last_config_set = set(self.__dict__[config_filename][-1].items())
             current_config_set = set(opt_model_data.configure.items())
-            if current_config_set.issubset(last_config_set):
+            if not current_config_set.issubset(last_config_set):
                 # 若已经注册过config，比对最后一次结果，如果不同，则写入，相同无操作。
                 self.__dict__[config_filename].append(config_dic)
                 pdg = pd.DataFrame.from_dict(config_dic, orient="index").transpose()
