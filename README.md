@@ -1,4 +1,6 @@
 # Just Do It (jdit)
+![Liberapay goal progress](https://img.shields.io/liberapay/goal/Changaco.svg)
+
 **Jdit** is a research processing oriented framework based on pytorch. Only care about your ideas. 
 You don't need to build a long boring code to run a deep learning project to verify your ideas.
 
