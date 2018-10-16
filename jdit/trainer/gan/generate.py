@@ -96,7 +96,7 @@ class GanTrainer(SupTrainer):
         for key in avg_dic.keys():
             avg_dic[key] = avg_dic[key] / self.valid_nsteps
 
-        self.watcher.scalars(self.step, tag="Valid", var_dict=avg_dic)
+        self.watcher.scalars(avg_dic, self.step, tag="Valid", )
         self._watch_images(show_imgs_num=4, tag="Valid")
         self.netG.train()
         self.netD.train()

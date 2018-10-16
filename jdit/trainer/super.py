@@ -195,24 +195,17 @@ class Watcher(object):
                 continue
             self.writer.add_histogram(name, param.clone().cpu().data.numpy(), global_step)
 
-    def _torch_to_np(self, torch):
-        if isinstance(torch, list) and len(torch) == 1:
-            torch = torch[0]
-        if isinstance(torch, Tensor):
-            torch = torch.cpu().detach().item()
-        return torch
-
-    def scalars(self, key_list=None, value_list=None, global_step=0, tag="Train", var_dict=None):
-        if var_dict is None:
-            value_list = list(map(self._torch_to_np, value_list))
-            for key, scalar in zip(key_list, value_list):
-                self.writer.add_scalars(key, {tag: scalar}, global_step)
-        else:
-            for key, scalar in var_dict.items():
-                self.writer.add_scalars(key, {tag: scalar}, global_step)
+    def scalars(self, var_dict, global_step, tag="Train"):
+        # if var_dict is None:
+        #     value_list = list(map(self._torch_to_np, value_list))
+        #     for key, scalar in zip(key_list, value_list):
+        #         self.writer.add_scalars(key, {tag: scalar}, global_step)
+        # else:
+        for key, scalar in var_dict.items():
+            self.writer.add_scalars(key, {tag: scalar}, global_step)
 
     def images(self, imgs_torch_list, title_list, global_step, tag="Train", show_imgs_num=3, mode="L",
-               mean=-1, std=2):
+               mean=(-1, -1, -1), std=(2, 2, 2)):
         # :param mode: color mode ,default :'L'
         # :param mean: do Normalize. if input is (-1, 1).this should be -1. to convert to (0,1)
         # :param std: do Normalize. if input is (-1, 1).this should be 2. to convert to (0,1)
@@ -228,7 +221,7 @@ class Watcher(object):
         for randindex in randindex_list:
             for imgs_torch in imgs_torch_list:
                 img_torch = imgs_torch[randindex].cpu().detach()
-                img_torch = transforms.Normalize([mean, mean, mean], [std, std, std])(
+                img_torch = transforms.Normalize(mean, std)(
                     img_torch)  # (-1,1)=>(0,1)   mean = -1,std = 2
                 imgs_stack.append(img_torch)
             out_1 = torch.stack(imgs_stack)
@@ -272,7 +265,7 @@ class Watcher(object):
 
 class Performance(object):
 
-    def __init__(self, gpu_ids = ()):
+    def __init__(self, gpu_ids=()):
         self.config_dic = dict()
         self.gpu_ids = gpu_ids
 
@@ -304,13 +297,6 @@ class Performance(object):
                 self.config_dic['%s_utilize_memory' % gpu_id_name] = GpuUtilize.memory
 
             pynvml.nvmlShutdown()
-
-    # def time_start(self):
-    #     self.last_time_point = time.time()
-    #
-    # def time_consuming(self, tag, smooth=0.3):
-    #     value = time.time() - self.last_time_point
-    #     self._set_dict_smooth("time_consuming_" + tag, value, smooth)
 
     def _set_dict_smooth(self, key, value, smooth=0.3):
         now = value
