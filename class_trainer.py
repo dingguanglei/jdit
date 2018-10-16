@@ -18,7 +18,7 @@ class FashingClassTrainer(ClassificationTrainer):
     mode = "L"
     num_class = 10
     every_epoch_checkpoint = 20  #2
-    every_epoch_changelr = 10   #1
+    every_epoch_changelr = 1   #1
 
     def __init__(self, log, nepochs, gpu_ids, net, opt, dataset):
         super(FashingClassTrainer, self).__init__(log, nepochs, gpu_ids, net, opt, dataset)
@@ -63,11 +63,11 @@ if __name__ == '__main__':
     os.environ["CUDA_VISIBLE_DEVICES"] = "2,3"
     gpus = [0, 1]
     batchSize = 512
-    nepochs = 101
+    nepochs = 100
 
     lr = 1e-3
-    lr_decay = 0.9  # 0.94
-    weight_decay = 2e-4  # 2e-5
+    lr_decay = 0.94  # 0.94
+    weight_decay = 0  # 2e-5
     momentum = 0
     betas = (0.9, 0.999)
 
@@ -84,7 +84,7 @@ if __name__ == '__main__':
     # net = Model(model_net, gpu_ids=gpus, use_weights_init=True)
     # -----------------------------------
     # net = Model(Tresnet18(depth = 8, mid_channels= 16), gpu_ids=gpus, use_weights_init=True)
-    net = Model(Tresnet18(depth=24, mid_channels=16), gpu_ids=gpus, init_method="kaiming")
+    net = Model(Tresnet18(depth=16, mid_channels=16), gpu_ids=gpus, init_method="kaiming")
     # net = Model(ResNet18, gpu_ids=gpus, use_weights_init=True)
     # -----------------------------------
 

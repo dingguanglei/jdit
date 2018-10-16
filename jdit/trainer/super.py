@@ -21,10 +21,11 @@ class SupTrainer(object):
 
     def __init__(self, nepochs, log, gpu_ids=()):
 
-        self.timer = Timer()
+        self.performance = Performance(gpu_ids)
         self.watcher = Watcher(log)
         self.loger = Loger(log)
 
+        self.gpu_ids = gpu_ids
         self.use_gpu = True if (len(gpu_ids) > 0) and torch.cuda.is_available() else False
         self.input = Variable()
         self.ground_truth = Variable()
@@ -37,15 +38,12 @@ class SupTrainer(object):
 
     def train(self):
         START_EPOCH = 1
-        for epoch in tqdm(range(START_EPOCH, self.nepochs + 1)):
+        for epoch in tqdm(range(START_EPOCH, self.nepochs + 1), unit="epoch", total=self.nepochs):
             self.current_epoch = epoch
-            self.timer.reset_start()
             self.update_config_info()
             self.train_epoch()
             self.valid()
             # self.watcher.netParams(self.netG, epoch)
-            self.timer.leftTime(epoch, self.nepochs, self.timer.elapsed_time())
-
             if isinstance(self.every_epoch_changelr, int):
                 is_change_lr = (self.current_epoch % self.every_epoch_changelr) == 0
             else:
@@ -54,25 +52,8 @@ class SupTrainer(object):
                 self.change_lr()
             if self.current_epoch % self.every_epoch_checkpoint == 0:
                 self.checkPoint()
-        self.make_predict()
+        self.test()
         self.watcher.close()
-
-    def mv_inplace(self, source_to, targert):
-        targert.data.resize_(source_to.size()).copy_(source_to)
-
-    def update_config_info(self):
-        """
-        to register the model and optim config info.
-            self.loger.regist_config(self.current_epoch, opt)
-            self.loger.regist_config(self.current_epoch, model)
-        :return:
-        """
-        # self.loger.regist_config(self,self.current_epoch)
-        pass
-
-    @abstractmethod
-    def checkPoint(self):
-        pass
 
     @abstractmethod
     def train_epoch(self):
@@ -83,13 +64,41 @@ class SupTrainer(object):
         """
         pass
 
-    def valid(self):
+    def train_iteration(self, opt, compute_loss_fc, tag="Train"):
+        opt.zero_grad()
+        loss, var_dic = compute_loss_fc()
+        loss.backward()
+        opt.step()
+        self.watcher.scalars(var_dict=var_dic, global_step=self.step, tag="Train")
+        self.loger.write(self.step, self.current_epoch, var_dic, tag, header=self.step <= 1)
+
+    def mv_inplace(self, source_to, targert):
+        targert.data.resize_(source_to.size()).copy_(source_to)
+
+    def update_config_info(self):
+        """
+        to register the `model` ,`optim` ,`trainer` and `performance` config info.
+            self.loger.regist_config(opt, self.current_epoch)  # for opt.configure
+            self.loger.regist_config(model, self.current_epoch ) # for model.configure
+            self.loger.regist_config(self.performance, self.current_epoch)# for self.performance.configure
+            self.loger.regist_config(self,self.current_epoch) # for trainer.configure
+        :return:
+        """
+        self.loger.regist_config(self, self.current_epoch)  # for trainer.configure
+        self.loger.regist_config(self.performance, self.current_epoch)  # for self.performance.configure
+        pass
+
+    @abstractmethod
+    def checkPoint(self):
         pass
 
     def change_lr(self):
         pass
 
-    def make_predict(self):
+    def valid(self):
+        pass
+
+    def test(self):
         pass
 
     @property
@@ -172,36 +181,6 @@ class Loger(object):
     def clear_regist(self):
         for var in self.regist_list:
             self.__dict__.pop(var)
-
-
-class Timer(object):
-    def __init__(self):
-        self.reset_start()
-
-    def reset_start(self):
-        self.start_time = time.time()
-
-    def elapsed_time(self):
-        return time.time() - self.start_time
-
-    def _convert_for_print(self, sec):
-        if sec < 60:
-            return str(round(sec, 2)) + " sec"
-        elif sec < (60 * 60):
-            return str(round(sec / 60, 2)) + " min"
-        else:
-            return str(round(sec / (60 * 60), 2)) + " hr"
-
-    def timLog(self, info="Elapsed", tim=None):
-        elapsed_time = self.elapsed_time()
-        if tim is None:
-            tim = elapsed_time
-        time_for_print = self._convert_for_print(tim)
-        return "%s: %s " % (info, time_for_print)
-
-    def leftTime(self, current, total, one_cost):
-        left = total - current
-        return self.timLog("LeftTime", left * one_cost)
 
 
 class Watcher(object):
@@ -289,3 +268,61 @@ class Watcher(object):
             if not os.path.exists(dir):
                 print("%s directory is not found. Build now!" % dir)
                 os.makedirs(dir)
+
+
+class Performance(object):
+
+    def __init__(self, gpu_ids = ()):
+        self.config_dic = dict()
+        self.gpu_ids = gpu_ids
+
+    def mem_info(self):
+        from psutil import virtual_memory
+        mem = virtual_memory()
+        self._set_dict_smooth("mem_total_M", mem.total // 1024 ** 2, smooth=0.3)
+        self._set_dict_smooth("mem_used_M", mem.used // 1024 ** 2, smooth=0.3)
+        self._set_dict_smooth("mem_free_M", mem.free // 1024 ** 2, smooth=0.3)
+        self._set_dict_smooth("mem_percent", mem.percent, smooth=0.3)
+
+    def gpu_info(self):
+        # pip install nvidia-ml-py3
+        if len(self.gpu_ids) >= 0 and torch.cuda.is_available():
+            import pynvml
+            pynvml.nvmlInit()
+            self.config_dic['gpu_driver_version'] = pynvml.nvmlSystemGetDriverVersion()
+            for gpu_id in self.gpu_ids:
+                handle = pynvml.nvmlDeviceGetHandleByIndex(gpu_id)
+                gpu_id_name = "gpu%s" % gpu_id
+                MemInfo = pynvml.nvmlDeviceGetMemoryInfo(handle)
+                GpuUtilize = pynvml.nvmlDeviceGetUtilizationRates(handle)
+                self.config_dic['%s_device_name' % gpu_id_name] = pynvml.nvmlDeviceGetName(handle)
+                self.config_dic['%s_mem_total' % gpu_id_name] = MemInfo.total // 1024 ** 2
+                self.config_dic['%s_mem_used' % gpu_id_name] = gpu_mem_used = MemInfo.used // 1024 ** 2
+                self.config_dic['%s_mem_free' % gpu_id_name] = gpu_mem_total = MemInfo.free // 1024 ** 2
+                self.config_dic['%s_mem_percent' % gpu_id_name] = gpu_mem_used / gpu_mem_total
+                self.config_dic['%s_utilize_gpu' % gpu_id_name] = GpuUtilize.gpu
+                self.config_dic['%s_utilize_memory' % gpu_id_name] = GpuUtilize.memory
+
+            pynvml.nvmlShutdown()
+
+    # def time_start(self):
+    #     self.last_time_point = time.time()
+    #
+    # def time_consuming(self, tag, smooth=0.3):
+    #     value = time.time() - self.last_time_point
+    #     self._set_dict_smooth("time_consuming_" + tag, value, smooth)
+
+    def _set_dict_smooth(self, key, value, smooth=0.3):
+        now = value
+        if key in self.config_dic:
+            last = self.config_dic[key]
+            self.config_dic[key] = now * (1 - smooth) + last * smooth
+        else:
+            self.config_dic[key] = now
+
+    @property
+    def configure(self):
+        self.mem_info()
+        self.gpu_info()
+        self.gpu_info()
+        return self.config_dic

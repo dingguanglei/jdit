@@ -5,7 +5,7 @@ You don't need to build a long boring code to run a deep learning project to ver
 You only need to implement you ideas and 
 don't do anything with training framework, multiply-gpus, checkpoint, process visualization, performance evaluation and so on.
 ## Structure
-There are four main module in this framework. They are dataset, model, optimizer and trainer.
+There are four main module in this framework. They are `dataset`, `model`, `optimizer` and `trainer`.
 Each of them are highly independent. So, you can process them easily and flexibly.
 ###  Dataset
 For dataset, every thing is inherit from super class `Dataloaders_factory`
@@ -45,6 +45,6 @@ class Dataloaders_factory(metaclass=ABCMeta):
         return configs
 ```
 ## Feature Work
-- [ ] Change `Timer`class to `Performance` class. 
+- [x] Change `Timer`class to `Performance` class. 
     -   Evaluate the model Performance. Such as memory cost, time cost of forward propagation.
 - [ ] Change saving model to `.cpu()` automatically.

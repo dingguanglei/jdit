@@ -31,9 +31,9 @@ class GanTrainer(SupTrainer):
 
             self.fake = self.netG(self.input)
 
-            d_log = self._train_iteration(self.optD, self.compute_d_loss, tag="LOSS_D")
+            d_log = self.train_iteration(self.optD, self.compute_d_loss, tag="LOSS_D")
             if (self.step % self.d_turn) == 0:
-                g_log = self._train_iteration(self.optG, self.compute_g_loss, tag="LOSS_G")
+                g_log = self.train_iteration(self.optG, self.compute_g_loss, tag="LOSS_G")
             else:
                 g_log = ""
 
@@ -49,7 +49,7 @@ class GanTrainer(SupTrainer):
         input_cpu, ground_truth_cpu = batch_data[0], batch_data[1]
         return input_cpu, ground_truth_cpu
 
-    def _train_iteration(self, opt, compute_loss_fc, tag="LOSS_D"):
+    def train_iteration(self, opt, compute_loss_fc, tag="LOSS_D"):
         opt.zero_grad()
         loss, var_dic = compute_loss_fc()
         loss.backward()
@@ -159,7 +159,7 @@ class GanTrainer(SupTrainer):
         # var_dic["WD"] = w_distance = (d_real.mean() - d_fake.mean()).detach()
         return var_dic
 
-    def make_predict(self):
+    def test(self):
         for input, real in self.test_loader:
             self.mv_inplace(input, self.input)
             self.mv_inplace(real, self.ground_truth)

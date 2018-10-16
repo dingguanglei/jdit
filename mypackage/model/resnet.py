@@ -265,9 +265,9 @@ class TResNet(nn.Module):
         self.relu = nn.LeakyReLU(0.1)
 
         # self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
-        self.layer1 = self._make_layer(block, depth * 1, depth * 1, layers[0], stride=1, type="normal",drop_rate = 0.2)
-        self.layer2 = self._make_layer(block, depth * 1, depth * 2, layers[1], stride=2, type="decomposition",drop_rate = 0.2)
-        self.layer3 = self._make_layer(block, depth * 2, depth * 4, layers[2], stride=2, type="decomposition",drop_rate = 0.2)
+        self.layer1 = self._make_layer(block, depth * 1, depth * 1, layers[0], stride=1, type="normal",drop_rate = 0.)
+        self.layer2 = self._make_layer(block, depth * 1, depth * 2, layers[1], stride=2, type="decomposition",drop_rate = 0.)
+        self.layer3 = self._make_layer(block, depth * 2, depth * 4, layers[2], stride=2, type="decomposition",drop_rate = 0.)
         # self.layer4 = self._make_layer(block, 512, layers[3], stride=2)
 
         self.avgpool = nn.AvgPool2d(8)
