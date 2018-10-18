@@ -12,11 +12,11 @@ don't do anything with training framework, multiply-gpus, checkpoint, process vi
 There are four main module in this framework. They are `dataset`, `model`, `optimizer` and `trainer`.
 Each of them are highly independent. So, you can process them easily and flexibly.
 ###  Dataset
-First of all, for dataset, every thing is inherit from super class `Dataloaders_factory`
-which is as following.
+First of all, for dataset, every thing is inherit from super class `Dataloaders_factory` 
+from `jdit/dataset.py`, which is as following.
 
 
-```pythonstub
+```python
 class Dataloaders_factory(metaclass=ABCMeta):
 
     def __init__(self, root, batch_size=128, num_workers=-1, shuffle=True):
@@ -45,9 +45,12 @@ class Dataloaders_factory(metaclass=ABCMeta):
 
     @property
     def configure(self):
-        """ register configures, such as `dataset_name`, `batch_size`, to a dict of `self.configure`"""
-        #  ...       
-        return configs
+        """the info which you can get from `configure[key]` are
+        "dataset_name", "batch_size", "shuffle", "root", "num_workers",
+        "train_nsteps", "valid_nsteps", "test_nsteps", 
+        "dataset_train", "dataset_valid","dataset_test"
+        """
+
 ```
 To build your dataset class, including train, valid and test. You need to do as following. 
 * Define datasets. (If you don't define test dataset, it will be replaced by valid datasaet)
@@ -77,15 +80,19 @@ class Fashion_mnist(Dataloaders_factory):
 Second, you need to wrap your own network by class `Model` in `jdit/model.py`.
 Let's see what's inside!
 
-```pythonstub
+```python
 class Model(object):
     def __init__(self, proto_model=None, gpu_ids_abs=(), init_method="kaiming", show_structure=False):
     """ 
-    if you pass a `proto_model`, it will class `self.define()` to init it.
-    for `init_method`. you can pass a method name like `kaiming` or `xavair`
+        if you pass a `proto_model`, it will use class `self.define()` to init it.
+        for `init_method`. you can pass a method name like `kaiming` or `xavair`       
     """
+        if proto_model is not None:
+            self.define(...)
+            
     def __call__(self, *args, **kwargs):
-        """this allows you to call model forward directly using `Model(x)`, other than `Model.model(x)`  
+        """this allows you to call model forward directly using `Model(x)`, 
+        other than `Model.model(x)`  
         """
         return self.model(*args, **kwargs)
 
@@ -95,27 +102,88 @@ class Model(object):
         
     def define(self, proto_model, gpu_ids, init_method, show_structure):
     """ to define a pytorch model to Model. In other words, this is a assemble method.
+        
         1. print network structure and total number of  parameters.
         2. set the model to specify device, such as cpu, gpu or gpus.
         3. apply a weight init method. You can pass "kaiming" or "Xavier" for simplicity.
         Or, you can pass your own init function.
+        
         self.num_params = self.print_network(proto_model, show_structure)
         self.model = self._set_device(proto_model, gpu_ids)
         init_name = self._apply_weight_init(init_method, proto_model)
-        print("apply %s weight init!" % init_name)
     """ 
+    
     def print_network(self, net, show_structure=False):
     """print total number of parameters and structure of network"""
-    def loadModel(self, model_path, model_weights_path, gpu_ids=(), is_eval=True):
+            
+    def loadModel(self, model_or_path, weights_or_path=None, gpu_ids=(), is_eval=True):
+    """to assemble a model and weights from paths or passing parameters."""
+    
     def loadPoint(self, model_name, epoch, logdir="log"):
+    """load model and weights from a certain checkpoint. cooperate with `checkPoint()`"""
+    
     def checkPoint(self, model_name, epoch, logdir="log"):
-    def countParams(self, proto_model)
+    """save model and weights for a checkpoint. cooperate with `loadPoint()`"""
+    
+    def countParams(self, proto_model):
+    """count the total parameters of model."""
+    
     @property
     def configure(self):
+        """the info which you can get from `configure[key]` are
+        "model_name", "init_method", "gpus", "total_params","structure"
+        """
+  
+```
+Example:
+
+Load a `resnet18()``` from torchvision.
+
+```python
+from torchvision.models.resnet import resnet18
+net = Model(resnet18(), gpu_ids_abs=[], init_method="kaiming")
+net.print_network()
 ```
 
+###  Optimizer
+Third, you need to build your own optimizer class `Optimizer` in `jdit/optimizer.py`.Let's see what's inside!
+```python
+class Optimizer(object):
+    def __init__(self, params, lr=1e-3, lr_decay=0.92, weight_decay=2e-5, momentum=0., betas=(0.9, 0.999),
+                 opt_name="Adam"):
+    
+    def __getattr__(self, item):
+    """this is a delegate for calling some pytorch optimizer methods."""        
+        return getattr(self.opt, item)
+        
+    def do_lr_decay(self, reset_lr_decay=None, reset_lr=None):
+    """decay learning rate by `self.lr_decay`. reset `lr` and `lr_decay`
+        if not None, reset `lr_decay` and `reset_lr`.
+    """
+
+    @property
+    def configure(self):
+     """the info which you can get from `configure[key]` are
+        "opt_name", "lr_decay", other optimizer hyper-parameter, such as "weight_decay", "momentum", "betas".
+        """
+```
+
+Example:
+
+Build a adam optimizer by `Optimizer()` class.
+
+```python
+
+net = model()
+lr = 1e-3
+lr_decay = 0.94  # 0.94
+weight_decay = 0  # 2e-5
+momentum = 0
+betas = (0.9, 0.999)
+opt_name = "RMSprop"
+opt = Optimizer(net.parameters(), lr, lr_decay, weight_decay, momentum, betas, opt_name)
+```
+
+
 ## Feature Work
-- [x] Change `Timer`class to `Performance` class. 
-    -   Evaluate the model Performance. Such as memory cost, time cost of forward propagation.
-- [ ] Change saving model to `.cpu()` automatically.
-- [ ] Build a unittest.
+

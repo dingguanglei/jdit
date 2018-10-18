@@ -54,53 +54,67 @@ class Model(object):
         print(num_params_log)
         return num_params
 
-    def loadModel(self, model_path, model_weights_path, gpu_ids=(), is_eval=True):
-        """to load a model from a path.
+    def loadModel(self, model_or_path, weights_or_path=None, gpu_ids=(), is_eval=True):
+        """to assemble a model and weights from paths or passing parameters.
+
         This method deal well with different devices model loading.
         You don' need to care about which devices your model have saved.
-
-        :param model_path:
-        :param model_weights_path:
-        :param gpu_ids:
-        :param is_eval:
-        :return:
+            loadModel(m_path, w_path) #both using a file from paths.
+            loadModel(model, w_path) #you have had the model. Only get weight from path.
+            loadModel(model, weight) #you get model and weight. So, you don't need to do any file reading.
+            loadModel(m_path, None)/loadModel(model, None) #you only load the model without weights.
+        :param model_or_path: pytorch model or model file path.
+        :param weights_or_path: pytorch weights or weights file path.
+        :param gpu_ids:using gpus. default:() using cpu
+        :param is_eval: if using only for evaluating. model.eval()
+        :return: model
         """
-        #TODO: 改为任意加载模型或路径。if model or modl path
+        is_path = isinstance(model_or_path, str) and os.path.exists(model_or_path)
+        model = model_or_path
+        if is_path:
+            model = load(model_or_path, map_location=lambda storage, loc: storage)
 
-        if isinstance(model_path, str) and os.path.exists(model_path):
-            print("load model uses CPU...")
-            model = load(model_path, map_location=lambda storage, loc: storage)
-        else:
-            model = model_path
-        if isinstance(model_weights_path, str) and os.path.exists(model_weights_path):
-            print("load weights uses CPU...")
-            weights = load(model_weights_path, map_location=lambda storage, loc: storage)
-        else:
-            weights = model_weights_path
+        is_path = isinstance(weights_or_path, str) and os.path.exists(weights_or_path)
+        weights = weights_or_path
+        if is_path:
+            weights = load(weights_or_path, map_location=lambda storage, loc: storage)
+
         if hasattr(model, "module"):
-            print("deal with dataparallel and extract module...")
+            print("deal with `dataparallel` and extract `module`...")
             model = model.module
-            from collections import OrderedDict
-            new_state_dict = OrderedDict()
-            for k, v in weights.items():
-                name = k[7:]  # remove `module.`
-                new_state_dict[name] = v
-            weights = new_state_dict
-            # load params
+            if weights is not None:
+                # fix params' key
+                from collections import OrderedDict
+                new_state_dict = OrderedDict()
+                for k, v in weights.items():
+                    # name = k[7:]  # remove `module.`
+                    name = k.replace("module.", "", 1) # remove `module.`
+                    new_state_dict[name] = v
+                weights = new_state_dict
 
-        model.load_state_dict(weights)
-        if torch.cuda.is_available() and (len(gpu_ids) == 1):
-            print("convert to GPU %s" % str(gpu_ids))
-            model = model.cuda()
-        elif torch.cuda.is_available() and (len(gpu_ids) > 1):
-            print("convert to GPUs %s" % str(gpu_ids))
-            model = DataParallel(model, gpu_ids).cuda()
+        if weights is not None:
+            model.load_state_dict(weights)
+
+        model = self._set_device(model, gpu_ids)
+        self.model = model
+        # if torch.cuda.is_available() and (len(gpu_ids) == 1):
+        #     print("convert to GPU %s" % str(gpu_ids))
+        #     model = model.cuda()
+        # elif torch.cuda.is_available() and (len(gpu_ids) > 1):
+        #     print("convert to GPUs %s" % str(gpu_ids))
+        #     model = DataParallel(model, gpu_ids).cuda()
+        #
+        #
         if is_eval:
             return model.eval()
         else:
             return model
 
     def loadPoint(self, model_name, epoch, logdir="log"):
+        """load model and weights from a certain checkpoint.
+
+        this method is cooperate with method `self.chechPoint()`
+        """
         dir = os.path.join(logdir, "checkpoint")
         model_weights_path = os.path.join(dir, "Weights_%s_%d.pth" % (model_name, epoch))
         model_path = os.path.join(dir, "Model_%s_%d.pth" % (model_name, epoch))
@@ -117,6 +131,11 @@ class Model(object):
         save(self.model, model_path)
 
     def countParams(self, proto_model):
+        """count the total parameters of model.
+
+        :param proto_model: pytorch model
+        :return: number of parameters
+        """
         num_params = 0
         for param in proto_model.parameters():
             num_params += param.numel()
