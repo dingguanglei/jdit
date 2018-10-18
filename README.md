@@ -61,7 +61,7 @@ Define a datasets by using `FashionMNIST()`.
 
 Using default transform.
 
-Don't define test dataset and using valid dataset replaces it. 
+Don't define test dataset and using valid dataset  instead of test dataset. 
 
 ```python
 class Fashion_mnist(Dataloaders_factory):
@@ -103,7 +103,7 @@ class Model(object):
     def define(self, proto_model, gpu_ids, init_method, show_structure):
     """ to define a pytorch model to Model. In other words, this is a assemble method.
         
-        1. print network structure and total number of  parameters.
+        1. print network structure and total number of parameters.
         2. set the model to specify device, such as cpu, gpu or gpus.
         3. apply a weight init method. You can pass "kaiming" or "Xavier" for simplicity.
         Or, you can pass your own init function.
@@ -135,9 +135,24 @@ class Model(object):
         """
   
 ```
+To wrap your pytorch model. You need to do as following. 
+* Wrap a pytoch model in your code.
+    * Using `Model(resnet18())`, to init your model.
+    * Using `Model()` to get a `None` model.
+  Then, using  `Model.define(resnet18())` other place to init your model.
+* Load pytoch model from a file.
+    * Using `Model.loadModel(model_or_path, weight_or_path)`, to load your model.
+    * You must pass a model to this method whether it is path or model.
+    * For `weight_or_path`, if it is not None. 
+   It can be a path or weight OrderedDict and it will be applied in model.
+* Do checkPoint.
+    * Using `checkPoint(model_name, epoch, logdir="log")` to save your model checkpoint in `./log/checkpoint/`.
+    * The Filename is `Weights_{model_name}_{epoch}.pth` and `Model_{model_name}_{epoch}.pth`
+    * The `loadPoint()` is exact the opposite.
+    
 Example:
 
-Load a `resnet18()``` from torchvision.
+Load a `resnet18()` from `torchvision`.
 
 ```python
 from torchvision.models.resnet import resnet18
@@ -146,7 +161,7 @@ net.print_network()
 ```
 
 ###  Optimizer
-Third, you need to build your own optimizer class `Optimizer` in `jdit/optimizer.py`.Let's see what's inside!
+Third, you need to build your own optimizer class `Optimizer` in `jdit/optimizer.py`. Let's see what's inside!
 ```python
 class Optimizer(object):
     def __init__(self, params, lr=1e-3, lr_decay=0.92, weight_decay=2e-5, momentum=0., betas=(0.9, 0.999),
@@ -167,6 +182,11 @@ class Optimizer(object):
         "opt_name", "lr_decay", other optimizer hyper-parameter, such as "weight_decay", "momentum", "betas".
         """
 ```
+To build your optimizer method. You need to do as following. 
+* Build an Optimizer by passing a series of parameters.
+* Learning rate decay.
+    * Using `optimizer.do_lr_deacy()` to multiply learning rate by `optimizer.lr_decay`, which you have inited before.
+    * Reset learning and decay by passing the parameters to `optimizer.do_lr_deacy(reset_lr_decay=None, reset_lr=None)`
 
 Example:
 
@@ -176,8 +196,8 @@ Build a adam optimizer by `Optimizer()` class.
 
 net = model()
 lr = 1e-3
-lr_decay = 0.94  # 0.94
-weight_decay = 0  # 2e-5
+lr_decay = 0.94 
+weight_decay = 0 
 momentum = 0
 betas = (0.9, 0.999)
 opt_name = "RMSprop"
