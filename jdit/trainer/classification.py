@@ -10,21 +10,11 @@ class ClassificationTrainer(SupTrainer):
     num_class = None
 
     def __init__(self, log, nepochs, gpu_ids, net, opt, datasets):
-        super(ClassificationTrainer, self).__init__(nepochs, log, gpu_ids=gpu_ids)
+        super(ClassificationTrainer, self).__init__(nepochs, log, gpu_ids_abs=gpu_ids)
         self.net = net
         self.opt = opt
         self.datasets = datasets
 
-        # self.predict = None
-        # self.train_loader = dataset.train_loader
-        # self.valid_loader = dataset.valid_loader
-        # self.test_loader = dataset.test_loader
-        #
-        # self.train_nsteps = dataset.train_nsteps
-        # self.valid_nsteps = dataset.valid_nsteps
-        # self.test_nsteps = dataset.test_nsteps
-        # if self.use_gpu:
-        #     self.labels = self.labels.cuda()
         self.labels = Variable().cuda() if self.use_gpu else Variable()
 
         self.loger.regist_config(net)
@@ -33,7 +23,6 @@ class ClassificationTrainer(SupTrainer):
 
     def train_epoch(self):
         for iteration, batch in tqdm(enumerate(self.datasets.train_loader, 1), unit="step"):
-            # iter_timer = Timer()
             self.step += 1
 
             input_cpu, ground_truth_cpu, labels_cpu = self.get_data_from_loader(batch)
@@ -43,18 +32,9 @@ class ClassificationTrainer(SupTrainer):
 
             self.output = self.net(self.input)
             self.train_iteration(self.opt, self.compute_loss, tag="Train")
-            # self.timer.leftTime(iteration, self.train_nsteps, iter_timer.elapsed_time())
 
             if iteration == 1:
                 self._watch_images(show_imgs_num=3, tag="Train")
-
-    # def _train_iteration(self, opt, compute_loss_fc, tag="Train"):
-    #     opt.zero_grad()
-    #     loss, var_dic = compute_loss_fc()
-    #     loss.backward()
-    #     opt.step()
-    #     self.watcher.scalars(var_dict=var_dic, global_step=self.step, tag="Train")
-    #     self.loger.write(self.step, self.current_epoch, var_dic, tag, header=self.step <= 1)
 
     @abstractmethod
     def compute_loss(self):

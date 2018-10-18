@@ -1,8 +1,8 @@
 from unittest import TestCase
 import torch
 from torch.optim import Adam, RMSprop
-from ..optimizer import Optimizer
-from .super import Loger
+from jdit.optimizer import Optimizer
+from jdit.trainer.super import Loger
 import pandas as pd
 from jdit.model import Model
 from torchvision.models import Inception3

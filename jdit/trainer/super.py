@@ -19,14 +19,15 @@ class SupTrainer(object):
     mode = "L"
     __metaclass__ = ABCMeta
 
-    def __init__(self, nepochs, log, gpu_ids=()):
+    def __init__(self, nepochs, log, gpu_ids_abs=()):
+        os.environ["CUDA_VISIBLE_DEVICES"] = ",".join([str(i) for i in gpu_ids_abs])
+        self.gpu_ids = [i for i in range(len(gpu_ids_abs))]
 
-        self.performance = Performance(gpu_ids)
+        self.performance = Performance(gpu_ids_abs)
         self.watcher = Watcher(log)
         self.loger = Loger(log)
 
-        self.gpu_ids = gpu_ids
-        self.use_gpu = True if (len(gpu_ids) > 0) and torch.cuda.is_available() else False
+        self.use_gpu = True if (len(self.gpu_ids) > 0) and torch.cuda.is_available() else False
         self.input = Variable()
         self.ground_truth = Variable()
         if self.use_gpu:
@@ -253,7 +254,7 @@ class Watcher(object):
             self.writer.add_graph(net, *input)
 
     def close(self):
-        self.writer.export_scalars_to_json("%s/scalers.json" % self.logdir)
+        # self.writer.export_scalars_to_json("%s/scalers.json" % self.logdir)
         self.writer.close()
 
     def _buildDir(self, dirs):
@@ -265,17 +266,21 @@ class Watcher(object):
 
 class Performance(object):
 
-    def __init__(self, gpu_ids=()):
+    def __init__(self, gpu_ids_abs=()):
         self.config_dic = dict()
-        self.gpu_ids = gpu_ids
+        self.gpu_ids = gpu_ids_abs
 
     def mem_info(self):
         from psutil import virtual_memory
         mem = virtual_memory()
-        self._set_dict_smooth("mem_total_M", mem.total // 1024 ** 2, smooth=0.3)
-        self._set_dict_smooth("mem_used_M", mem.used // 1024 ** 2, smooth=0.3)
-        self._set_dict_smooth("mem_free_M", mem.free // 1024 ** 2, smooth=0.3)
-        self._set_dict_smooth("mem_percent", mem.percent, smooth=0.3)
+        self.config_dic['mem_total_GB'] = round(mem.total / 1024 ** 3, 2)
+        self.config_dic['mem_used_GB'] = round(mem.used / 1024 ** 3, 2)
+        # self.config_dic['mem_free_GB'] = round(mem.free // 1024 ** 3, 2)
+        self.config_dic['mem_percent'] = mem.percent
+        # self._set_dict_smooth("mem_total_M", mem.total // 1024 ** 2, smooth=0.3)
+        # self._set_dict_smooth("mem_used_M", mem.used // 1024 ** 2, smooth=0.3)
+        # self._set_dict_smooth("mem_free_M", mem.free // 1024 ** 2, smooth=0.3)
+        # self._set_dict_smooth("mem_percent", mem.percent, smooth=0.3)
 
     def gpu_info(self):
         # pip install nvidia-ml-py3
@@ -289,12 +294,13 @@ class Performance(object):
                 MemInfo = pynvml.nvmlDeviceGetMemoryInfo(handle)
                 GpuUtilize = pynvml.nvmlDeviceGetUtilizationRates(handle)
                 self.config_dic['%s_device_name' % gpu_id_name] = pynvml.nvmlDeviceGetName(handle)
-                self.config_dic['%s_mem_total' % gpu_id_name] = MemInfo.total // 1024 ** 2
-                self.config_dic['%s_mem_used' % gpu_id_name] = gpu_mem_used = MemInfo.used // 1024 ** 2
-                self.config_dic['%s_mem_free' % gpu_id_name] = gpu_mem_total = MemInfo.free // 1024 ** 2
-                self.config_dic['%s_mem_percent' % gpu_id_name] = gpu_mem_used / gpu_mem_total
-                self.config_dic['%s_utilize_gpu' % gpu_id_name] = GpuUtilize.gpu
-                self.config_dic['%s_utilize_memory' % gpu_id_name] = GpuUtilize.memory
+                self.config_dic['%s_mem_total' % gpu_id_name] = gpu_mem_total = round(MemInfo.total / 1024 ** 3, 2)
+                self.config_dic['%s_mem_used' % gpu_id_name] = gpu_mem_used = round(MemInfo.used / 1024 ** 3, 2)
+                # self.config_dic['%s_mem_free' % gpu_id_name] = gpu_mem_free = MemInfo.free // 1024 ** 2
+                self.config_dic['%s_mem_percent' % gpu_id_name] = round((gpu_mem_used / gpu_mem_total) * 100, 1)
+                self._set_dict_smooth('%s_utilize_gpu' % gpu_id_name, GpuUtilize.gpu, 0.8)
+                # self.config_dic['%s_utilize_gpu' % gpu_id_name] = GpuUtilize.gpu
+                # self.config_dic['%s_utilize_memory' % gpu_id_name] = GpuUtilize.memory
 
             pynvml.nvmlShutdown()
 
