@@ -42,7 +42,7 @@ class GenerateGanTrainer(GanTrainer):
         var_dic = {}
         # var_dic["JC"] = jc = jcbClamp(self.netG, self.input, use_gpu=self.use_gpu)
         # var_dic["LOSS_D"] = loss_g = -d_fake.mean() + jc
-        var_dic["LOSS_D"] = loss_g = -d_fake.mean()
+        var_dic["LOSS_G"] = loss_g = -d_fake.mean()
         return loss_g, var_dic
 
     def compute_valid(self):
@@ -61,23 +61,23 @@ class GenerateGanTrainer(GanTrainer):
 
 if __name__ == '__main__':
     gpus = [2, 3]
-    batchSize = 4
+    batchSize = 256
     nepochs = 100
 
     opt_G_name = "Adam"
     depth_G = 16
     lr = 1e-3
-    lr_decay = 0.9  # 0.94
+    lr_decay = 0.94  # 0.94
     weight_decay = 2e-5  # 2e-5
-    momentum = 0
     betas = (0.9, 0.999)
 
     opt_D_name = "RMSprop"
-    depth_D = 16
+    depth_D = 8
+    momentum = 0
 
     latent_shape = (16, 4, 4)
     image_channel = 3
-    mid_channel = 4
+    mid_channel = 16
     print('===> Build dataset')
     cifar10 = Cifar10(batch_size=batchSize)
     torch.backends.cudnn.benchmark = True

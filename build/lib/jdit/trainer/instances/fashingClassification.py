@@ -54,7 +54,7 @@ class FashingClassTrainer(ClassificationTrainer):
         return var_dic
 
 
-def start_example():
+def test():
     gpus = [0]
     batchSize = 64
     nepochs = 10

@@ -1,0 +1,8 @@
+torch>=0.4.1
+setuptools>=16.0
+torchvision>=0.2.0
+psutil>=5.4.6
+tqdm>=4.23.4
+pandas>=0.23.0
+tensorboardX>=1.4
+tensorboard>=1.7.0

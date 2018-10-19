@@ -1,0 +1,14 @@
+Metadata-Version: 1.1
+Name: jdit
+Version: 0.1
+Summary: This is a framework for research based on pytorch
+Home-page: https://github.com/dingguanglei/jdit
+Author: Guanglei Ding
+Author-email: dingguanglei.bupt@qq.com
+License: MIT
+Description: UNKNOWN
+Keywords: pytorch research framework
+Platform: UNKNOWN
+Classifier: Development Status :: 1 - Alpha
+Classifier: Topic :: Utilities
+Classifier: License :: MIT :: GNU General Public License (MIT)
