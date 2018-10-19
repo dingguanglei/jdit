@@ -64,7 +64,7 @@ First of all, for dataset, every thing is inherit from super class `Dataloaders_
 from `jdit/dataset.py`, which is as following.
 
 
-```python
+```
 class Dataloaders_factory(metaclass=ABCMeta):
 
     def __init__(self, root, batch_size=128, num_workers=-1, shuffle=True):
