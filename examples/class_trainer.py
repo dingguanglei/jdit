@@ -1,10 +1,10 @@
 # coding=utf-8
 import os, torch
 from torch.nn import CrossEntropyLoss
-from jdit.trainer.classification import ClassificationTrainer
-from jdit.model import Model
-from jdit.optimizer import Optimizer
-from jdit.dataset import Cifar10, Fashion_mnist
+from ..jdit.trainer.classification import ClassificationTrainer
+from ..jdit.model import Model
+from ..jdit.optimizer import Optimizer
+from ..jdit.dataset import Cifar10, Fashion_mnist
 
 # from mypackage.model.densnet import denseNet, TdenseNet
 from mypackage.model.resnet import ResNet18, Tresnet18
@@ -14,17 +14,15 @@ from mypackage.model.resnet import ResNet18, Tresnet18
 
 
 class FashingClassTrainer(ClassificationTrainer):
-    verbose = False
     mode = "L"
     num_class = 10
     every_epoch_checkpoint = 20  #2
     every_epoch_changelr = 10   #1
 
-    def __init__(self, log, nepochs, gpu_ids, net, opt, dataset):
-        super(FashingClassTrainer, self).__init__(log, nepochs, gpu_ids, net, opt, dataset)
+    def __init__(self, logdir, nepochs, gpu_ids, net, opt, dataset):
+        super(FashingClassTrainer, self).__init__(logdir, nepochs, gpu_ids, net, opt, dataset)
 
         self.watcher.graph(net, (4, 1, 32, 32), self.use_gpu)
-        self.last_cep = 100
 
     def compute_loss(self):
         var_dic = {}

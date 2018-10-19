@@ -9,8 +9,8 @@ from tqdm import *
 class ClassificationTrainer(SupTrainer):
     num_class = None
 
-    def __init__(self, log, nepochs, gpu_ids, net, opt, datasets):
-        super(ClassificationTrainer, self).__init__(nepochs, log, gpu_ids_abs=gpu_ids)
+    def __init__(self, logdir, nepochs, gpu_ids, net, opt, datasets):
+        super(ClassificationTrainer, self).__init__(nepochs, logdir, gpu_ids_abs=gpu_ids)
         self.net = net
         self.opt = opt
         self.datasets = datasets
@@ -116,7 +116,7 @@ class ClassificationTrainer(SupTrainer):
         self.opt.do_lr_decay()
 
     def checkPoint(self):
-        self.net.checkPoint("classmodel", self.current_epoch)
+        self.net.checkPoint("classmodel", self.current_epoch, self.logdir)
 
     def update_config_info(self):
         self.loger.regist_config(self.opt, self.current_epoch)

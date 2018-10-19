@@ -1,10 +1,8 @@
 import os
 import random
-# import time
 import torch
 import torchvision.transforms as transforms
 from tensorboardX import SummaryWriter
-# from torch import Tensor
 from torch.autograd import Variable
 from torchvision.utils import make_grid
 from abc import ABCMeta, abstractmethod
@@ -15,17 +13,16 @@ import pandas as pd
 class SupTrainer(object):
     every_epoch_checkpoint = 10
     every_epoch_changelr = 0
-    verbose = True
     mode = "L"
     __metaclass__ = ABCMeta
 
-    def __init__(self, nepochs, log, gpu_ids_abs=()):
+    def __init__(self, nepochs, logdir, gpu_ids_abs=()):
         os.environ["CUDA_VISIBLE_DEVICES"] = ",".join([str(i) for i in gpu_ids_abs])
         self.gpu_ids = [i for i in range(len(gpu_ids_abs))]
-
+        self.logdir = logdir
         self.performance = Performance(gpu_ids_abs)
-        self.watcher = Watcher(log)
-        self.loger = Loger(log)
+        self.watcher = Watcher(logdir)
+        self.loger = Loger(logdir)
 
         self.use_gpu = True if (len(self.gpu_ids) > 0) and torch.cuda.is_available() else False
         self.input = Variable()
@@ -188,7 +185,7 @@ class Watcher(object):
     def __init__(self, logdir):
         self.logdir = logdir
         self.writer = SummaryWriter(log_dir=logdir)
-        self._buildDir([logdir])
+        self._buildDir(logdir)
 
     def netParams(self, network, global_step):
         for name, param in network.named_parameters():
@@ -210,7 +207,9 @@ class Watcher(object):
         # :param mode: color mode ,default :'L'
         # :param mean: do Normalize. if input is (-1, 1).this should be -1. to convert to (0,1)
         # :param std: do Normalize. if input is (-1, 1).this should be 2. to convert to (0,1)
-        self._buildDir(["%s/plots/%s" % (self.logdir, i) for i in title_list])
+
+        self._buildDir(os.path.join(self.logdir, "plots", tag))
+        # ["%s/plots/%s" % (self.logdir, i) for i in title_list])
 
         out = None
         batchSize = len(imgs_torch_list[0])
@@ -258,10 +257,11 @@ class Watcher(object):
         self.writer.close()
 
     def _buildDir(self, dirs):
-        for dir in dirs:
-            if not os.path.exists(dir):
-                print("%s directory is not found. Build now!" % dir)
-                os.makedirs(dir)
+        if not os.path.exists(dirs):
+            # print("%s directory is not found. Build now!" % dir)
+            os.makedirs(dirs)
+
+
 
 
 class Performance(object):
@@ -275,8 +275,8 @@ class Performance(object):
         mem = virtual_memory()
         self.config_dic['mem_total_GB'] = round(mem.total / 1024 ** 3, 2)
         self.config_dic['mem_used_GB'] = round(mem.used / 1024 ** 3, 2)
-        # self.config_dic['mem_free_GB'] = round(mem.free // 1024 ** 3, 2)
         self.config_dic['mem_percent'] = mem.percent
+        # self.config_dic['mem_free_GB'] = round(mem.free // 1024 ** 3, 2)
         # self._set_dict_smooth("mem_total_M", mem.total // 1024 ** 2, smooth=0.3)
         # self._set_dict_smooth("mem_used_M", mem.used // 1024 ** 2, smooth=0.3)
         # self._set_dict_smooth("mem_free_M", mem.free // 1024 ** 2, smooth=0.3)

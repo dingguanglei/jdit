@@ -1,28 +1,31 @@
-from ..super import *
-
+from ..super import SupTrainer
+from abc import abstractmethod
+from tqdm import tqdm
+from torch.autograd import Variable
+import torch
 
 class GanTrainer(SupTrainer):
-    def __init__(self, log, nepochs, gpu_ids, netG, netD, optG, optD, dataset,
+
+    def __init__(self, logdir, nepochs, gpu_ids_abs, netG, netD, optG, optD, datasets,latent_shape,
                  d_turn=1):
-        super(GanTrainer, self).__init__(nepochs, log, gpu_ids=gpu_ids)
+        self.d_turn = d_turn
+        super(GanTrainer, self).__init__(nepochs, logdir, gpu_ids_abs=gpu_ids_abs)
         self.netG = netG
         self.netD = netD
         self.optG = optG
         self.optD = optD
-
+        self.datasets = datasets
         self.fake = None
-        self.train_loader = dataset.train_loader
-        self.test_loader = dataset.test_loader
-        self.valid_loader = dataset.valid_loader
-        self.valid_nsteps = dataset.train_nsteps
-        self.train_nsteps = dataset.valid_nsteps
-        self.test_nsteps = dataset.test_nsteps
+        self.latent_shape = latent_shape
+        self.loger.regist_config(self.netG, config_filename="Generator")
+        self.loger.regist_config(self.netD, config_filename="Discriminator")
+        self.loger.regist_config(datasets)
+        self.loger.regist_config(self)
 
-        self.d_turn = d_turn
+
 
     def train_epoch(self):
-        for iteration, batch in tqdm(enumerate(self.train_loader, 1)):
-            iter_timer = Timer()
+        for iteration, batch in tqdm(enumerate(self.datasets.train_loader, 1), unit="step"):
             self.step += 1
 
             input_cpu, ground_truth_cpu = self.get_data_from_loader(batch)
@@ -31,32 +34,17 @@ class GanTrainer(SupTrainer):
 
             self.fake = self.netG(self.input)
 
-            d_log = self.train_iteration(self.optD, self.compute_d_loss, tag="LOSS_D")
+            self.train_iteration(self.optD, self.compute_d_loss, tag="LOSS_D")
             if (self.step % self.d_turn) == 0:
-                g_log = self.train_iteration(self.optG, self.compute_g_loss, tag="LOSS_G")
-            else:
-                g_log = ""
-
-            timsg = self.timer.leftTime(self.step, self.train_nsteps, iter_timer.elapsed_time())
-
-            # self.loger.record("===> Epoch[{}]({}/{}): {}\t{} \t{}".format(
-            #     self.current_epoch, iteration, self.train_nsteps, d_log, g_log, timsg))
+                self.train_iteration(self.optG, self.compute_g_loss, tag="LOSS_G")
 
             if iteration == 1:
-                self._watch_images(show_imgs_num=3, tag="Train")
+                self._watch_images(show_imgs_num = 3, tag="Train")
 
     def get_data_from_loader(self, batch_data):
-        input_cpu, ground_truth_cpu = batch_data[0], batch_data[1]
+        ground_truth_cpu = batch_data[0]
+        input_cpu = Variable(torch.randn((len(ground_truth_cpu), *self.latent_shape)))
         return input_cpu, ground_truth_cpu
-
-    def train_iteration(self, opt, compute_loss_fc, tag="LOSS_D"):
-        opt.zero_grad()
-        loss, var_dic = compute_loss_fc()
-        loss.backward()
-        opt.step()
-        self.watcher.scalars(var_dict=var_dic, global_step=self.step, tag="Train")
-        d_log = self._log(tag, loss.cpu().detach().item())
-        return d_log
 
     def _watch_images(self, show_imgs_num=4, tag="Train"):
 
@@ -73,14 +61,11 @@ class GanTrainer(SupTrainer):
                             show_imgs_num=show_imgs_num,
                             mode=self.mode)
 
-    def _log(self, tag, loss):
-        return "{}: {:.4f}".format(tag, loss)
-
     def valid(self):
         avg_dic = {}
         self.netG.eval()
         self.netD.eval()
-        for iteration, batch in enumerate(self.valid_loader, 1):
+        for iteration, batch in enumerate(self.datasets.valid_loader, 1):
             input_cpu, ground_truth_cpu = self.get_data_from_loader(batch)
             self.mv_inplace(input_cpu, self.input)  # input data
             self.mv_inplace(ground_truth_cpu, self.ground_truth)  # real data
@@ -94,7 +79,7 @@ class GanTrainer(SupTrainer):
                     avg_dic[key] += dic[key]
 
         for key in avg_dic.keys():
-            avg_dic[key] = avg_dic[key] / self.valid_nsteps
+            avg_dic[key] = avg_dic[key] / self.datasets.valid_nsteps
 
         self.watcher.scalars(avg_dic, self.step, tag="Valid", )
         self._watch_images(show_imgs_num=4, tag="Valid")
@@ -160,7 +145,7 @@ class GanTrainer(SupTrainer):
         return var_dic
 
     def test(self):
-        for input, real in self.test_loader:
+        for input, real in self.datasets.test_loader:
             self.mv_inplace(input, self.input)
             self.mv_inplace(real, self.ground_truth)
             self.netG.eval()
@@ -176,5 +161,11 @@ class GanTrainer(SupTrainer):
         self.optG.do_lr_decay()
 
     def checkPoint(self):
-        self.netG.checkPoint("classmodel", self.current_epoch)
-        self.netD.checkPoint("classmodel", self.current_epoch)
+        self.netG.checkPoint("G", self.current_epoch, self.logdir)
+        self.netD.checkPoint("D", self.current_epoch, self.logdir)
+
+    @property
+    def configure(self):
+        dict = super(GanTrainer, self).configure
+        dict["d_turn"] = self.d_turn
+        return dict

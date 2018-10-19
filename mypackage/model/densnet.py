@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from .shared.basic import ThickVarietyConv2d
+from .shared.basic import NLConv2d
 import math
 
 
@@ -29,13 +29,13 @@ def Tconv3x3(in_planes, out_planes, mid_channels=32, stride=1, use_group=True):
     else:
         groups_list = [1, 1] * repeat
 
-    thickConv2d = ThickVarietyConv2d(in_planes, mid_channels, out_planes,
-                                     knl_list=knl_list,
-                                     strd_list=strd_list,
-                                     pad_list=pad_list,
-                                     dilation_list=dilation_list,
-                                     groups_list=groups_list,
-                                     bias_list=False)
+    thickConv2d = NLConv2d(in_planes, mid_channels, out_planes,
+                           knl_list=knl_list,
+                           strd_list=strd_list,
+                           pad_list=pad_list,
+                           dilation_list=dilation_list,
+                           groups_list=groups_list,
+                           bias_list=False)
     return thickConv2d
 
 

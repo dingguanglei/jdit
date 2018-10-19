@@ -4,9 +4,6 @@ from torch.nn import init, Conv2d, Linear, ConvTranspose2d, InstanceNorm2d, Batc
 from torch import save, load
 
 
-# from torchvision.models import Inception3
-
-
 class Model(object):
     def __init__(self, proto_model=None, gpu_ids_abs=(), init_method="kaiming", show_structure=False):
 
@@ -206,11 +203,3 @@ class Model(object):
             config_dic["structure"].append(str(item))
         return config_dic
 
-# # def Test():
-# from torchvision.models import resnet18
-# net_G = Model(resnet18())
-# g = net_G.configure
-# net_G.checkPoint("test_model", 32)
-# net_G.loadPoint("test_model", 32)
-# net_G = Model()
-# net_G.loadPoint("test_model", 32)
