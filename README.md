@@ -18,7 +18,7 @@ from jdit.trainer.instances.fashingClassification import start_example
 start_example()
 ```
 Then you will see something like this as following.
-```python
+```
 ===> Build dataset
 use 8 thread!
 Downloading http://fashion-mnist.s3-website.eu-central-1.amazonaws.com/train-images-idx3-ubyte.gz
@@ -64,7 +64,7 @@ First of all, for dataset, every thing is inherit from super class `Dataloaders_
 from `jdit/dataset.py`, which is as following.
 
 
-```
+```python
 class Dataloaders_factory(metaclass=ABCMeta):
 
     def __init__(self, root, batch_size=128, num_workers=-1, shuffle=True):
