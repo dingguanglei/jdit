@@ -2,11 +2,13 @@ from ..super import SupTrainer
 from abc import abstractmethod
 from tqdm import tqdm
 from torch.autograd import Variable
+from jdit.metric.inception import Metric
 import torch
+
 
 class GanTrainer(SupTrainer):
 
-    def __init__(self, logdir, nepochs, gpu_ids_abs, netG, netD, optG, optD, datasets,latent_shape,
+    def __init__(self, logdir, nepochs, gpu_ids_abs, netG, netD, optG, optD, datasets, latent_shape,
                  d_turn=1):
         self.d_turn = d_turn
         super(GanTrainer, self).__init__(nepochs, logdir, gpu_ids_abs=gpu_ids_abs)
@@ -16,13 +18,13 @@ class GanTrainer(SupTrainer):
         self.optD = optD
         self.datasets = datasets
         self.fake = None
+        self.fixed_input = None
         self.latent_shape = latent_shape
+        self.metric = Metric(self.gpu_ids)
         self.loger.regist_config(self.netG, config_filename="Generator")
         self.loger.regist_config(self.netD, config_filename="Discriminator")
         self.loger.regist_config(datasets)
         self.loger.regist_config(self)
-
-
 
     def train_epoch(self):
         for iteration, batch in tqdm(enumerate(self.datasets.train_loader, 1), unit="step"):
@@ -39,14 +41,14 @@ class GanTrainer(SupTrainer):
                 self.train_iteration(self.optG, self.compute_g_loss, tag="LOSS_G")
 
             if iteration == 1:
-                self._watch_images(show_imgs_num = 3, tag="Train")
+                self._watch_images(show_imgs_num=6, tag="Train")
 
     def get_data_from_loader(self, batch_data):
         ground_truth_cpu = batch_data[0]
         input_cpu = Variable(torch.randn((len(ground_truth_cpu), *self.latent_shape)))
         return input_cpu, ground_truth_cpu
 
-    def _watch_images(self, show_imgs_num=4, tag="Train"):
+    def _watch_images(self, show_imgs_num, tag):
 
         show_list = [self.input, self.fake, self.ground_truth]
         show_title = ["input", "fake", "real"]
@@ -81,7 +83,7 @@ class GanTrainer(SupTrainer):
         for key in avg_dic.keys():
             avg_dic[key] = avg_dic[key] / self.datasets.valid_nsteps
 
-        self.watcher.scalars(avg_dic, self.step, tag="Valid", )
+        self.watcher.scalars(avg_dic, self.step, tag="Valid" )
         self._watch_images(show_imgs_num=4, tag="Valid")
         self.netG.train()
         self.netD.train()
@@ -145,15 +147,14 @@ class GanTrainer(SupTrainer):
         return var_dic
 
     def test(self):
-        for input, real in self.datasets.test_loader:
-            self.mv_inplace(input, self.input)
-            self.mv_inplace(real, self.ground_truth)
-            self.netG.eval()
-            fake = self.netG(input).detach()
-            self.netG.zero_grad()
-            self.watcher.images([input, fake, real], ["input", "fake", "real"], self.current_epoch, tag="Test",
-                                show_imgs_num=-1,
-                                mode=self.mode)
+
+        self.mv_inplace(Variable(torch.randn((32, *self.latent_shape))), self.input)
+        self.netG.eval()
+        with torch.no_grad():
+            fake = self.netG(self.input).detach()
+        self.watcher.images([fake], ["fake"], self.current_epoch, tag="Test",
+                            show_imgs_num=-1,
+                            mode=self.mode)
         self.netG.train()
 
     def change_lr(self):

@@ -6,8 +6,8 @@ from abc import ABCMeta, abstractmethod
 
 class Dataloaders_factory(metaclass=ABCMeta):
 
-    def __init__(self, root, batch_size=128, num_workers=-1, shuffle=True):
-        self.batch_size = batch_size
+    def __init__(self, root, batch_shape=(128, 1, 32, 32), num_workers=-1, shuffle=True):
+        self.batch_size, self.batch_shape = batch_shape[0], batch_shape
         self.shuffle = shuffle
         self.root = root
         if num_workers == -1:
@@ -63,7 +63,7 @@ class Dataloaders_factory(metaclass=ABCMeta):
         #                                       transform=transforms.Compose(self.valid_transform_list))
 
     def buildTransforms(self, resize=32):
-            self.train_transform_list = self.valid_transform_list = [
+        self.train_transform_list = self.valid_transform_list = [
             transforms.Resize(resize),
             transforms.ToTensor(),
             transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])]
@@ -87,8 +87,8 @@ class Dataloaders_factory(metaclass=ABCMeta):
 
 
 class Hand_mnist(Dataloaders_factory):
-    def __init__(self, root=r'.\datasets\mnist', batch_size=128, num_workers=-1):
-        super(Hand_mnist, self).__init__(root, batch_size, num_workers)
+    def __init__(self, root=r'.\datasets\mnist',  batch_shape=(128, 1, 32, 32), num_workers=-1):
+        super(Hand_mnist, self).__init__(root, batch_shape, num_workers)
 
     def buildDatasets(self):
         self.dataset_train = datasets.MNIST(self.root, train=True, download=True,
@@ -98,9 +98,8 @@ class Hand_mnist(Dataloaders_factory):
 
 
 class Fashion_mnist(Dataloaders_factory):
-    def __init__(self, root=r'.\datasets\fashion_data', batch_size=128, num_workers=-1):
-
-        super(Fashion_mnist, self).__init__(root, batch_size, num_workers)
+    def __init__(self, root=r'.\datasets\fashion_data',  batch_shape=(128, 1, 32, 32), num_workers=-1):
+        super(Fashion_mnist, self).__init__(root, batch_shape, num_workers)
 
     def buildDatasets(self):
         self.dataset_train = datasets.FashionMNIST(self.root, train=True, download=True,
@@ -108,9 +107,10 @@ class Fashion_mnist(Dataloaders_factory):
         self.dataset_valid = datasets.FashionMNIST(self.root, train=False, download=True,
                                                    transform=transforms.Compose(self.valid_transform_list))
 
+
 class Cifar10(Dataloaders_factory):
-    def __init__(self, root='datasets/cifar10', batch_size=128, num_workers=-1):
-        super(Cifar10, self).__init__(root, batch_size, num_workers)
+    def __init__(self, root='datasets/cifar10', batch_shape=(128, 3, 32, 32), num_workers=-1):
+        super(Cifar10, self).__init__(root, batch_shape, num_workers)
 
     def buildDatasets(self):
         self.dataset_train = datasets.CIFAR10(self.root, train=True, download=True,
@@ -118,9 +118,10 @@ class Cifar10(Dataloaders_factory):
         self.dataset_valid = datasets.CIFAR10(self.root, train=False, download=True,
                                               transform=transforms.Compose(self.valid_transform_list))
 
+
 class Lsun(Dataloaders_factory):
-    def __init__(self, root=r'.\datasets\LSUN', batch_size=64, num_workers=-1):
-        super(Lsun, self).__init__(root, batch_size, num_workers)
+    def __init__(self, root=r'.\datasets\LSUN',  batch_shape=(64, 3, 128, 128), num_workers=-1):
+        super(Lsun, self).__init__(root, batch_shape, num_workers)
 
     def buildDatasets(self):
         self.dataset_train = datasets.CIFAR10(self.root, train=True, download=True,

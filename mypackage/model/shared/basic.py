@@ -190,6 +190,7 @@ class SwitchNorm(Module):
         x = x.view(N, C, H, W)
         return x * self.weight + self.bias
 
+
 # class ThickConv2d(Module):
 #     def __init__(self, in_channels, mid_channels, out_channels, kernel_size, stride=1,
 #                  padding=0, dilation=1, groups=1, bias=True):
@@ -253,11 +254,13 @@ class NLConv2d(Module):
             dilation = self.getKernelSuparams(dilation_list, i)
             groups = self.getKernelSuparams(groups_list, i)
             bias = self.getKernelSuparams(bias_list, i)
-            self.out_channels_list.append(self.build_convunit(in_channels = in_channels, mid_channels=mid_channels, kernel_size=kernel_size, stride=stride,
-                                                   padding=padding, dilation=dilation, groups=groups, bias=bias))
+            self.out_channels_list.append(
+                self.build_convunit(in_channels=in_channels, mid_channels=mid_channels, kernel_size=kernel_size,
+                                    stride=stride,
+                                    padding=padding, dilation=dilation, groups=groups, bias=bias))
 
-    def build_convunit(self,in_channels, mid_channels, kernel_size, stride=1,
-                 padding=0, dilation=1, groups=1, bias=True):
+    def build_convunit(self, in_channels, mid_channels, kernel_size, stride=1,
+                       padding=0, dilation=1, groups=1, bias=True):
         module_list = ModuleList([])
         module_list.append(Conv2d(in_channels, mid_channels, kernel_size, stride, padding, dilation, groups, bias))
         module_list.append(LeakyReLU(0.1))
@@ -289,6 +292,7 @@ class NLConv2d(Module):
         out = torch.cat(results, 1)
         return out
 
+
 class NLDeConv2d(Module):
     def __init__(self, in_channels, mid_channels, out_channels, knl_list, strd_list,
                  pad_list, dilation_list, groups_list, bias_list=True):
@@ -302,16 +306,22 @@ class NLDeConv2d(Module):
             dilation = self.getKernelSuparams(dilation_list, i)
             groups = self.getKernelSuparams(groups_list, i)
             bias = self.getKernelSuparams(bias_list, i)
-            self.out_channels_list.append(self.build_deconvunit(in_channels = in_channels, mid_channels=mid_channels, kernel_size=kernel_size, stride=stride,
-                                                   padding=padding, dilation=dilation, groups=groups, bias=bias))
-    def build_deconvunit(self,in_channels, mid_channels, kernel_size, stride=1,
-                 padding=0, dilation=1, groups=1, bias=True):
+            self.out_channels_list.append(
+                self.build_deconvunit(in_channels=in_channels, mid_channels=mid_channels, kernel_size=kernel_size,
+                                      stride=stride,
+                                      padding=padding, dilation=dilation, groups=groups, bias=bias))
+
+    def build_deconvunit(self, in_channels, mid_channels, kernel_size, stride=1,
+                         padding=0, dilation=1, groups=1, bias=True):
         module_list = ModuleList([])
-        module_list.append(ConvTranspose2d(in_channels, mid_channels, kernel_size, stride, padding, dilation=dilation, groups=groups, bias=bias))
+        module_list.append(
+            ConvTranspose2d(in_channels, mid_channels, kernel_size, stride, padding, dilation=dilation, groups=groups,
+                            bias=bias))
         module_list.append(LeakyReLU(0.1))
         module_list.append(Conv2d(mid_channels, 1, 1, 1, 0, dilation=1, groups=1, bias=True))
         ConvUnit = Sequential(*module_list)
         return ConvUnit
+
     def getKernelSuparams(self, params, index):
         """
         list or tuple and length must grater than 1.
@@ -335,6 +345,7 @@ class NLDeConv2d(Module):
             results.append(unit(input))
         out = torch.cat(results, 1)
         return out
+
 
 def Tconv3x3(in_planes, out_planes, mid_channels=16, stride=1, use_group=True, is_decomposed=False):
     "3x3 convolution with padding"
@@ -392,61 +403,102 @@ def Tconv3x3(in_planes, out_planes, mid_channels=16, stride=1, use_group=True, i
                            bias_list=False)
     return thickConv2d
 
+
 def Tdeconv3x3(in_planes, out_planes, mid_channels=16, stride=1, use_group=True, is_decomposed=False):
-        "3x3 convolution with padding"
+    "3x3 convolution with padding"
 
-        repeat = out_planes // 2
-        addition = out_planes % 2
-        groups_list = []
-        if stride == 1:
-            addition_kpd = [3, 1, 1]
-            if not is_decomposed:
-                knl_list = [3, 3] * repeat
-                strd_list = 1
-                pad_list = [1, 2] * repeat
-                dilation_list = [1, 2] * repeat
-            if is_decomposed:
-                knl_list = [(3, 1), (1, 3)] * repeat
-                strd_list = 1
-                pad_list = [(1, 0), (0, 2)] * repeat
-                dilation_list = [1, 2] * repeat
-        elif stride == 2:
-            addition_kpd = [4, 2, 1]
-            if not is_decomposed:
-                # ksp: 421,220  1x4,4x1?
-                knl_list = [4, 4] * repeat
-                strd_list = 2
-                pad_list = [1, 1] * repeat
-                dilation_list = [1, 1] * repeat
-            if is_decomposed:
-                # ksp: 421,220  1x4,4x1?
-                knl_list = [(1, 4), (4, 1)] * repeat
-                strd_list = 2
-                pad_list = [(0, 1), (1, 0)] * repeat
-                dilation_list = [1, 1] * repeat
-        else:
-            raise AttributeError
+    repeat = out_planes // 2
+    addition = out_planes % 2
+    groups_list = []
+    if stride == 1:
+        addition_kpd = [3, 1, 1]
+        if not is_decomposed:
+            knl_list = [3, 3] * repeat
+            strd_list = 1
+            pad_list = [1, 2] * repeat
+            dilation_list = [1, 2] * repeat
+        if is_decomposed:
+            knl_list = [(3, 1), (1, 3)] * repeat
+            strd_list = 1
+            pad_list = [(1, 0), (0, 2)] * repeat
+            dilation_list = [1, 2] * repeat
+    elif stride == 2:
+        addition_kpd = [4, 2, 1]
+        if not is_decomposed:
+            # ksp: 421,220  1x4,4x1?
+            knl_list = [4, 4] * repeat
+            strd_list = 2
+            pad_list = [1, 1] * repeat
+            dilation_list = [1, 1] * repeat
+        if is_decomposed:
+            # ksp: 421,220  1x4,4x1?
+            knl_list = [(1, 4), (4, 1)] * repeat
+            strd_list = 2
+            pad_list = [(0, 1), (1, 0)] * repeat
+            dilation_list = [1, 1] * repeat
+    else:
+        raise AttributeError
 
-        knl_list.extend([addition_kpd[0]] * addition)
-        pad_list.extend([addition_kpd[1]] * addition)
-        dilation_list.extend([addition_kpd[2]] * addition)
-        assert len(dilation_list) == out_planes
+    knl_list.extend([addition_kpd[0]] * addition)
+    pad_list.extend([addition_kpd[1]] * addition)
+    dilation_list.extend([addition_kpd[2]] * addition)
+    assert len(dilation_list) == out_planes
 
-        if use_group:
-            assert (addition == 0), "you got out_channle %d. can not divided by 2" % out_planes
-            for i in range(repeat):
-                groups_list = groups_list + [1, 1] * (i + 1)
-        else:
-            groups_list = [1] * out_planes
+    if use_group:
+        assert (addition == 0), "you got out_channle %d. can not divided by 2" % out_planes
+        for i in range(repeat):
+            groups_list = groups_list + [1, 1] * (i + 1)
+    else:
+        groups_list = [1] * out_planes
 
-        thickConv2d = NLDeConv2d(in_planes, mid_channels, out_planes,
-                               knl_list=knl_list,
-                               strd_list=strd_list,
-                               pad_list=pad_list,
-                               dilation_list=dilation_list,
-                               groups_list=groups_list,
-                               bias_list=False)
-        return thickConv2d
+    thickConv2d = NLDeConv2d(in_planes, mid_channels, out_planes,
+                             knl_list=knl_list,
+                             strd_list=strd_list,
+                             pad_list=pad_list,
+                             dilation_list=dilation_list,
+                             groups_list=groups_list,
+                             bias_list=False)
+    return thickConv2d
+
+
+def InitTconv(in_planes, out_planes, mid_channels=16, use_group=True, is_decomposed=False):
+    repeat = out_planes // 2
+    addition = out_planes % 2
+    groups_list = []
+    addition_kpd = [4, 1, 0]
+
+    if not is_decomposed:
+        knl_list = [4, 4] * repeat
+        strd_list = 1
+        pad_list = [0, 0] * repeat
+        dilation_list = [1, 1] * repeat
+    else:
+        knl_list = [(4, 1), (1, 4)] * repeat
+        strd_list = 1
+        pad_list = [(0, 0), (0, 0)] * repeat
+        dilation_list = [1, 1] * repeat
+
+    knl_list.extend([addition_kpd[0]] * addition)
+    pad_list.extend([addition_kpd[1]] * addition)
+    dilation_list.extend([addition_kpd[2]] * addition)
+    assert len(dilation_list) == out_planes
+
+    if use_group:
+        assert (addition == 0), "you got out_channle %d. can not divided by 2" % out_planes
+        for i in range(repeat):
+            groups_list = groups_list + [1, 1] * (i + 1)
+    else:
+        groups_list = [1] * out_planes
+
+    thickConv2d = NLDeConv2d(in_planes, mid_channels, out_planes,
+                             knl_list=knl_list,
+                             strd_list=strd_list,
+                             pad_list=pad_list,
+                             dilation_list=dilation_list,
+                             groups_list=groups_list,
+                             bias_list=False)
+    return thickConv2d
+
 
 class TconvLayer(Module):
     def __init__(self, c_in, c_out, mid_channels=16, stride=1, active_type="ReLU",
@@ -475,6 +527,35 @@ class TconvLayer(Module):
             out = layer(out)
         return out
 
+
+class InitTconvlayer(Module):
+    def __init__(self, c_in, c_out, mid_channels=16, active_type="ReLU",
+                 norm_type="batch", use_group=True,
+                 is_decomposed=False, use_sn=False):
+        super(InitTconvlayer, self).__init__()
+        norm = getNormLayer(norm_type)
+        act = getActiveLayer(active_type)
+
+        self.module_list = ModuleList([])
+
+        if use_sn:
+            self.module_list += [
+                SpectralNorm(
+                    InitTconv(c_in, c_out, mid_channels, use_group=use_group, is_decomposed=is_decomposed))]
+        else:
+            self.module_list += [
+                InitTconv(c_in, c_out, mid_channels, use_group=use_group, is_decomposed=is_decomposed)]
+        if norm:
+            self.module_list += [norm(c_out, affine=True)]
+        self.module_list += [act]
+
+    def forward(self, input):
+        out = input
+        for layer in self.module_list:
+            out = layer(out)
+        return out
+
+
 class TdeconvLayer(Module):
     def __init__(self, c_in, c_out, mid_channels=16, stride=1, active_type="ReLU",
                  norm_type="batch", use_group=True,
@@ -496,12 +577,12 @@ class TdeconvLayer(Module):
             self.module_list += [norm(c_out, affine=True)]
         self.module_list += [act]
 
-
     def forward(self, input):
         out = input
         for layer in self.module_list:
             out = layer(out)
         return out
+
 
 def getNormLayer(norm_type):
     norm_layer = BatchNorm2d
