@@ -1,4 +1,4 @@
-![123](https://github.com/dingguanglei/jdit/blob/master/logo.png)
+![logo](https://github.com/dingguanglei/jdit/blob/master/logo.png)
 
 # Just Do It (jdit)
 ![Liberapay goal progress](https://img.shields.io/badge/goal%20progress-95%25-green.svg)
@@ -50,7 +50,7 @@ It will create a `log` directory in `example/`, which saves training processing 
 Although it is just an example, you still can build your own project easily by using jdit framework.
 Jdit framework can deal with 
 * Data visualization. (learning curves, images in pilot process)
-* CPU, GPU or GPU. (Training your model on specify devices)
+* CPU, GPU or GPUs. (Training your model on specify devices)
 * Intermediate data storage. (Saving training data into a csv file)
 * Model checkpoint automatically.
 * Flexible templates can be used to integrate and custom overrides.
