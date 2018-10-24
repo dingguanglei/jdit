@@ -1,6 +1,7 @@
 ![logo](https://github.com/dingguanglei/jdit/blob/master/logo.png)
 
-# Just Do It (jdit)
+---
+
 ![Liberapay goal progress](https://img.shields.io/badge/goal%20progress-95%25-green.svg)
 ![Packagist](https://img.shields.io/packagist/l/doctrine/orm.svg)
 

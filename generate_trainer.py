@@ -112,8 +112,9 @@ if __name__ == '__main__':
     cifar10 = Cifar10(batch_shape=batch_shape)
     torch.backends.cudnn.benchmark = True
     print('===> Building model')
-    D_net = NThickLayer_D(input_nc=image_channel, mid_channels=D_mid_channel, depth=depth_D, norm_type=None,
-                          active_type="ReLU")
+    # D_net = NThickLayer_D(input_nc=image_channel, mid_channels=D_mid_channel, depth=depth_D, norm_type=None,
+    #                       active_type="ReLU")
+    D_net = NLayer_D(input_nc=image_channel, depth = depth_D, use_sigmoid=False,use_liner=False,norm_type="batch",active_type="ReLU")
     D = Model(D_net, gpu_ids_abs=gpus, init_method="kaiming")
     # -----------------------------------
     G_net = TWnet_G(input_nc=latent_shape[0], mid_channels=G_mid_channel, output_nc=image_channel, depth=depth_G,
