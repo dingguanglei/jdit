@@ -7,10 +7,8 @@ import torch
 
 
 class GanTrainer(SupTrainer):
-
-    def __init__(self, logdir, nepochs, gpu_ids_abs, netG, netD, optG, optD, datasets, latent_shape,
-                 d_turn=1):
-        self.d_turn = d_turn
+    d_turn = 1
+    def __init__(self, logdir, nepochs, gpu_ids_abs, netG, netD, optG, optD, datasets, latent_shape):
         super(GanTrainer, self).__init__(nepochs, logdir, gpu_ids_abs=gpu_ids_abs)
         self.netG = netG
         self.netD = netD
@@ -41,27 +39,26 @@ class GanTrainer(SupTrainer):
                 self.train_iteration(self.optG, self.compute_g_loss, tag="LOSS_G")
 
             if iteration == 1:
-                self._watch_images(show_imgs_num=6, tag="Train")
+                self._watch_images("Train")
 
     def get_data_from_loader(self, batch_data):
         ground_truth_cpu = batch_data[0]
         input_cpu = Variable(torch.randn((len(ground_truth_cpu), *self.latent_shape)))
         return input_cpu, ground_truth_cpu
 
-    def _watch_images(self, show_imgs_num, tag):
-
-        show_list = [self.input, self.fake, self.ground_truth]
-        show_title = ["input", "fake", "real"]
-
-        if self.input.size() != self.ground_truth.size():
-            show_list.pop(0)
-            show_title.pop(0)
-
-        self.watcher.images(show_list, show_title,
-                            self.current_epoch,
-                            tag=tag,
-                            show_imgs_num=show_imgs_num,
-                            mode=self.mode)
+    def _watch_images(self, tag, grid_size=(3, 3), shuffle=False, save_file = True):
+        self.watcher.image(self.fake,
+                           self.current_epoch,
+                           tag="%s/fake" % tag,
+                           grid_size=grid_size,
+                           shuffle=shuffle,
+                           save_file = save_file)
+        self.watcher.image(self.ground_truth,
+                           self.current_epoch,
+                           tag="%s/real" % tag,
+                           grid_size=grid_size,
+                           shuffle=shuffle,
+                           save_file=save_file)
 
     def valid(self):
         avg_dic = {}
@@ -83,8 +80,8 @@ class GanTrainer(SupTrainer):
         for key in avg_dic.keys():
             avg_dic[key] = avg_dic[key] / self.datasets.valid_nsteps
 
-        self.watcher.scalars(avg_dic, self.step, tag="Valid" )
-        self._watch_images(show_imgs_num=4, tag="Valid")
+        self.watcher.scalars(avg_dic, self.step, tag="Valid")
+        self._watch_images(tag="Valid")
         self.netG.train()
         self.netD.train()
 
@@ -148,13 +145,12 @@ class GanTrainer(SupTrainer):
 
     def test(self):
 
-        self.mv_inplace(Variable(torch.randn((32, *self.latent_shape))), self.input)
+        self.mv_inplace(Variable(torch.randn((16, *self.latent_shape))), self.input)
         self.netG.eval()
         with torch.no_grad():
             fake = self.netG(self.input).detach()
-        self.watcher.images([fake], ["fake"], self.current_epoch, tag="Test",
-                            show_imgs_num=-1,
-                            mode=self.mode)
+        self.watcher.image(fake, self.current_epoch, tag="Test/fake", grid_size=(4, 4), shuffle=False)
+
         self.netG.train()
 
     def change_lr(self):
