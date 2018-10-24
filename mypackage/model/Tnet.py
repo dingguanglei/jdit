@@ -2,6 +2,8 @@
 #     Tanh, Dropout, ReLU, MaxPool2d, AvgPool2d
 # import torch
 from .shared.basic import *
+
+
 # import numpy as np
 
 
@@ -10,28 +12,28 @@ class NThickLayer_D(Module):
                  active_type="ReLU"):
         super(NThickLayer_D, self).__init__()
 
-        self.layer1 = TconvLayer(input_nc, depth * 8, mid_channels, stride=1, active_type=active_type,
+        self.layer1 = TconvLayer(input_nc, depth * 5, mid_channels, stride=2, active_type=active_type,
                                  norm_type=norm_type,
                                  is_decomposed=False, use_group=False)
         # 16 x 16 x depth * 4
-        self.layer2 = TconvLayer(depth * 8, depth * 4, mid_channels, stride=2, active_type=active_type,
+        self.layer2 = TconvLayer(depth * 5, depth * 2, mid_channels, stride=2, active_type=active_type,
                                  norm_type=norm_type,
-                                 is_decomposed=False, use_group=True)
+                                 is_decomposed=True, use_group=True)
         # 8 x 8 x depth * 2
-        self.layer3 = TconvLayer(depth * 4, depth * 2, mid_channels, stride=2, active_type=active_type,
+        self.layer3 = TconvLayer(depth * 2, depth * 1, mid_channels, stride=2, active_type=active_type,
                                  norm_type=norm_type,
-                                 is_decomposed=False, use_group=True)
+                                 is_decomposed=True, use_group=True)
         # 4 x 4 x depth * 1
-        self.layer4 = TconvLayer(depth * 2, depth * 1, mid_channels, stride=2, active_type=active_type,
-                                 norm_type=norm_type,
-                                 is_decomposed=False, use_group=True)
+        # self.layer4 = TconvLayer(depth * 2, depth * 1, mid_channels, stride=2, active_type=active_type,
+        #                          norm_type=norm_type,
+        #                          is_decomposed=True, use_group=True)
         self.outlayer = Conv2d(depth * 1, 1, 4, 1, 0)
 
     def forward(self, x):
         out = self.layer1(x)
         out = self.layer2(out)
         out = self.layer3(out)
-        out = self.layer4(out)
+        # out = self.layer4(out)
         out = self.outlayer(out)
         return out
 
@@ -88,7 +90,7 @@ class NLayer_D(Module):
 
 
 class TWnet_G(Module):
-    def __init__(self, input_nc=16, output_nc=1,mid_channels=16, depth=32, norm_type=None,
+    def __init__(self, input_nc=16, output_nc=1, mid_channels=16, depth=16, norm_type=None,
                  active_type="ReLU"):
         super(TWnet_G, self).__init__()
         self.depth = depth
@@ -110,16 +112,23 @@ class TWnet_G(Module):
         #                           norm_type=norm_type, groups=1, use_sn=False)
         # # 32 * 32 * 1
 
-        self.layer1 = TdeconvLayer(input_nc, depth * 8, mid_channels, stride=1, active_type=active_type, norm_type=norm_type,
-                                 is_decomposed=False, use_group=False)
-        self.layer2 = TdeconvLayer(depth * 8, depth * 4, mid_channels, stride=2, active_type=active_type, norm_type=norm_type,
-                                 is_decomposed=False)
-        self.layer3 = TdeconvLayer(depth * 4, depth * 2, mid_channels, stride=2, active_type=active_type, norm_type=norm_type,
-                                 is_decomposed=False)
-        self.layer4 = TdeconvLayer(depth * 2, depth * 1, mid_channels, stride=2, active_type=active_type, norm_type=norm_type,
-                                 is_decomposed=False)
+        self.layer1 = InitTconvlayer(input_nc, depth * 8, mid_channels, active_type=active_type,
+                                   norm_type=norm_type,
+                                   is_decomposed=False, use_group=False)
+        # self.layer1 = TdeconvLayer(input_nc, depth * 8, mid_channels, stride=1, active_type=active_type,
+        #                            norm_type=norm_type,
+        #                            is_decomposed=False, use_group=False)
+        self.layer2 = TdeconvLayer(depth * 8, depth * 4, mid_channels, stride=2, active_type=active_type,
+                                   norm_type=norm_type,
+                                   is_decomposed=False)
+        self.layer3 = TdeconvLayer(depth * 4, depth * 2, mid_channels, stride=2, active_type=active_type,
+                                   norm_type=norm_type,
+                                   is_decomposed=False)
+        self.layer4 = TdeconvLayer(depth * 2, depth * 1, mid_channels, stride=2, active_type=active_type,
+                                   norm_type=norm_type,
+                                   is_decomposed=False)
         self.output = TdeconvLayer(depth * 1, output_nc, mid_channels, stride=1, active_type="Tanh", norm_type=None,
-                                 is_decomposed=False, use_group=False)
+                                   is_decomposed=False, use_group=False)
 
     def forward(self, input):
         out = self.layer1(input)
@@ -128,8 +137,6 @@ class TWnet_G(Module):
         out = self.layer4(out)
         out = self.output(out)
         return out
-
-
 
 
 class NNormalClassLayer_D(Module):

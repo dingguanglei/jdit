@@ -10,7 +10,7 @@ setup(
     keywords="pytorch research framework",
     url="https://github.com/dingguanglei/jdit",
     packages=['jdit','jdit/trainer','jdit/trainer/gan','jdit/trainer/instances',
-              'mypackage','mypackage/model','mypackage/model/shared'],  # 需要打包的目录列表
+              'mypackage','mypackage/model','mypackage/metric','mypackage/model/shared'],  # 需要打包的目录列表
 
     # 需要安装的依赖
     install_requires=[

@@ -1,0 +1,20 @@
+jdit/metric/Cifar10_M.csv
+jdit/metric/Cifar10_S.csv
+.idea
+
+# Windows:
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Python:
+*.py[cod]
+*.so
+*.egg
+*.egg-info
+dist
+build
+
+# My configurations:
+db.ini
+deploy_key_rsa
