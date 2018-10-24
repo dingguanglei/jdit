@@ -1,7 +1,0 @@
-jdit
-jdit/trainer
-jdit/trainer/gan
-jdit/trainer/instances
-mypackage
-mypackage/model
-mypackage/model/shared

@@ -1,6 +1,7 @@
 jdit/metric/Cifar10_M.csv
 jdit/metric/Cifar10_S.csv
 .idea
+datasets
 
 # Windows:
 Thumbs.db
