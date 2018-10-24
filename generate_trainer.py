@@ -17,14 +17,12 @@ from mypackage.model.Tnet import NLayer_D, TWnet_G, NThickLayer_D
 
 class GenerateGanTrainer(GanTrainer):
     mode = "RGB"
-    every_epoch_checkpoint = 20  # 2
+    every_epoch_checkpoint = 50  # 2
     every_epoch_changelr = 2  # 1
-
-    def __init__(self, logdir, nepochs, gpu_ids_abs, netG, netD, optG, optD, dataset, latent_shape,
-                 d_turn=1):
+    d_turn = 5
+    def __init__(self, logdir, nepochs, gpu_ids_abs, netG, netD, optG, optD, dataset, latent_shape):
         super(GenerateGanTrainer, self).__init__(logdir, nepochs, gpu_ids_abs, netG, netD, optG, optD, dataset,
-                                                 latent_shape=latent_shape,
-                                                 d_turn=d_turn)
+                                                 latent_shape=latent_shape)
 
         self.watcher.graph(netG, (4, *self.latent_shape), self.use_gpu)
 
@@ -71,39 +69,33 @@ class GenerateGanTrainer(GanTrainer):
         self.netG.eval()
         with torch.no_grad():
             fake = self.netG(self.fixed_input).detach()
-        self.watcher.images([fake], ["Fixedfake"], self.current_epoch, tag="Valid",
-                            show_imgs_num=-1,
-                            mode=self.mode)
+        self.watcher.image(fake, self.current_epoch, tag="Valid/Fixed_fake",grid_size=(4,4),shuffle=False)
+        self.watcher.set_training_progress_images(fake, grid_size=(4,4))
 
         var_dic = {}
-        var_dic["FID_SCORE"] = self.metric.evaluate_model_fid(self.netG, (256, *self.latent_shape), amount=8)
-        self.watcher.scalars(var_dic, self.step, tag="Valid")
-
+        # var_dic["FID_SCORE"] = self.metric.evaluate_model_fid(self.netG, (256, *self.latent_shape), amount=8)
+        # self.watcher.scalars(var_dic, self.step, tag="Valid")
         self.netG.train()
 
 
 if __name__ == '__main__':
-    # m_fid =Metric([0,1])
-    # m_fid._get_cifar10_mu_sigma()
-    #
-    # exit(1)
-    gpus = [2, 3]
-    batch_shape = (256, 3, 32, 32)
+
+    gpus = [3]
+    batch_shape = (128, 3, 32, 32)
     image_channel = batch_shape[1]
-    nepochs = 100
-    d_turn = 5
+    nepochs = 200
     mid_channel = 8
 
     opt_G_name = "Adam"
     depth_G = 8
     lr = 1e-3
     lr_decay = 0.94  # 0.94
-    weight_decay = 2e-5  # 2e-5
+    weight_decay = 0  # 2e-5
     betas = (0.9, 0.999)
     G_mid_channel = 8
 
     opt_D_name = "RMSprop"
-    depth_D = 16
+    depth_D = 64
     momentum = 0
     D_mid_channel = 16
 
@@ -126,5 +118,5 @@ if __name__ == '__main__':
     opt_G = Optimizer(G.parameters(), lr, lr_decay, weight_decay, momentum, betas, opt_G_name)
 
     print('===> Training')
-    Trainer = GenerateGanTrainer("log", nepochs, gpus, G, D, opt_G, opt_D, cifar10, latent_shape, d_turn=d_turn)
+    Trainer = GenerateGanTrainer("log", nepochs, gpus, G, D, opt_G, opt_D, cifar10, latent_shape)
     Trainer.train()

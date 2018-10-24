@@ -8,7 +8,7 @@ from torchvision.utils import make_grid
 from abc import ABCMeta, abstractmethod
 from tqdm import tqdm
 import pandas as pd
-
+import numpy as np
 
 class SupTrainer(object):
     every_epoch_checkpoint = 10
@@ -21,7 +21,7 @@ class SupTrainer(object):
         self.gpu_ids = [i for i in range(len(gpu_ids_abs))]
         self.logdir = logdir
         self.performance = Performance(gpu_ids_abs)
-        self.watcher = Watcher(logdir)
+        self.watcher = Watcher(logdir, self.mode)
         self.loger = Loger(logdir)
 
         self.use_gpu = True if (len(self.gpu_ids) > 0) and torch.cuda.is_available() else False
@@ -182,10 +182,12 @@ class Loger(object):
 
 
 class Watcher(object):
-    def __init__(self, logdir):
+    def __init__(self, logdir, mode="L"):
         self.logdir = logdir
         self.writer = SummaryWriter(log_dir=logdir)
+        self.mode = mode
         self._buildDir(logdir)
+        self.training_progress_images = []
 
     def netParams(self, network, global_step):
         for name, param in network.named_parameters():
@@ -194,48 +196,60 @@ class Watcher(object):
             self.writer.add_histogram(name, param.clone().cpu().data.numpy(), global_step)
 
     def scalars(self, var_dict, global_step, tag="Train"):
-        # if var_dict is None:
-        #     value_list = list(map(self._torch_to_np, value_list))
-        #     for key, scalar in zip(key_list, value_list):
-        #         self.writer.add_scalars(key, {tag: scalar}, global_step)
-        # else:
+
         for key, scalar in var_dict.items():
             self.writer.add_scalars(key, {tag: scalar}, global_step)
 
-    def images(self, imgs_torch_list, title_list, global_step, tag="Train", show_imgs_num=3, mode="L",
-               mean=(-1, -1, -1), std=(2, 2, 2)):
-        # :param mode: color mode ,default :'L'
-        # :param mean: do Normalize. if input is (-1, 1).this should be -1. to convert to (0,1)
-        # :param std: do Normalize. if input is (-1, 1).this should be 2. to convert to (0,1)
-
-        self._buildDir(os.path.join(self.logdir, "plots", tag))
-        # ["%s/plots/%s" % (self.logdir, i) for i in title_list])
-
-        out = None
-        batchSize = len(imgs_torch_list[0])
-        show_nums = batchSize if show_imgs_num == -1 else min(show_imgs_num, batchSize)
-        columns_num = len(title_list)
-        imgs_stack = []
-
-        randindex_list = random.sample(list(range(batchSize)), show_nums)
-        for randindex in randindex_list:
-            for imgs_torch in imgs_torch_list:
-                img_torch = imgs_torch[randindex].cpu().detach()
-                img_torch = transforms.Normalize(mean, std)(
-                    img_torch)  # (-1,1)=>(0,1)   mean = -1,std = 2
-                imgs_stack.append(img_torch)
-            out_1 = torch.stack(imgs_stack)
-        if out is None:
-            out = out_1
+    def _sample(self, tensor, num_samples, shuffle=True):
+        total = len(tensor)
+        assert num_samples <= total
+        if shuffle:
+            rand_index = random.sample(list(range(total)), num_samples)
+            sampled_tensor = tensor[rand_index]
         else:
-            out = torch.cat((out_1, out))
-        out = make_grid(out, nrow=columns_num)
-        self.writer.add_image('%s:%s' % (tag, "-".join(title_list)), out, global_step)
+            sampled_tensor = tensor[:num_samples]
+        return sampled_tensor
 
-        for img, title in zip(imgs_stack, title_list):
-            img = transforms.ToPILImage()(img).convert(mode)
-            filename = "%s/plots/%s/E%03d_%s_.png" % (self.logdir, tag, global_step, title)
+    def image(self, img_tensors, global_step, tag="Train/input", grid_size=(3, 1), shuffle=True, save_file=False):
+        # if input is (-1, 1).this should be -1. to convert to (0,1)   mean=(-1, -1, -1), std=(2, 2, 2)
+        assert len(img_tensors.size()) == 4, "img_tensors rank should be 4, got %d instead" % len(img_tensors.size())
+        self._buildDir(os.path.join(self.logdir, "plots", tag))
+        rows, columns = grid_size[0], grid_size[1]
+        batchSize = len(img_tensors)  # img_tensors =>(batchsize, 3, 256, 256)
+        num_samples = min(batchSize, rows * columns)
+        assert len(img_tensors) >= num_samples, "you want to show grid %s, but only have %d tensors to show." % (
+            grid_size, len(img_tensors))
+
+        sampled_tensor = self._sample(img_tensors, num_samples,
+                                      shuffle).detach().cpu()  # (sample_num, 3, 32,32)  tensors
+        # sampled_images = map(transforms.Normalize(mean, std), sampled_tensor)  # (sample_num, 3, 32,32) images
+        sampled_images = make_grid(sampled_tensor, nrow=rows, normalize=True, scale_each=True)
+        self.writer.add_image(tag, sampled_images, global_step)
+
+        if save_file:
+            img = transforms.ToPILImage()(sampled_images).convert(self.mode)
+            filename = "%s/plots/%s/E%03d.png" % (self.logdir, tag, global_step)
             img.save(filename)
+
+    def set_training_progress_images(self,img_tensors, grid_size=(3, 1)):
+        assert len(img_tensors.size()) == 4, "img_tensors rank should be 4, got %d instead" % len(img_tensors.size())
+        rows, columns = grid_size[0], grid_size[1]
+        batchSize = len(img_tensors)  # img_tensors =>(batchsize, 3, 256, 256)
+        num_samples = min(batchSize, rows * columns)
+        assert len(img_tensors) >= num_samples, "you want to show grid %s, but only have %d tensors to show." % (
+            grid_size, len(img_tensors))
+        sampled_tensor = self._sample(img_tensors, num_samples ,False).detach().cpu()  # (sample_num, 3, 32,32)  tensors
+        sampled_images = make_grid(sampled_tensor, nrow=rows, normalize=True, scale_each=True)
+        img_grid = np.transpose(sampled_images.numpy(), (1, 2, 0))
+        self.training_progress_images.append(img_grid)
+
+    def save_in_gif(self):
+        import imageio,warnings
+        filename = "%s/plots/training.gif" % (self.logdir)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            imageio.mimsave(filename, self.training_progress_images)
+        self.training_progress_images = None
 
     def graph(self, net, input_shape=None, use_gpu=False, *input):
         if hasattr(net, 'module'):
@@ -254,14 +268,14 @@ class Watcher(object):
 
     def close(self):
         # self.writer.export_scalars_to_json("%s/scalers.json" % self.logdir)
+        if self.training_progress_images:
+            self.save_in_gif()
         self.writer.close()
 
     def _buildDir(self, dirs):
         if not os.path.exists(dirs):
             # print("%s directory is not found. Build now!" % dir)
             os.makedirs(dirs)
-
-
 
 
 class Performance(object):

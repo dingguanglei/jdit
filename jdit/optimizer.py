@@ -2,11 +2,13 @@
 
 from torch.optim import Adam, RMSprop
 
+
 class Optimizer(object):
     def __init__(self, params, lr=1e-3, lr_decay=0.92, weight_decay=2e-5, momentum=0., betas=(0.9, 0.999),
-                 opt_name="Adam"):
+                 opt_name="Adam", lr_minimum=1e-5):
         self.lr = lr
         self.lr_decay = lr_decay
+        self.lr_minimum = 1e-5
         self.momentum = momentum
         self.betas = betas
         self.weight_decay = weight_decay
@@ -24,7 +26,8 @@ class Optimizer(object):
         :param reset_lr: if not None, use this value to reset `self.lr`. defaule: None.
         :return:
         """
-        self.lr = self.lr * self.lr_decay
+        if self.lr > self.lr_minimum:
+            self.lr = self.lr * self.lr_decay
         if reset_lr_decay is not None:
             self.lr_decay = reset_lr_decay
         if reset_lr is not None:
@@ -36,7 +39,8 @@ class Optimizer(object):
         if self.opt_name == "Adam":
             opt = Adam(filter(lambda p: p.requires_grad, params), self.lr, self.betas, weight_decay=self.weight_decay)
         elif self.opt_name == "RMSprop":
-            opt = RMSprop(filter(lambda p: p.requires_grad, params), self.lr, weight_decay=self.weight_decay, momentum=self.momentum)
+            opt = RMSprop(filter(lambda p: p.requires_grad, params), self.lr, weight_decay=self.weight_decay,
+                          momentum=self.momentum)
         else:
             raise ValueError('%s is not a optimizer method!' % self.opt_name)
         return opt
@@ -50,7 +54,6 @@ class Optimizer(object):
         config_dic.update(opt_config)
         config_dic["lr_decay"] = self.lr_decay
         return config_dic
-
 
 # def test_opt():
 #     import torch
