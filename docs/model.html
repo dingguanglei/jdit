@@ -1,0 +1,319 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>jdit.model &mdash; jdit 0.0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="jdit.optimizer" href="optimizer.html" />
+    <link rel="prev" title="jdit.dataset" href="dataset.html" /> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> jdit
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Package Reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="dataset.html">jdit.dataset</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">jdit.model</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#model">Model</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="optimizer.html">jdit.optimizer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="trainer.html">jdit.trainer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="metric.html">jdit.Metric</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">jdit</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>jdit.model</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/model.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-jdit">
+<span id="jdit-model"></span><h1>jdit.model<a class="headerlink" href="#module-jdit" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="model">
+<h2>Model<a class="headerlink" href="#model" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="jdit.Model">
+<em class="property">class </em><code class="descclassname">jdit.</code><code class="descname">Model</code><span class="sig-paren">(</span><em>proto_model=None</em>, <em>gpu_ids_abs=()</em>, <em>init_method='kaiming'</em>, <em>show_structure=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/jdit/model.html#Model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jdit.Model" title="Permalink to this definition">¶</a></dt>
+<dd><p>a model</p>
+<dl class="method">
+<dt id="jdit.Model.countParams">
+<code class="descname">countParams</code><span class="sig-paren">(</span><em>proto_model</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/jdit/model.html#Model.countParams"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jdit.Model.countParams" title="Permalink to this definition">¶</a></dt>
+<dd><p>count the total parameters of model.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>proto_model</strong> – pytorch model</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">number of parameters</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="jdit.Model.define">
+<code class="descname">define</code><span class="sig-paren">(</span><em>proto_model</em>, <em>gpu_ids</em>, <em>init_method</em>, <em>show_structure</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/jdit/model.html#Model.define"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jdit.Model.define" title="Permalink to this definition">¶</a></dt>
+<dd><p>define network, according to CPU, GPU and multi-GPUs.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>proto_model</strong> – Network, type of module.</li>
+<li><strong>gpu_ids</strong> – Using GPUs’ id, type of tuple. If not use GPU, pass ‘()’.</li>
+<li><strong>init_method</strong> – init weights method(“kaiming”) or <cite>False</cite> don’t use any init.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Network</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="jdit.Model.loadModel">
+<code class="descname">loadModel</code><span class="sig-paren">(</span><em>model_or_path</em>, <em>weights_or_path=None</em>, <em>gpu_ids=()</em>, <em>is_eval=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/jdit/model.html#Model.loadModel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jdit.Model.loadModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>to assemble a model and weights from paths or passing parameters.</p>
+<p>This method deal well with different devices model loading.
+You don’ need to care about which devices your model have saved.
+loadModel(m_path, w_path) #both using a file from paths.
+loadModel(model, w_path) #you have had the model. Only get weight from path.
+loadModel(model, weight) #you get model and weight. So, you don’t need to do any file reading.
+loadModel(m_path, None)/loadModel(model, None) #you only load the model without weights.
+:param model_or_path: pytorch model or model file path.
+:param weights_or_path: pytorch weights or weights file path.
+:param gpu_ids:using gpus. default:() using cpu
+:param is_eval: if using only for evaluating. model.eval()
+:return: model</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="jdit.Model.loadPoint">
+<code class="descname">loadPoint</code><span class="sig-paren">(</span><em>model_name</em>, <em>epoch</em>, <em>logdir='log'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/jdit/model.html#Model.loadPoint"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jdit.Model.loadPoint" title="Permalink to this definition">¶</a></dt>
+<dd><p>load model and weights from a certain checkpoint.</p>
+<p>this method is cooperate with method <cite>self.chechPoint()</cite></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="jdit.Model.print_network">
+<code class="descname">print_network</code><span class="sig-paren">(</span><em>net</em>, <em>show_structure=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/jdit/model.html#Model.print_network"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jdit.Model.print_network" title="Permalink to this definition">¶</a></dt>
+<dd><p>print total number of parameters and structure of network</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>net</strong> – network</li>
+<li><strong>show_structure</strong> – if show network’s structure. default: false</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="optimizer.html" class="btn btn-neutral float-right" title="jdit.optimizer" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="dataset.html" class="btn btn-neutral" title="jdit.dataset" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, dingguanglei
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    
+    
+      <script type="text/javascript">
+          var DOCUMENTATION_OPTIONS = {
+              URL_ROOT:'./',
+              VERSION:'0.0.1',
+              LANGUAGE:'None',
+              COLLAPSE_INDEX:false,
+              FILE_SUFFIX:'.html',
+              HAS_SOURCE:  true,
+              SOURCELINK_SUFFIX: '.txt'
+          };
+      </script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+    
+
+  
+
+  <script type="text/javascript" src="_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

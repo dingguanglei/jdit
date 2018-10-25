@@ -1,0 +1,317 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>jdit.dataset &mdash; jdit 0.0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="jdit.model" href="model.html" />
+    <link rel="prev" title="Welcome to jdit’s documentation!" href="index.html" /> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> jdit
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Package Reference</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">jdit.dataset</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#dataloaders-factory">Dataloaders_factory</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#hand-mnist">Hand_mnist</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#fashion-mnist">Fashion_mnist</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#cifar10">Cifar10</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#lsun">Lsun</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#get-mnist-dataloaders">get_mnist_dataloaders</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#get-fashion-mnist-dataloaders">get_fashion_mnist_dataloaders</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#get-lsun-dataloader">get_lsun_dataloader</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="model.html">jdit.model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="optimizer.html">jdit.optimizer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="trainer.html">jdit.trainer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="metric.html">jdit.Metric</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">jdit</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>jdit.dataset</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/dataset.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-jdit.dataset">
+<span id="jdit-dataset"></span><h1>jdit.dataset<a class="headerlink" href="#module-jdit.dataset" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="dataloaders-factory">
+<h2>Dataloaders_factory<a class="headerlink" href="#dataloaders-factory" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="jdit.dataset.Dataloaders_factory">
+<em class="property">class </em><code class="descclassname">jdit.dataset.</code><code class="descname">Dataloaders_factory</code><span class="sig-paren">(</span><em>root</em>, <em>batch_shape=(128</em>, <em>1</em>, <em>32</em>, <em>32)</em>, <em>num_workers=-1</em>, <em>shuffle=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/jdit/dataset.html#Dataloaders_factory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jdit.dataset.Dataloaders_factory" title="Permalink to this definition">¶</a></dt>
+<dd><p>this is a super dataloader</p>
+<dl class="method">
+<dt id="jdit.dataset.Dataloaders_factory.buildLoaders">
+<code class="descname">buildLoaders</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/jdit/dataset.html#Dataloaders_factory.buildLoaders"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jdit.dataset.Dataloaders_factory.buildLoaders" title="Permalink to this definition">¶</a></dt>
+<dd><p>The previous function <cite>self.buildDatasets()</cite> has create datasets.
+self.dataset_train
+self.dataset_valid
+self.dataset_test (may be created)</p>
+<p>use them to create loaders
+:return:</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="hand-mnist">
+<h2>Hand_mnist<a class="headerlink" href="#hand-mnist" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="jdit.dataset.Hand_mnist">
+<em class="property">class </em><code class="descclassname">jdit.dataset.</code><code class="descname">Hand_mnist</code><span class="sig-paren">(</span><em>root='.\datasets\mnist'</em>, <em>batch_shape=(128</em>, <em>1</em>, <em>32</em>, <em>32)</em>, <em>num_workers=-1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/jdit/dataset.html#Hand_mnist"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jdit.dataset.Hand_mnist" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="fashion-mnist">
+<h2>Fashion_mnist<a class="headerlink" href="#fashion-mnist" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="jdit.dataset.Fashion_mnist">
+<em class="property">class </em><code class="descclassname">jdit.dataset.</code><code class="descname">Fashion_mnist</code><span class="sig-paren">(</span><em>root='.\datasets\fashion_data'</em>, <em>batch_shape=(128</em>, <em>1</em>, <em>32</em>, <em>32)</em>, <em>num_workers=-1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/jdit/dataset.html#Fashion_mnist"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jdit.dataset.Fashion_mnist" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="cifar10">
+<h2>Cifar10<a class="headerlink" href="#cifar10" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="jdit.dataset.Cifar10">
+<em class="property">class </em><code class="descclassname">jdit.dataset.</code><code class="descname">Cifar10</code><span class="sig-paren">(</span><em>root='datasets/cifar10'</em>, <em>batch_shape=(128</em>, <em>3</em>, <em>32</em>, <em>32)</em>, <em>num_workers=-1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/jdit/dataset.html#Cifar10"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jdit.dataset.Cifar10" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="lsun">
+<h2>Lsun<a class="headerlink" href="#lsun" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="jdit.dataset.Lsun">
+<em class="property">class </em><code class="descclassname">jdit.dataset.</code><code class="descname">Lsun</code><span class="sig-paren">(</span><em>root='.\datasets\LSUN'</em>, <em>batch_shape=(64</em>, <em>3</em>, <em>128</em>, <em>128)</em>, <em>num_workers=-1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/jdit/dataset.html#Lsun"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jdit.dataset.Lsun" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="get-mnist-dataloaders">
+<h2>get_mnist_dataloaders<a class="headerlink" href="#get-mnist-dataloaders" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="jdit.dataset.get_mnist_dataloaders">
+<code class="descclassname">jdit.dataset.</code><code class="descname">get_mnist_dataloaders</code><span class="sig-paren">(</span><em>root='..\\data'</em>, <em>batch_size=128</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/jdit/dataset.html#get_mnist_dataloaders"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jdit.dataset.get_mnist_dataloaders" title="Permalink to this definition">¶</a></dt>
+<dd><p>MNIST dataloader with (32, 32) sized images.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="get-fashion-mnist-dataloaders">
+<h2>get_fashion_mnist_dataloaders<a class="headerlink" href="#get-fashion-mnist-dataloaders" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="jdit.dataset.get_fashion_mnist_dataloaders">
+<code class="descclassname">jdit.dataset.</code><code class="descname">get_fashion_mnist_dataloaders</code><span class="sig-paren">(</span><em>root='.\\dataset\\fashion_data'</em>, <em>batch_size=128</em>, <em>resize=32</em>, <em>transform_list=None</em>, <em>num_workers=-1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/jdit/dataset.html#get_fashion_mnist_dataloaders"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jdit.dataset.get_fashion_mnist_dataloaders" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fashion MNIST dataloader with (32, 32) sized images.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="get-lsun-dataloader">
+<h2>get_lsun_dataloader<a class="headerlink" href="#get-lsun-dataloader" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="jdit.dataset.get_lsun_dataloader">
+<code class="descclassname">jdit.dataset.</code><code class="descname">get_lsun_dataloader</code><span class="sig-paren">(</span><em>path_to_data='/data/dgl/LSUN'</em>, <em>dataset='bedroom_train'</em>, <em>batch_size=64</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/jdit/dataset.html#get_lsun_dataloader"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jdit.dataset.get_lsun_dataloader" title="Permalink to this definition">¶</a></dt>
+<dd><p>LSUN dataloader with (128, 128) sized images.</p>
+<dl class="docutils">
+<dt>path_to_data <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd>One of ‘bedroom_val’ or ‘bedroom_train’</dd>
+</dl>
+</dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="model.html" class="btn btn-neutral float-right" title="jdit.model" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="index.html" class="btn btn-neutral" title="Welcome to jdit’s documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, dingguanglei
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    
+    
+      <script type="text/javascript">
+          var DOCUMENTATION_OPTIONS = {
+              URL_ROOT:'./',
+              VERSION:'0.0.1',
+              LANGUAGE:'None',
+              COLLAPSE_INDEX:false,
+              FILE_SUFFIX:'.html',
+              HAS_SOURCE:  true,
+              SOURCELINK_SUFFIX: '.txt'
+          };
+      </script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+    
+
+  
+
+  <script type="text/javascript" src="_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
