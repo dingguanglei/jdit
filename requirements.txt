@@ -4,3 +4,16 @@ pyyaml
 setuptools
 six
 typing
+
+torch
+setuptools
+torchvision
+psutil
+tqdm
+pandas
+tensorboardX
+tensorboard
+nvidia_ml_py3
+pandas
+numpy
+imageio

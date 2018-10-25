@@ -14,18 +14,19 @@ setup(
 
     # 需要安装的依赖
     install_requires=[
-        'torch>=0.4.1',
-        'setuptools>=16.0',
-        'torchvision>=0.2.0',
-        'psutil>=5.4.6',
-        'tqdm>=4.23.4',
-        'pandas>=0.23.0',
-        "tensorboardX>=1.4",
-        # 'tensorboard>=1.7.0',
-        "nvidia_ml_py3>=7.352.0",
-        "pandas>=0.23.1",
-        'numpy>=1.14.5',
-        'imageio>=2.4.1'],
+        # 'torch>=0.4.1',
+        # 'setuptools>=16.0',
+        # 'torchvision',
+        # 'psutil>=5.4.6',
+        # 'tqdm>=4.23.4',
+        # 'pandas>=0.23.0',
+        # "tensorboardX>=1.4",
+        # # 'tensorboard>=1.7.0',
+        # "nvidia_ml_py3>=7.352.0",
+        # "pandas>=0.23.1",
+        # 'numpy>=1.14.5',
+        # 'imageio>=2.4.1'
+    ],
 
     # # 添加这个选项，在windows下Python目录的scripts下生成exe文件
     # # 注意：模块与函数之间是冒号:
