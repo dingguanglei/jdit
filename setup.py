@@ -21,8 +21,12 @@ setup(
         'tqdm>=4.23.4',
         'pandas>=0.23.0',
         "tensorboardX>=1.4",
-        'tensorboard>=1.7.0'
-    ],
+        'tensorboard>=1.7.0',
+        "nvidia_ml_py3>=7.352.0",
+        "scipy>=1.1.0",
+        "pandas>=0.23.1",
+        'numpy>=1.14.5',
+        'imageio>=2.4.1'],
 
     # # 添加这个选项，在windows下Python目录的scripts下生成exe文件
     # # 注意：模块与函数之间是冒号:
