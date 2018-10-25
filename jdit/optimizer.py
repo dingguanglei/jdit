@@ -4,11 +4,18 @@ from torch.optim import Adam, RMSprop
 
 
 class Optimizer(object):
+    """This is a wrapper of `optimizer` class in pytorch.
+    We add something new to feather control the optimizer.
+    learning rate decay.
+    learning rate reset.
+    minimum learning rate.
+
+    """
     def __init__(self, params, lr=1e-3, lr_decay=0.92, weight_decay=2e-5, momentum=0., betas=(0.9, 0.999),
                  opt_name="Adam", lr_minimum=1e-5):
         self.lr = lr
         self.lr_decay = lr_decay
-        self.lr_minimum = 1e-5
+        self.lr_minimum = lr_minimum
         self.momentum = momentum
         self.betas = betas
         self.weight_decay = weight_decay

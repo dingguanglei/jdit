@@ -5,8 +5,10 @@ from torch import save, load
 
 
 class Model(object):
-    def __init__(self, proto_model=None, gpu_ids_abs=(), init_method="kaiming", show_structure=False):
+    """a model
 
+    """
+    def __init__(self, proto_model=None, gpu_ids_abs=(), init_method="kaiming", show_structure=False):
         os.environ["CUDA_VISIBLE_DEVICES"] = ",".join([str(i) for i in gpu_ids_abs])
         self.gpu_ids = [i for i in range(len(gpu_ids_abs))]
         self.model = None
@@ -56,10 +58,10 @@ class Model(object):
 
         This method deal well with different devices model loading.
         You don' need to care about which devices your model have saved.
-            loadModel(m_path, w_path) #both using a file from paths.
-            loadModel(model, w_path) #you have had the model. Only get weight from path.
-            loadModel(model, weight) #you get model and weight. So, you don't need to do any file reading.
-            loadModel(m_path, None)/loadModel(model, None) #you only load the model without weights.
+        loadModel(m_path, w_path) #both using a file from paths.
+        loadModel(model, w_path) #you have had the model. Only get weight from path.
+        loadModel(model, weight) #you get model and weight. So, you don't need to do any file reading.
+        loadModel(m_path, None)/loadModel(model, None) #you only load the model without weights.
         :param model_or_path: pytorch model or model file path.
         :param weights_or_path: pytorch weights or weights file path.
         :param gpu_ids:using gpus. default:() using cpu
