@@ -8,13 +8,13 @@ jdit.trainer
 .. currentmodule:: jdit.trainer
 
 SupTrainer
------
+----------
 
 .. autoclass:: SupTrainer
     :members:
 
 GanTrainer
------
+----------
 
 .. autoclass:: GanTrainer
     :members:

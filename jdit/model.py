@@ -1,8 +1,8 @@
 # coding=utf-8
-import torch, os
-from torch.nn import init, Conv2d, Linear, ConvTranspose2d, InstanceNorm2d, BatchNorm2d, DataParallel
-from torch import save, load
-
+# import torch, os
+# from torch.nn import init, Conv2d, Linear, ConvTranspose2d, InstanceNorm2d, BatchNorm2d, DataParallel
+# from torch import save, load
+from .pkg import *
 class Model(object):
     """a model
 

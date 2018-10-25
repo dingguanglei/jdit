@@ -1,7 +1,7 @@
 # coding=utf-8
 
-from torch.optim import Adam, RMSprop
-
+# from torch.optim import Adam, RMSprop
+from .pkg import *
 
 class Optimizer(object):
     """This is a wrapper of `optimizer` class in pytorch.
