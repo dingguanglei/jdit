@@ -5,15 +5,14 @@ setuptools
 six
 typing
 
-torch
+#torch
 setuptools
-torchvision
+#torchvision
 psutil
 tqdm
 pandas
-tensorboardX
-tensorboard
+#tensorboardX
+#tensorboard
 nvidia_ml_py3
-pandas
 numpy
 imageio
