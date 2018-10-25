@@ -6,7 +6,7 @@ setup(
     author="Guanglei Ding",
     author_email="dingguanglei.bupt@qq.com",
     description=("This is a framework for research based on pytorch"),
-    license="MIT",
+    license="Apache License 2.0",
     keywords="pytorch research framework",
     url="https://github.com/dingguanglei/jdit",
     packages=['jdit','jdit/trainer','jdit/trainer/gan','jdit/trainer/instances',
