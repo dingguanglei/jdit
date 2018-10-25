@@ -1,0 +1,377 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>jdit.trainer.gan.generate &mdash; jdit 0.0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+
+  
+  <script src="../../../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../../../index.html" class="icon icon-home"> jdit
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Package Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../dataset.html">jdit.dataset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../model.html">jdit.model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../optimizer.html">jdit.optimizer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../trainer.html">jdit.trainer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../metric.html">jdit.Metric</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">jdit</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+        
+      <li>jdit.trainer.gan.generate</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for jdit.trainer.gan.generate</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">..super</span> <span class="k">import</span> <span class="n">SupTrainer</span>
+<span class="kn">from</span> <span class="nn">abc</span> <span class="k">import</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span> <span class="nn">tqdm</span> <span class="k">import</span> <span class="n">tqdm</span>
+<span class="kn">from</span> <span class="nn">torch.autograd</span> <span class="k">import</span> <span class="n">Variable</span>
+<span class="kn">from</span> <span class="nn">jdit.metric.inception</span> <span class="k">import</span> <span class="n">Metric</span>
+<span class="kn">import</span> <span class="nn">torch</span>
+
+
+<div class="viewcode-block" id="GanTrainer"><a class="viewcode-back" href="../../../../trainer.html#jdit.trainer.GanTrainer">[docs]</a><span class="k">class</span> <span class="nc">GanTrainer</span><span class="p">(</span><span class="n">SupTrainer</span><span class="p">):</span>
+    <span class="n">d_turn</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">logdir</span><span class="p">,</span> <span class="n">nepochs</span><span class="p">,</span> <span class="n">gpu_ids_abs</span><span class="p">,</span> <span class="n">netG</span><span class="p">,</span> <span class="n">netD</span><span class="p">,</span> <span class="n">optG</span><span class="p">,</span> <span class="n">optD</span><span class="p">,</span> <span class="n">datasets</span><span class="p">,</span> <span class="n">latent_shape</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">GanTrainer</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nepochs</span><span class="p">,</span> <span class="n">logdir</span><span class="p">,</span> <span class="n">gpu_ids_abs</span><span class="o">=</span><span class="n">gpu_ids_abs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">netG</span> <span class="o">=</span> <span class="n">netG</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">netD</span> <span class="o">=</span> <span class="n">netD</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">optG</span> <span class="o">=</span> <span class="n">optG</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">optD</span> <span class="o">=</span> <span class="n">optD</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span> <span class="o">=</span> <span class="n">datasets</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fake</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fixed_input</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">latent_shape</span> <span class="o">=</span> <span class="n">latent_shape</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metric</span> <span class="o">=</span> <span class="n">Metric</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gpu_ids</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">loger</span><span class="o">.</span><span class="n">regist_config</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">netG</span><span class="p">,</span> <span class="n">config_filename</span><span class="o">=</span><span class="s2">&quot;Generator&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">loger</span><span class="o">.</span><span class="n">regist_config</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">netD</span><span class="p">,</span> <span class="n">config_filename</span><span class="o">=</span><span class="s2">&quot;Discriminator&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">loger</span><span class="o">.</span><span class="n">regist_config</span><span class="p">(</span><span class="n">datasets</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">loger</span><span class="o">.</span><span class="n">regist_config</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+<div class="viewcode-block" id="GanTrainer.train_epoch"><a class="viewcode-back" href="../../../../trainer.html#jdit.trainer.GanTrainer.train_epoch">[docs]</a>    <span class="k">def</span> <span class="nf">train_epoch</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">iteration</span><span class="p">,</span> <span class="n">batch</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">train_loader</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;step&quot;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">step</span> <span class="o">+=</span> <span class="mi">1</span>
+
+            <span class="n">input_cpu</span><span class="p">,</span> <span class="n">ground_truth_cpu</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_data_from_loader</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mv_inplace</span><span class="p">(</span><span class="n">input_cpu</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">input</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mv_inplace</span><span class="p">(</span><span class="n">ground_truth_cpu</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ground_truth</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">fake</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">netG</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">train_iteration</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">optD</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_d_loss</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;LOSS_D&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">step</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">d_turn</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">train_iteration</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">optG</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_g_loss</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;LOSS_G&quot;</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">iteration</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_watch_images</span><span class="p">(</span><span class="s2">&quot;Train&quot;</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">get_data_from_loader</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch_data</span><span class="p">):</span>
+        <span class="n">ground_truth_cpu</span> <span class="o">=</span> <span class="n">batch_data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">input_cpu</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">ground_truth_cpu</span><span class="p">),</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">latent_shape</span><span class="p">)))</span>
+        <span class="k">return</span> <span class="n">input_cpu</span><span class="p">,</span> <span class="n">ground_truth_cpu</span>
+
+    <span class="k">def</span> <span class="nf">_watch_images</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">grid_size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">save_file</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">watcher</span><span class="o">.</span><span class="n">image</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fake</span><span class="p">,</span>
+                           <span class="bp">self</span><span class="o">.</span><span class="n">current_epoch</span><span class="p">,</span>
+                           <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">/fake&quot;</span> <span class="o">%</span> <span class="n">tag</span><span class="p">,</span>
+                           <span class="n">grid_size</span><span class="o">=</span><span class="n">grid_size</span><span class="p">,</span>
+                           <span class="n">shuffle</span><span class="o">=</span><span class="n">shuffle</span><span class="p">,</span>
+                           <span class="n">save_file</span> <span class="o">=</span> <span class="n">save_file</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">watcher</span><span class="o">.</span><span class="n">image</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ground_truth</span><span class="p">,</span>
+                           <span class="bp">self</span><span class="o">.</span><span class="n">current_epoch</span><span class="p">,</span>
+                           <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">/real&quot;</span> <span class="o">%</span> <span class="n">tag</span><span class="p">,</span>
+                           <span class="n">grid_size</span><span class="o">=</span><span class="n">grid_size</span><span class="p">,</span>
+                           <span class="n">shuffle</span><span class="o">=</span><span class="n">shuffle</span><span class="p">,</span>
+                           <span class="n">save_file</span><span class="o">=</span><span class="n">save_file</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">valid</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">avg_dic</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">netG</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">netD</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">iteration</span><span class="p">,</span> <span class="n">batch</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">valid_loader</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">input_cpu</span><span class="p">,</span> <span class="n">ground_truth_cpu</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_data_from_loader</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mv_inplace</span><span class="p">(</span><span class="n">input_cpu</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">input</span><span class="p">)</span>  <span class="c1"># input data</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mv_inplace</span><span class="p">(</span><span class="n">ground_truth_cpu</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ground_truth</span><span class="p">)</span>  <span class="c1"># real data</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fake</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">netG</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input</span><span class="p">)</span>
+            <span class="n">dic</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_valid</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">avg_dic</span> <span class="o">==</span> <span class="p">{}:</span>
+                <span class="n">avg_dic</span> <span class="o">=</span> <span class="n">dic</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># 求和</span>
+                <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">dic</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                    <span class="n">avg_dic</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">+=</span> <span class="n">dic</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">avg_dic</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">avg_dic</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">avg_dic</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">valid_nsteps</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">watcher</span><span class="o">.</span><span class="n">scalars</span><span class="p">(</span><span class="n">avg_dic</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;Valid&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_watch_images</span><span class="p">(</span><span class="n">tag</span><span class="o">=</span><span class="s2">&quot;Valid&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">netG</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">netD</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+
+<div class="viewcode-block" id="GanTrainer.compute_d_loss"><a class="viewcode-back" href="../../../../trainer.html#jdit.trainer.GanTrainer.compute_d_loss">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">compute_d_loss</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        An example!</span>
+<span class="sd">        __________________________________________</span>
+<span class="sd">        d_fake = self.netD(self.fake.detach())</span>
+<span class="sd">        d_real = self.netD(self.ground_truth)</span>
+
+<span class="sd">        var_dic = {}</span>
+<span class="sd">        var_dic[&quot;GP&quot;] = gp = gradPenalty(self.netD, self.ground_truth, self.fake, input=self.input,</span>
+<span class="sd">                                         use_gpu=self.use_gpu)</span>
+<span class="sd">        var_dic[&quot;SGP&quot;] = sgp = spgradPenalty(self.netD, self.ground_truth, self.fake, type=&quot;G&quot;,</span>
+<span class="sd">                                             use_gpu=self.use_gpu) * 0.5 + \</span>
+<span class="sd">                               spgradPenalty(self.netD, self.ground_truth, self.fake, type=&quot;X&quot;,</span>
+<span class="sd">                                             use_gpu=self.use_gpu) * 0.5</span>
+<span class="sd">        var_dic[&quot;WD&quot;] = w_distance = (d_real.mean() - d_fake.mean()).detach()</span>
+<span class="sd">        var_dic[&quot;LOSS_D&quot;] = loss_d = d_fake.mean() - d_real.mean() + gp + sgp</span>
+
+<span class="sd">        :return: loss_d, var_dic</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">loss_d</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">var_dic</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">return</span> <span class="n">loss_d</span><span class="p">,</span> <span class="n">var_dic</span></div>
+
+<div class="viewcode-block" id="GanTrainer.compute_g_loss"><a class="viewcode-back" href="../../../../trainer.html#jdit.trainer.GanTrainer.compute_g_loss">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">compute_g_loss</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        An example!</span>
+<span class="sd">        __________________________________________</span>
+<span class="sd">        d_fake = self.netD(self.fake)</span>
+<span class="sd">        var_dic = {}</span>
+<span class="sd">        var_dic[&quot;JC&quot;] = jc = jcbClamp(self.netG, self.input, use_gpu=self.use_gpu)</span>
+<span class="sd">        var_dic[&quot;LOSS_D&quot;] = loss_g = -d_fake.mean() + jc</span>
+<span class="sd">        :return: loss_g, var_dic</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">loss_g</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">var_dic</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">return</span> <span class="n">loss_g</span><span class="p">,</span> <span class="n">var_dic</span></div>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">compute_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+        <span class="n">g_loss</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_g_loss</span><span class="p">()</span>
+        <span class="n">d_loss</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_d_loss</span><span class="p">()</span>
+        <span class="n">var_dic</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;LOSS_D&quot;</span><span class="p">:</span> <span class="n">d_loss</span><span class="p">,</span> <span class="s2">&quot;LOSS_G&quot;</span><span class="p">:</span> <span class="n">g_loss</span><span class="p">}</span>
+        <span class="c1"># var_dic = {}</span>
+        <span class="c1"># fake = self.netG(self.input).detach()</span>
+        <span class="c1"># d_fake = self.netD(self.fake, self.input).detach()</span>
+        <span class="c1"># d_real = self.netD(self.ground_truth, self.input).detach()</span>
+        <span class="c1">#</span>
+        <span class="c1"># var_dic[&quot;G&quot;] = loss_g = (-d_fake.mean()).detach()</span>
+        <span class="c1"># var_dic[&quot;GP&quot;] = gp = (</span>
+        <span class="c1">#     gradPenalty(self.netD, self.ground_truth, self.fake, input=self.input, use_gpu=self.use_gpu)).detach()</span>
+        <span class="c1"># var_dic[&quot;D&quot;] = loss_d = (d_fake.mean() - d_real.mean() + gp).detach()</span>
+        <span class="c1"># var_dic[&quot;WD&quot;] = w_distance = (d_real.mean() - d_fake.mean()).detach()</span>
+        <span class="k">return</span> <span class="n">var_dic</span>
+
+    <span class="k">def</span> <span class="nf">test</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">mv_inplace</span><span class="p">(</span><span class="n">Variable</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">((</span><span class="mi">16</span><span class="p">,</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">latent_shape</span><span class="p">))),</span> <span class="bp">self</span><span class="o">.</span><span class="n">input</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">netG</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+        <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+            <span class="n">fake</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">netG</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input</span><span class="p">)</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">watcher</span><span class="o">.</span><span class="n">image</span><span class="p">(</span><span class="n">fake</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_epoch</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;Test/fake&quot;</span><span class="p">,</span> <span class="n">grid_size</span><span class="o">=</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">netG</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">change_lr</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">optD</span><span class="o">.</span><span class="n">do_lr_decay</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">optG</span><span class="o">.</span><span class="n">do_lr_decay</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">checkPoint</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">netG</span><span class="o">.</span><span class="n">checkPoint</span><span class="p">(</span><span class="s2">&quot;G&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_epoch</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">logdir</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">netD</span><span class="o">.</span><span class="n">checkPoint</span><span class="p">(</span><span class="s2">&quot;D&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_epoch</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">logdir</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">configure</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">dict</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">GanTrainer</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">configure</span>
+        <span class="nb">dict</span><span class="p">[</span><span class="s2">&quot;d_turn&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">d_turn</span>
+        <span class="k">return</span> <span class="nb">dict</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, dingguanglei
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    
+    
+      <script type="text/javascript">
+          var DOCUMENTATION_OPTIONS = {
+              URL_ROOT:'../../../../',
+              VERSION:'0.0.1',
+              LANGUAGE:'None',
+              COLLAPSE_INDEX:false,
+              FILE_SUFFIX:'.html',
+              HAS_SOURCE:  true,
+              SOURCELINK_SUFFIX: '.txt'
+          };
+      </script>
+        <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    
+
+  
+
+  <script type="text/javascript" src="../../../../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
