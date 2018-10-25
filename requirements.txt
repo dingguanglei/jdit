@@ -5,10 +5,4 @@ setuptools
 six
 typing
 
-future
-numpy
-pyyaml
-setuptools
-six
-typing
 
