@@ -21,7 +21,7 @@ setup(
         'tqdm>=4.23.4',
         'pandas>=0.23.0',
         "tensorboardX>=1.4",
-        'tensorboard>=1.7.0',
+        # 'tensorboard>=1.7.0',
         "nvidia_ml_py3>=7.352.0",
         "pandas>=0.23.1",
         'numpy>=1.14.5',
