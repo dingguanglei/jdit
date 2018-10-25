@@ -10,6 +10,7 @@ from tqdm import tqdm
 import pandas as pd
 import numpy as np
 
+
 class SupTrainer(object):
     every_epoch_checkpoint = 10
     every_epoch_changelr = 0
@@ -231,20 +232,20 @@ class Watcher(object):
             filename = "%s/plots/%s/E%03d.png" % (self.logdir, tag, global_step)
             img.save(filename)
 
-    def set_training_progress_images(self,img_tensors, grid_size=(3, 1)):
+    def set_training_progress_images(self, img_tensors, grid_size=(3, 1)):
         assert len(img_tensors.size()) == 4, "img_tensors rank should be 4, got %d instead" % len(img_tensors.size())
         rows, columns = grid_size[0], grid_size[1]
         batchSize = len(img_tensors)  # img_tensors =>(batchsize, 3, 256, 256)
         num_samples = min(batchSize, rows * columns)
         assert len(img_tensors) >= num_samples, "you want to show grid %s, but only have %d tensors to show." % (
             grid_size, len(img_tensors))
-        sampled_tensor = self._sample(img_tensors, num_samples ,False).detach().cpu()  # (sample_num, 3, 32,32)  tensors
+        sampled_tensor = self._sample(img_tensors, num_samples, False).detach().cpu()  # (sample_num, 3, 32,32)  tensors
         sampled_images = make_grid(sampled_tensor, nrow=rows, normalize=True, scale_each=True)
         img_grid = np.transpose(sampled_images.numpy(), (1, 2, 0))
         self.training_progress_images.append(img_grid)
 
     def save_in_gif(self):
-        import imageio,warnings
+        import imageio, warnings
         filename = "%s/plots/training.gif" % (self.logdir)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
