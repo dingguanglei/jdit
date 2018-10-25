@@ -5,7 +5,7 @@ setuptools
 six
 typing
 
-#torch
+torch
 setuptools
 #torchvision
 psutil
