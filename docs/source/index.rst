@@ -1,57 +1,19 @@
-.. jdit documentation master file, created by
-sphinx-quickstart on Thu Oct 25 09:05:01 2018.
-You can adapt this file completely to your liking, but it should at least
-contain the root `toctree` directive.
-
 Welcome to jdit's documentation!
 ================================
+.. toctree::
+   :glob:
+   :maxdepth: 1
+   :caption: Notes
 
 .. toctree::
-   :maxdepth: 3
-   :caption: Contents:
+   :maxdepth: 1
+   :caption: Package Reference
 
-dataset
-============
-
-.. automodule:: dataset
-    :members:
-
-model
-==========
-
-.. automodule:: model
-    :members:
-
-optimizer
-==============
-
-.. automodule:: optimizer
-    :members:
-
-jdit.trainer.super
-==================
-
-.. automodule:: jdit.trainer.super
-    :members:
-
-jdit.trainer.classification
-===========================
-
-.. automodule:: jdit.trainer.classification
-    :members:
-
-jdit.trainer.gan.generate
-=========================
-
-.. automodule:: jdit.trainer.gan.generate
-    :members:
-
-jdit.trainer.instances.fashingClassification
-============================================
-
-.. automodule:: jdit.trainer.instances.fashingClassification
-    :members:
-
+   dataset
+   model
+   optimizer
+   trainer
+   metric
 
 Indices and tables
 ==================
