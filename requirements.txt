@@ -5,4 +5,10 @@ setuptools
 six
 typing
 
--r jdit/requirements.txt
+future
+numpy
+pyyaml
+setuptools
+six
+typing
+
