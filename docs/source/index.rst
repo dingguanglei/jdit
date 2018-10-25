@@ -10,22 +10,22 @@ Welcome to jdit's documentation!
    :maxdepth: 3
    :caption: Contents:
 
-jdit.dataset
+dataset
 ============
 
-.. automodule:: jdit.dataset
+.. automodule:: dataset
     :members:
 
-jdit.model
+model
 ==========
 
-.. automodule:: jdit.model
+.. automodule:: model
     :members:
 
-jdit.optimizer
+optimizer
 ==============
 
-.. automodule:: jdit.optimizer
+.. automodule:: optimizer
     :members:
 
 jdit.trainer.super
