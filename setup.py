@@ -23,7 +23,6 @@ setup(
         "tensorboardX>=1.4",
         'tensorboard>=1.7.0',
         "nvidia_ml_py3>=7.352.0",
-        "scipy>=1.1.0",
         "pandas>=0.23.1",
         'numpy>=1.14.5',
         'imageio>=2.4.1'],
