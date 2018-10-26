@@ -14,7 +14,7 @@ setup(
 
     # 需要安装的依赖
     install_requires=[
-        'pip>=18.0'
+        # 'pip>=18.0'
         # 'torch>=0.4.1',
         # 'setuptools>=16.0',
         # 'torchvision',

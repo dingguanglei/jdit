@@ -1,9 +1,10 @@
 pip
+mock
 future
 numpy
 pyyaml
 setuptools
 six
 typing
-torch
+
 
