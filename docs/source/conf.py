@@ -22,7 +22,12 @@ MOCK_MODULES = ['numpy', 'scipy',
                 'scipy.interpolate',
                 'torch','torchvision',
                 'tensorboardX',
-                'tensorboard'
+                'tensorboard',
+                'torch.optim',
+                'torch.nn',
+                'torch.utils.data',
+                'torch.autograd',
+                'torchvision.transforms'
                 ]
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = mock.Mock()
