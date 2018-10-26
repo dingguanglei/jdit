@@ -14,8 +14,9 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../../'))
-import jdit
+sys.path.append(os.path.join(os.path.dirname(__file__), '../../'))
+# sys.path.insert(0, os.path.abspath('../../'))
+# import jdit
 import mock
 MOCK_MODULES = ['numpy', 'scipy',
                 'pandas',
