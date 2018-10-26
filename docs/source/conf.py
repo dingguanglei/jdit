@@ -21,13 +21,15 @@ MOCK_MODULES = ['numpy', 'scipy',
                 'matplotlib', 'matplotlib.pyplot',
                 'scipy.interpolate',
                 'torch',
-                'tensorboardX',
+                'tensorboardX','tensorboardX.SummaryWriter'
                 'tensorboard',
                 'torch.optim',
-                'torch.nn',
+                'torch.nn','torch.nn',
                 'torch.utils.data',
-                'torch.autograd',
-                # 'torchvision.transforms','torchvision', 'torchvision.utils'
+                'torch.autograd','torch.autograd.Variable'
+                'torchvision.transforms','torchvision', 'torchvision.utils',
+                'torchvision.utils.make_grid','torchvision.datasets',
+
 
                 ]
 for mod_name in MOCK_MODULES:
