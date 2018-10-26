@@ -4,8 +4,8 @@
 jdit.Metric
 ===========
 
-.. automodule:: jdit.metric
-.. currentmodule:: jdit.metric
+.. automodule:: jdit
+.. currentmodule:: jdit
 
 Metric
 ------
