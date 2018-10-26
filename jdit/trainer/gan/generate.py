@@ -2,7 +2,7 @@ from ..super import SupTrainer
 from abc import abstractmethod
 from tqdm import tqdm
 from torch.autograd import Variable
-from jdit.metric.inception import Metric
+from ...metric.inception import Metric
 import torch
 
 
