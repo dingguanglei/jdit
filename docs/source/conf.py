@@ -18,6 +18,7 @@ import sys
 # import jdit
 import mock
 MOCK_MODULES = ['numpy', 'scipy',
+                'pandas',
                 'matplotlib', 'matplotlib.pyplot',
                 'scipy.interpolate',
                 'tensorboardX','tensorboardX.SummaryWriter',
