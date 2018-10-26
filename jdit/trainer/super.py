@@ -12,6 +12,9 @@ import numpy as np
 
 
 class SupTrainer(object):
+    """this is a super class of all trainers
+
+    """
     every_epoch_checkpoint = 10
     every_epoch_changelr = 0
     mode = "L"
@@ -112,6 +115,9 @@ class SupTrainer(object):
 
 
 class Loger(object):
+    """this is a log recorder.
+
+    """
     def __init__(self, logdir="log"):
         self.logdir = logdir
         self.regist_list = []
@@ -183,6 +189,9 @@ class Loger(object):
 
 
 class Watcher(object):
+    """this is a params and images watcher
+
+    """
     def __init__(self, logdir, mode="L"):
         self.logdir = logdir
         self.writer = SummaryWriter(log_dir=logdir)
@@ -280,6 +289,9 @@ class Watcher(object):
 
 
 class Performance(object):
+    """this is a performance watcher.
+
+    """
 
     def __init__(self, gpu_ids_abs=()):
         self.config_dic = dict()

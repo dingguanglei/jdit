@@ -13,6 +13,12 @@ SupTrainer
 .. autoclass:: SupTrainer
     :members:
 
+ClassificationTrainer
+-------------------
+
+.. autoclass:: ClassificationTrainer
+    :members:
+
 GanTrainer
 ----------
 

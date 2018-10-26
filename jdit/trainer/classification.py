@@ -1,14 +1,13 @@
-# import torch
-# from torch.autograd import Variable
 from torch.nn import CrossEntropyLoss
 from .super import *
 from abc import abstractmethod
 from tqdm import *
 
-
 class ClassificationTrainer(SupTrainer):
-    num_class = None
+    """this is a classification trainer.
 
+    """
+    num_class = None
     def __init__(self, logdir, nepochs, gpu_ids, net, opt, datasets):
         super(ClassificationTrainer, self).__init__(nepochs, logdir, gpu_ids_abs=gpu_ids)
         self.net = net

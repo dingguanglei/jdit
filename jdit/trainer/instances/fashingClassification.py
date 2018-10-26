@@ -10,6 +10,9 @@ from mypackage.model.resnet import  resnet18
 
 
 class FashingClassTrainer(ClassificationTrainer):
+    """this is an instance of how to use `ClassificationTrainer` to build your own trainer
+
+    """
     mode = "L"
     num_class = 10
     every_epoch_checkpoint = 20  # 2
@@ -55,6 +58,10 @@ class FashingClassTrainer(ClassificationTrainer):
 
 
 def start_example():
+    """ run this to test a `FashingClassTrainer` instance
+
+    :return:
+    """
     gpus = [0]
     batchSize = 64
     nepochs = 10
