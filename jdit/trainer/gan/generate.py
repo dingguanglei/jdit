@@ -2,7 +2,8 @@ from ..super import SupTrainer
 from abc import abstractmethod
 from tqdm import tqdm
 from torch.autograd import Variable
-from ...metric import FID
+from jdit.metric.inception import FID
+# from ...metric import FID
 import torch
 
 
