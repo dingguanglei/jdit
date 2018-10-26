@@ -3,7 +3,7 @@ from abc import abstractmethod
 from tqdm import tqdm
 from torch.autograd import Variable
 # from jdit.metric.inception import FID
-# from ...metric import FID
+from ...metric import FID
 import torch
 
 
@@ -31,7 +31,7 @@ class GanTrainer(SupTrainer):
         self.fake = None
         self.fixed_input = None
         self.latent_shape = latent_shape
-        # self.metric = FID(self.gpu_ids)
+        self.metric = FID(self.gpu_ids)
         self.loger.regist_config(self.netG, config_filename="Generator")
         self.loger.regist_config(self.netD, config_filename="Discriminator")
         self.loger.regist_config(datasets)
