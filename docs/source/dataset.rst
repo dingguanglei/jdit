@@ -7,13 +7,6 @@ jdit.dataset
 .. automodule:: jdit.dataset
 .. currentmodule:: jdit.dataset
 
-jdit.dataset
-============
-
-.. automodule:: jdit
-.. currentmodule:: jdit
-
-
 Dataloaders_factory
 -------------------
 
