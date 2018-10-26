@@ -28,6 +28,7 @@ MOCK_MODULES = ['numpy', 'scipy',
                 'torch.utils.data',
                 'torch.autograd',
                 'torchvision.transforms'
+                'torchvision.utils'
                 ]
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = mock.Mock()
