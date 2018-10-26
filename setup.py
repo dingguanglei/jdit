@@ -39,7 +39,7 @@ setup(
     classifiers=[  # 程序的所属分类列表
         "Development Status :: 1 - Alpha",
         "Topic :: Utilities",
-        "License :: MIT :: GNU General Public License (MIT)",
+        "License :: Apache :: Apache License 2.0",
     ],
     # 此项需要，否则卸载时报windows error
     zip_safe=False
