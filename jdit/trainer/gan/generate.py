@@ -2,7 +2,7 @@ from ..super import SupTrainer
 from abc import abstractmethod
 from tqdm import tqdm
 from torch.autograd import Variable
-from jdit.metric.inception import FID
+# from jdit.metric.inception import FID
 # from ...metric import FID
 import torch
 
@@ -10,6 +10,18 @@ import torch
 class GanTrainer(SupTrainer):
     d_turn = 1
     def __init__(self, logdir, nepochs, gpu_ids_abs, netG, netD, optG, optD, datasets, latent_shape):
+        """ a gan super class
+
+        :param logdir:
+        :param nepochs:
+        :param gpu_ids_abs:
+        :param netG:
+        :param netD:
+        :param optG:
+        :param optD:
+        :param datasets:
+        :param latent_shape:
+        """
         super(GanTrainer, self).__init__(nepochs, logdir, gpu_ids_abs=gpu_ids_abs)
         self.netG = netG
         self.netD = netD
@@ -19,7 +31,7 @@ class GanTrainer(SupTrainer):
         self.fake = None
         self.fixed_input = None
         self.latent_shape = latent_shape
-        self.metric = FID(self.gpu_ids)
+        # self.metric = FID(self.gpu_ids)
         self.loger.regist_config(self.netG, config_filename="Generator")
         self.loger.regist_config(self.netD, config_filename="Discriminator")
         self.loger.regist_config(datasets)
