@@ -1,7 +1,7 @@
 pip
 mock
 future
-numpy
+#numpy
 pyyaml
 setuptools
 six

@@ -12,12 +12,11 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-import os
+# import os
 import sys
-sys.path.insert(0, os.path.abspath('../../'))
-import jdit
+# sys.path.insert(0, os.path.abspath('../../'))
+# import jdit
 import mock
-
 MOCK_MODULES = ['numpy', 'scipy',
                 'matplotlib', 'matplotlib.pyplot',
                 'scipy.interpolate',
@@ -27,7 +26,7 @@ MOCK_MODULES = ['numpy', 'scipy',
                 ]
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = mock.Mock()
-
+import torch
 
 
 # -- Project information -----------------------------------------------------
