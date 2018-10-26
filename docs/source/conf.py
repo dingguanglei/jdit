@@ -28,10 +28,14 @@ MOCK_MODULES = ['numpy', 'scipy',
                 'torch.utils.data',
                 'torch.autograd','torch.autograd.Variable'
                 'torchvision.transforms','torchvision', 'torchvision.utils',
+                'torchvision.transforms.Resize','torchvision.transforms.ToTensor',
+                'torchvision.transforms.Normalize',
                 'torchvision.utils.make_grid','torchvision.datasets',
-
-
+                'torchvision.datasets.MNIST','torchvision.datasets.FashionMNIST',
+                'torchvision.datasets.CIFAR10','torchvision.datasets.LSUN',
                 ]
+
+
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = mock.Mock()
 import torch
