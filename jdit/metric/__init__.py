@@ -1,1 +1,1 @@
-from .inception import FID
+from .inception import *
