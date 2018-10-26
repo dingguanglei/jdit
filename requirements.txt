@@ -2,6 +2,7 @@ pip
 mock
 future
 #numpy
+tqdm
 pyyaml
 setuptools
 six
