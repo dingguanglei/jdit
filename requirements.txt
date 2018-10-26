@@ -1,3 +1,4 @@
+pip
 future
 numpy
 pyyaml
