@@ -8,5 +8,6 @@ pyyaml
 setuptools
 six
 typing
+psutil
 
 

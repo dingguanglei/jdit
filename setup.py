@@ -23,10 +23,10 @@ setup(
         # 'pandas>=0.23.0',
         # "tensorboardX>=1.4",
         # # 'tensorboard>=1.7.0',
-        # "nvidia_ml_py3>=7.352.0",
+        "nvidia_ml_py3>=7.352.0",
         # "pandas>=0.23.1",
         # 'numpy>=1.14.5',
-        # 'imageio>=2.4.1'
+        'imageio>=2.4.1'
     ],
 
     # # 添加这个选项，在windows下Python目录的scripts下生成exe文件
