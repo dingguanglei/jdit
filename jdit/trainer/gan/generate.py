@@ -6,7 +6,6 @@ from torch.autograd import Variable
 # from ...metric import FID
 import torch
 
-
 class GanTrainer(SupTrainer):
     d_turn = 1
     def __init__(self, logdir, nepochs, gpu_ids_abs, netG, netD, optG, optD, datasets, latent_shape):

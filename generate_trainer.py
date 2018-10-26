@@ -11,7 +11,6 @@ from jdit.metric.inception import FID
 from mypackage.tricks import gradPenalty, spgradPenalty
 from mypackage.model.Tnet import NLayer_D, TWnet_G, NThickLayer_D
 
-
 # from mypackage.tricks import jcbClamp
 
 
