@@ -2,7 +2,7 @@ pip
 mock
 future
 numpy
-pandas
+#pandas
 tqdm
 pyyaml
 setuptools
