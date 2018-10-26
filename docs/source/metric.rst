@@ -1,15 +1,15 @@
 .. role:: hidden
     :class: hidden-section
 
-jdit.Metric
+jdit.metric
 ===========
 
 .. automodule:: jdit.metric
 .. currentmodule:: jdit.metric
 
-Metric
+FID
 ------
 
-.. autoclass:: Metric
+.. autoclass:: FID
     :members:
 

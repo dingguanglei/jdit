@@ -6,7 +6,7 @@ from jdit.trainer.gan.generate import GanTrainer
 from jdit.model import Model
 from jdit.optimizer import Optimizer
 from jdit.dataset import Cifar10
-from jdit.metric.inception import Metric
+from jdit.metric.inception import FID
 # from mypackage.model.resnet import ResNet18, Tresnet18
 from mypackage.tricks import gradPenalty, spgradPenalty
 from mypackage.model.Tnet import NLayer_D, TWnet_G, NThickLayer_D

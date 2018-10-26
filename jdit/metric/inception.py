@@ -148,7 +148,7 @@ class InceptionV3(nn.Module):
         return outp
 
 
-class Metric(object):
+class FID(object):
     def __init__(self, gpu_ids, dim=2048, ):
         self.inception = None
         self.dim = dim

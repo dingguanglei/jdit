@@ -1,1 +1,1 @@
-from .inception import Metric
+from .inception import FID
