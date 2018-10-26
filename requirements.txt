@@ -2,6 +2,7 @@ pip
 mock
 future
 #numpy
+torchvision
 pyyaml
 setuptools
 six
