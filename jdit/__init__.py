@@ -1,6 +1,6 @@
-from .model import Model
-from .optimizer import Optimizer
+from jdit.model import Model
+from jdit.optimizer import Optimizer
 # import dataset
-from .trainer import *
+from jdit.trainer import *
 # import .metric
 # from .metric import *
