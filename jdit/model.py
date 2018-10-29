@@ -10,19 +10,17 @@ class Model(object):
     In the simplest case, we use a raw pytorch ``module`` to assemble a ``Model`` of this class.
     It can be more convenient to use some feather method, such ``checkPoint`` , ``loadModel`` and so on.
 
-    * :attr:`proto_model` is the core model in this class. It is no necessary to passing a ``module``
-      when you init a ``Model`` . you can build a model later by using ``Model.define(module)`` or load a model from
-      a file.
+    * :attr:`proto_model` is the core model in this class. It is no necessary to passing a ``module``when you init a ``Model`` . you can build a model later by using ``Model.define(module)`` or load a model from a file.
 
     * :attr:`gpu_ids_abs` controls the gpus which you want to use. you should use a absolute id of gpus.
 
     * :attr:`init_method` controls the weights init method.
 
-        * At init_method="xavier", it will use ``init.xavier_normal_``, in ``pytorch.nn.init``, to init the Conv
-        layers of model.
-        * At init_method="kaiming", it will use ``init.kaiming_normal_``, in ``pytorch.nn.init``, to init the Conv
-        layers of model.
-        * At init_method=your_own_method, it will be used on weights, just like what ``pytorch.nn.init`` method does.
+        * At init_method="xavier", it will use ``init.xavier_normal_``,in ``pytorch.nn.init``, to init the Conv layers of model.
+
+        * At init_method="kaiming", it will use ``init.kaiming_normal_``,in ``pytorch.nn.init``, to init the Conv layers of model.
+
+        * At init_method=your_own_method, it will be used on weights,just like what ``pytorch.nn.init`` method does.
 
     * :attr:`show_structure` controls whether to show your network structure.
 
@@ -84,7 +82,9 @@ class Model(object):
         """Define and wrap a pytorch module, according to CPU, GPU and multi-GPUs.
 
         * Print the module's info.
+
         * Move this module to specify device.
+
         * Apply weight init method.
 
         :param proto_model: Network, type of ``module``.
@@ -112,7 +112,7 @@ class Model(object):
         return num_params
 
     def loadModel(self, model_or_path, weights_or_path=None, gpu_ids=()):
-        r"""Assemble a model and weights from paths or passing parameters.
+        """Assemble a model and weights from paths or passing parameters.
 
         You can load a model from a file, passing parameters or both.
 
@@ -171,8 +171,10 @@ class Model(object):
         self.model = self._set_device(model, gpu_ids)
 
     def saveModel(self, model_path=None, weights_path=None, to_cpu=False):
-        r"""Save a model and weights to files.
+        """Save a model and weights to files.
+
         You can save a model, weights or both to file.
+
         .. note::
 
             This method deal well with different devices on model saving.
