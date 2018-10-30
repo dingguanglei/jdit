@@ -79,7 +79,7 @@ class GenerateGanTrainer(GanTrainer):
 
 if __name__ == '__main__':
 
-    gpus = [3]
+    gpus = [2,3]
     batch_shape = (128, 3, 32, 32)
     image_channel = batch_shape[1]
     nepochs = 200

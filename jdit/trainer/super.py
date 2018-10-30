@@ -118,6 +118,7 @@ class Loger(object):
     """this is a log recorder.
 
     """
+
     def __init__(self, logdir="log"):
         self.logdir = logdir
         self.regist_list = []
@@ -192,6 +193,7 @@ class Watcher(object):
     """this is a params and images watcher
 
     """
+
     def __init__(self, logdir, mode="L"):
         self.logdir = logdir
         self.writer = SummaryWriter(log_dir=logdir)
@@ -240,6 +242,22 @@ class Watcher(object):
             img = transforms.ToPILImage()(sampled_images).convert(self.mode)
             filename = "%s/plots/%s/E%03d.png" % (self.logdir, tag, global_step)
             img.save(filename)
+
+    def embedding(self, mat,  label_img=None, label=None, global_step=None, tag="embedding"):
+        """ Show PCA, t-SNE of `mat` on tensorboard
+
+        :param mat: An img tensor with shape  of (N, C, H, W)
+        :param label_img: Label img on each data point.
+        :param label: Label of each img. It will convert to str.
+        :param global_step: Img step label.
+        :param tag: Tag of this plot.
+        """
+        # images = dataset.train_data[:amount]
+        # images = dataset.train_data[:amount]
+
+        samples = len(mat)
+        features = mat.view(samples, -1)
+        self.writer.add_embedding(features, metadata=label, label_img=label_img, global_step=global_step, tag=tag)
 
     def set_training_progress_images(self, img_tensors, grid_size=(3, 1)):
         assert len(img_tensors.size()) == 4, "img_tensors rank should be 4, got %d instead" % len(img_tensors.size())
