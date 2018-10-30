@@ -14,7 +14,7 @@ SupTrainer
     :members:
 
 ClassificationTrainer
--------------------
+---------------------
 
 .. autoclass:: ClassificationTrainer
     :members:

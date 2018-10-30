@@ -5,10 +5,60 @@ from abc import ABCMeta, abstractmethod
 
 
 class Dataloaders_factory(metaclass=ABCMeta):
-    """this is a super dataloader
+    """This is a super class of dataloader.
+
+    It defines same basic attributes and methods.
+
+    * For training data: ``train_dataset``, ``train_loader``, ``train_nsteps`` .
+      Others such as ``valid`` and ``test`` have the same naming format.
+    * For transform, you can define your own transforms.
+    * If you don't have test set, it will be replaced by valid dataset.
+
+    It will build dataset following these setps:
+
+      #. ``buildTransforms()`` To build transforms for training dataset and valid.
+         You can rewrite this method for your own transform. It will be used in ``buildDatasets()``
+      #. ``buildDatasets()`` You must rewrite this method to load your own dataset
+         by passing datasets to ``self.dataset_train`` and ``self.dataset_valid`` .
+         ``self.dataset_test`` is optional. If you don't pass a test dataset,
+         it will be replaced by ``self.dataset_valid`` .
+
+         Example::
+
+           def buildTransforms(self, resize=32):
+               self.train_transform_list = self.valid_transform_list = [
+                   transforms.Resize(resize),
+                   transforms.ToTensor(),
+                   transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])]
+           # Inherit this class and write this method.
+           def buildDatasets(self):
+               self.dataset_train = datasets.CIFAR10(root, train=True, download=True,
+                   transform=transforms.Compose(self.train_transform_list))
+               self.dataset_valid = datasets.CIFAR10(root, train=False, download=True,
+                   transform=transforms.Compose(self.valid_transform_list))
+
+      #. ``buildLoaders()`` It will use dataset, and passed parameters to
+         build dataloaders for ``self.train_loader``, ``self.valid_loader`` and ``self.test_loader``.
+
+
+    * :attr:`root` is the root path of datasets.
+
+    * :attr:`batch_shape` is the size of data loader. shape is ``(Batchsize, Channel, Height, Width)``
+
+    * :attr:`num_workers` is the number of threads, using to load data.
+      If you pass -1, it will use the max number of threads, according to your cpu. Default: -1
+
+    * :attr:`shuffle` is whether shuffle the data. Default: ``True``
 
     """
-    def __init__(self, root, batch_shape=(128, 1, 32, 32), num_workers=-1, shuffle=True):
+    def __init__(self, root, batch_shape, num_workers=-1, shuffle=True):
+        """ Build data loaders.
+
+        :param root: root path of datasets.
+        :param batch_shape: shape of data. ``(Batchsize, Channel, Height, Width)``
+        :param num_workers: the number of threads. Default: -1
+        :param shuffle: whether shuffle the data. Default: ``True``
+        """
         self.batch_size, self.batch_shape = batch_shape[0], batch_shape
         self.shuffle = shuffle
         self.root = root
@@ -34,17 +84,14 @@ class Dataloaders_factory(metaclass=ABCMeta):
         self.buildLoaders()
 
     def buildLoaders(self):
+        r""" Build datasets
+        The previous function ``self.buildDatasets()`` has created datasets.
+        Use these datasets to build their dataloader
         """
-        The previous function `self.buildDatasets()` has create datasets.
-        self.dataset_train
-        self.dataset_valid
-        self.dataset_test (may be created)
-
-        use them to create loaders
-        :return:
-        """
-        assert self.dataset_train is not None, "`self.dataset_train` can't be `None`"
-        assert self.dataset_valid is not None, "`self.dataset_valid` can't be `None`"
+        assert self.dataset_train is not None, "`self.dataset_train` can't be `None`. " \
+                                               "Rewrite `buildDatasets` method and pass your own dataset to self.dataset_train"
+        assert self.dataset_valid is not None, "`self.dataset_valid` can't be `None`. " \
+                                               "Rewrite `buildDatasets` method and pass your own dataset to self.dataset_valid"
         # Create dataloaders
         self.train_loader = DataLoader(self.dataset_train, batch_size=self.batch_size, shuffle=self.shuffle)
         self.valid_loader = DataLoader(self.dataset_valid, batch_size=self.batch_size, shuffle=self.shuffle)
@@ -59,6 +106,13 @@ class Dataloaders_factory(metaclass=ABCMeta):
 
     @abstractmethod
     def buildDatasets(self):
+        """ You must to rewrite this method to load your own datasets.
+
+        * :attr:`self.dataset_train` . Assign a training dataset to this.
+        * :attr:`self.dataset_valid` . Assign a valid dataset to this.
+        * :attr:`self.dataset_test` is optional. Assign a test dataset to this.
+
+        """
         pass
         # self.dataset_train = datasets.CIFAR10(root, train=True, download=True,
         #                                       transform=transforms.Compose(self.train_transform_list))

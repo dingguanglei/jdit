@@ -10,33 +10,38 @@ class Model(object):
     In the simplest case, we use a raw pytorch ``module`` to assemble a ``Model`` of this class.
     It can be more convenient to use some feather method, such ``checkPoint`` , ``loadModel`` and so on.
 
-    * :attr:`proto_model` is the core model in this class. It is no necessary to passing a ``module``when you init a ``Model`` . you can build a model later by using ``Model.define(module)`` or load a model from a file.
+    * :attr:`proto_model` is the core model in this class.
+      It is no necessary to passing a ``module`` when you init a ``Model`` .
+      You can build a model later by using ``Model.define(module)`` or load a model from a file.
 
     * :attr:`gpu_ids_abs` controls the gpus which you want to use. you should use a absolute id of gpus.
 
     * :attr:`init_method` controls the weights init method.
 
-        * At init_method="xavier", it will use ``init.xavier_normal_``,in ``pytorch.nn.init``, to init the Conv layers of model.
+        * At init_method="xavier", it will use ``init.xavier_normal_`` ,
+          in ``pytorch.nn.init`` , to init the Conv layers of model.
 
-        * At init_method="kaiming", it will use ``init.kaiming_normal_``,in ``pytorch.nn.init``, to init the Conv layers of model.
+        * At init_method="kaiming", it will use ``init.kaiming_normal_`` ,
+          in ``pytorch.nn.init`` , to init the Conv layers of model.
 
-        * At init_method=your_own_method, it will be used on weights,just like what ``pytorch.nn.init`` method does.
+        * At init_method=your_own_method, it will be used on weights,
+          just like what ``pytorch.nn.init`` method does.
 
     * :attr:`show_structure` controls whether to show your network structure.
 
     .. note::
 
          Don't try to pass a ``DataParallel`` model. Only ``module`` is accessible.
-         It will change to ``DataParallel`` class automatically by passing a muti-gpus ids, like ``[0, 1]``.
+         It will change to ``DataParallel`` class automatically by passing a muti-gpus ids, like ``[0, 1]`` .
 
     .. note::
 
-        :attr:`gpu_ids_abs` must be a tuple or list. If you want to use cpu, just passing an ampty list like ``[]``.
+        :attr:`gpu_ids_abs` must be a tuple or list. If you want to use cpu, just passing an ampty list like ``[]`` .
 
     Args:
-        proto_model (module): A pytroch module. Default: ``None``.
+        proto_model (module): A pytroch module. Default: ``None``
 
-        gpu_ids_abs (tuple or list): The absolute id of gpus. if [] using cpu. Default: ``()``.
+        gpu_ids_abs (tuple or list): The absolute id of gpus. if [] using cpu. Default: ``()``
 
         init_method (str or def): Weights init method. Default: ``"Kaiming"``
 
@@ -48,6 +53,7 @@ class Model(object):
         gpu_ids (list or tuple): Which device is this model on.
 
     Examples::
+
         >>> from torch.nn import Sequential, Conv3d
         >>> # using a square kernels and equal stride
         >>> module = Sequential(Conv3d(16, 33, (3, 5, 2), stride=(2, 1, 1), padding=(4, 2, 0)))

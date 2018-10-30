@@ -3,11 +3,71 @@
 from torch.optim import Adam, RMSprop
 
 class Optimizer(object):
-    """This is a wrapper of `optimizer` class in pytorch.
-    We add something new to feather control the optimizer.
-    learning rate decay.
-    learning rate reset.
-    minimum learning rate.
+    """This is a wrapper of ``optimizer`` class in pytorch.
+
+    We add something new features in order to feather control the optimizer.
+
+    * :attr:`params` is the parameters of model which need to be updated.
+      It will use a filter to get all the parameters that required grad automatically.
+      Like this
+
+      ``filter(lambda p: p.requires_grad, params)``
+
+      So, you can passing ``model.all_params()`` without any filters.
+
+    * :attr:`learning rate decay` When calling ``do_lr_decay()``,
+      it will do a learning rate decay. like:
+
+      .. math::
+
+         lr = lr * decay
+
+    * :attr:`learning rate reset` . Reset learning rate, it can change learning rate and decay directly.
+
+    * :attr:`minimum learning rate` . When you do a learning rate decay, it will stop,
+      when the learning rate is smaller than the minmimum
+
+    Args:
+        params (dict): parameters of model, which need to be updated.
+
+        lr (float, optional): learning rate. Default: 1e-3
+
+        lr_decay (float, optional): learning rate decay. Default: 0.92
+
+        weight_decay (float, optional): weight_decay in pytorch ``optimizer`` . Default: 2e-5
+
+        moemntum (float, optional): moemntum in pytorch ``moemntum`` . Default: 0
+
+        betas (tuple, list, optional): betas in pytorch ``betas`` . Default: (0.9, 0.999)
+
+        opt_name (str, optional): name of pytorch optimizer . Default: "Adam"
+
+        lr_minimum (float, optional): minimum learning rate . Default: 1e-5
+
+    Example::
+
+        >>> from torch.nn import Sequential, Conv3d
+        >>> module = Sequential(Conv3d(16, 33, (3, 5, 2), stride=(2, 1, 1), padding=(4, 2, 0)))
+        >>> opt = Optimizer(module.parameters(), lr = 0.2, lr_decay=0.5, opt_name="Adam", betas=(0.5, 0.99))
+        >>> opt.lr
+        0.2
+        >>> opt.lr_decay
+        0.5
+        >>> opt.do_lr_decay()
+        >>> opt.lr
+        0.1
+        >>> opt.do_lr_decay(reset_lr=1)
+        >>> opt.lr
+        1
+        >>> opt.opt
+        Adam (
+        Parameter Group 0
+            amsgrad: False
+            betas: (0.5, 0.99)
+            eps: 1e-08
+            lr: 1
+            weight_decay: 2e-05
+        )
 
     """
     def __init__(self, params, lr=1e-3, lr_decay=0.92, weight_decay=2e-5, momentum=0., betas=(0.9, 0.999),
@@ -26,10 +86,18 @@ class Optimizer(object):
         return getattr(self.opt, item)
 
     def do_lr_decay(self, reset_lr_decay=None, reset_lr=None):
-        """ decay learning rate by `self.lr_decay`. reset `lr` and `lr_decay`
+        """Do learning rate decay, or reset them.
 
-        :param reset_lr_decay: if not None, use this value to reset `self.lr_decay`. defaule: None.
-        :param reset_lr: if not None, use this value to reset `self.lr`. defaule: None.
+        Passing parameters both None:
+            Do a learning rate decay by ``self.lr = self.lr * self.lr_decay`` .
+
+        Passing parameters reset_lr_decay or reset_lr:
+            Do a learning rate or decay reset. by
+            ``self.lr = reset_lr``
+            ``self.lr_decay = reset_lr_decay``
+
+        :param reset_lr_decay: if not None, use this value to reset `self.lr_decay`. Default: None.
+        :param reset_lr: if not None, use this value to reset `self.lr`. Default: None.
         :return:
         """
         if self.lr > self.lr_minimum:
