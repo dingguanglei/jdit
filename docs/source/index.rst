@@ -13,6 +13,7 @@ Welcome to jdit's documentation!
    model
    optimizer
    trainer
+   assessment
 
 
 

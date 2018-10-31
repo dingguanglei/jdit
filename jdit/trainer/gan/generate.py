@@ -37,7 +37,7 @@ class GanTrainer(SupTrainer):
         self.loger.regist_config(self)
 
     def train_epoch(self):
-        for iteration, batch in tqdm(enumerate(self.datasets.train_loader, 1), unit="step"):
+        for iteration, batch in tqdm(enumerate(self.datasets.loader_train, 1), unit="step"):
             self.step += 1
 
             input_cpu, ground_truth_cpu = self.get_data_from_loader(batch)
@@ -76,7 +76,7 @@ class GanTrainer(SupTrainer):
         avg_dic = {}
         self.netG.eval()
         self.netD.eval()
-        for iteration, batch in enumerate(self.datasets.valid_loader, 1):
+        for iteration, batch in enumerate(self.datasets.loader_valid, 1):
             input_cpu, ground_truth_cpu = self.get_data_from_loader(batch)
             self.mv_inplace(input_cpu, self.input)  # input data
             self.mv_inplace(ground_truth_cpu, self.ground_truth)  # real data
@@ -90,7 +90,7 @@ class GanTrainer(SupTrainer):
                     avg_dic[key] += dic[key]
 
         for key in avg_dic.keys():
-            avg_dic[key] = avg_dic[key] / self.datasets.valid_nsteps
+            avg_dic[key] = avg_dic[key] / self.datasets.nsteps_valid
 
         self.watcher.scalars(avg_dic, self.step, tag="Valid")
         self._watch_images(tag="Valid")

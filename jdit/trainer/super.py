@@ -243,7 +243,7 @@ class Watcher(object):
             filename = "%s/plots/%s/E%03d.png" % (self.logdir, tag, global_step)
             img.save(filename)
 
-    def embedding(self, mat,  label_img=None, label=None, global_step=None, tag="embedding"):
+    def embedding(self, data, label_img=None, label=None, global_step=None, tag="embedding"):
         """ Show PCA, t-SNE of `mat` on tensorboard
 
         :param mat: An img tensor with shape  of (N, C, H, W)
@@ -252,11 +252,7 @@ class Watcher(object):
         :param global_step: Img step label.
         :param tag: Tag of this plot.
         """
-        # images = dataset.train_data[:amount]
-        # images = dataset.train_data[:amount]
-
-        samples = len(mat)
-        features = mat.view(samples, -1)
+        features = data.view(len(data), -1)
         self.writer.add_embedding(features, metadata=label, label_img=label_img, global_step=global_step, tag=tag)
 
     def set_training_progress_images(self, img_tensors, grid_size=(3, 1)):

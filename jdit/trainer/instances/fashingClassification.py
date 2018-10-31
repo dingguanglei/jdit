@@ -23,6 +23,8 @@ class FashingClassTrainer(ClassificationTrainer):
         print("using `tensorboard --logdir=%s` to see learning curves and net structure." % logdir)
         print("training and valid data, configures info and checkpoint were save in `%s` directory." % logdir)
         self.watcher.graph(net, (4, 1, 32, 32), self.use_gpu)
+        data, label = self.datasets.samples_train
+        self.watcher.embedding(data, data, label)
 
     def compute_loss(self):
         var_dic = {}
@@ -63,7 +65,7 @@ def start_example():
     :return:
     """
     gpus = [0]
-    batchSize = 64
+    batch_shape = (32, 3, 32, 32)
     nepochs = 10
 
     lr = 1e-3
@@ -76,7 +78,7 @@ def start_example():
     # opt_name = "Adam"
 
     print('===> Build dataset')
-    mnist = Fashion_mnist(batch_size=batchSize)
+    mnist = Fashion_mnist(batch_shape = batch_shape)
     torch.backends.cudnn.benchmark = True
     print('===> Building model')
     net = Model(resnet18(), gpu_ids_abs=gpus, init_method="kaiming")

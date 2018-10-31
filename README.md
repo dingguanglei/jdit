@@ -95,11 +95,7 @@ class Dataloaders_factory(metaclass=ABCMeta):
 
     @property
     def configure(self):
-        """the info which you can get from `configure[key]` are
-        "dataset_name", "batch_size", "shuffle", "root", "num_workers",
-        "train_nsteps", "valid_nsteps", "test_nsteps", 
-        "dataset_train", "dataset_valid","dataset_test"
-        """
+        nsteps_train
 
 ```
 To build your dataset class, including train, valid and test. You need to do as following. 

@@ -175,12 +175,12 @@ class FID(object):
 
     # def cifar10_FID_fromloader(self, dataloader):
     #
-    #     fake_mu, fake_sigma = self.compute_act_statistics(dataloader, self._getInception(), self.gpu_ids)
+    #     fake_mu, fake_sigma = self.compute_act_statistics_from_loader(dataloader, self._getInception(), self.gpu_ids)
     #     cifar10_mu, cifar10_sigma = self._get_cifar10_mu_sigma()
     #     fid = self.FID(cifar10_mu, cifar10_sigma, fake_mu, fake_sigma)
     #     return fid
     #
-    # def compute_act_statistics(self, dataloader, model, gpu_ids):
+    # def compute_act_statistics_from_loader(self, dataloader, model, gpu_ids):
     #     model.eval()
     #     pred_arr = None
     #     placeholder = Variable().cuda() if len(gpu_ids) > 0 else Variable()

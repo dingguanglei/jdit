@@ -21,7 +21,7 @@ class ClassificationTrainer(SupTrainer):
         self.loger.regist_config(self)
 
     def train_epoch(self):
-        for iteration, batch in tqdm(enumerate(self.datasets.train_loader, 1), unit="step"):
+        for iteration, batch in tqdm(enumerate(self.datasets.loader_train, 1), unit="step"):
             self.step += 1
 
             input_cpu, ground_truth_cpu, labels_cpu = self.get_data_from_loader(batch)
@@ -70,7 +70,7 @@ class ClassificationTrainer(SupTrainer):
     def valid(self):
         avg_dic = {}
         self.net.eval()
-        for iteration, batch in enumerate(self.datasets.valid_loader, 1):
+        for iteration, batch in enumerate(self.datasets.loader_valid, 1):
             input_cpu, ground_truth_cpu, labels_cpu = self.get_data_from_loader(batch)
             self.mv_inplace(input_cpu, self.input)
             self.mv_inplace(ground_truth_cpu, self.ground_truth)
@@ -86,7 +86,7 @@ class ClassificationTrainer(SupTrainer):
                     avg_dic[key] += dic[key]
 
         for key in avg_dic.keys():
-            avg_dic[key] = avg_dic[key] / self.datasets.valid_nsteps
+            avg_dic[key] = avg_dic[key] / self.datasets.nsteps_valid_
 
         self.watcher.scalars(var_dict=avg_dic, global_step=self.step, tag="Valid")
         self.loger.write(self.step, self.current_epoch, avg_dic, "Valid", header=self.current_epoch <= 1)

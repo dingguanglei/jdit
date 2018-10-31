@@ -1,4 +1,4 @@
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, random_split
 from torchvision import datasets, transforms
 import psutil
 from abc import ABCMeta, abstractmethod
@@ -9,7 +9,7 @@ class Dataloaders_factory(metaclass=ABCMeta):
 
     It defines same basic attributes and methods.
 
-    * For training data: ``train_dataset``, ``train_loader``, ``train_nsteps`` .
+    * For training data: ``train_dataset``, ``loader_train``, ``nsteps_train`` .
       Others such as ``valid`` and ``test`` have the same naming format.
     * For transform, you can define your own transforms.
     * If you don't have test set, it will be replaced by valid dataset.
@@ -38,7 +38,7 @@ class Dataloaders_factory(metaclass=ABCMeta):
                    transform=transforms.Compose(self.valid_transform_list))
 
       #. ``buildLoaders()`` It will use dataset, and passed parameters to
-         build dataloaders for ``self.train_loader``, ``self.valid_loader`` and ``self.test_loader``.
+         build dataloaders for ``self.loader_train``, ``self.loader_valid`` and ``self.loader_test``.
 
 
     * :attr:`root` is the root path of datasets.
@@ -51,7 +51,8 @@ class Dataloaders_factory(metaclass=ABCMeta):
     * :attr:`shuffle` is whether shuffle the data. Default: ``True``
 
     """
-    def __init__(self, root, batch_shape, num_workers=-1, shuffle=True):
+
+    def __init__(self, root, batch_shape, num_workers=-1, shuffle=True, subdata_prop=0.1):
         """ Build data loaders.
 
         :param root: root path of datasets.
@@ -72,37 +73,25 @@ class Dataloaders_factory(metaclass=ABCMeta):
         self.dataset_valid = None
         self.dataset_test = None
 
-        self.train_loader = None
-        self.valid_loader = None
-        self.test_loader = None
+        self.loader_train = None
+        self.loader_valid = None
+        self.loader_test = None
 
-        self.train_nsteps = None
-        self.valid_nsteps = None
-        self.test_nsteps = None
+        self.nsteps_train = None
+        self.nsteps_valid = None
+        self.nsteps_test = None
+
+        self.sample_dataset_prop = subdata_prop
+
         self.buildTransforms()
         self.buildDatasets()
         self.buildLoaders()
 
-    def buildLoaders(self):
-        r""" Build datasets
-        The previous function ``self.buildDatasets()`` has created datasets.
-        Use these datasets to build their dataloader
-        """
-        assert self.dataset_train is not None, "`self.dataset_train` can't be `None`. " \
-                                               "Rewrite `buildDatasets` method and pass your own dataset to self.dataset_train"
-        assert self.dataset_valid is not None, "`self.dataset_valid` can't be `None`. " \
-                                               "Rewrite `buildDatasets` method and pass your own dataset to self.dataset_valid"
-        # Create dataloaders
-        self.train_loader = DataLoader(self.dataset_train, batch_size=self.batch_size, shuffle=self.shuffle)
-        self.valid_loader = DataLoader(self.dataset_valid, batch_size=self.batch_size, shuffle=self.shuffle)
-        self.train_nsteps = len(self.train_loader)
-        self.valid_nsteps = len(self.valid_loader)
-
-        if self.dataset_test is None:
-            self.dataset_test = self.dataset_valid
-
-        self.test_loader = DataLoader(self.dataset_test, batch_size=self.batch_size, shuffle=self.shuffle)
-        self.test_nsteps = len(self.test_loader)
+    def buildTransforms(self, resize=32):
+        self.train_transform_list = self.valid_transform_list = [
+            transforms.Resize(resize),
+            transforms.ToTensor(),
+            transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])]
 
     @abstractmethod
     def buildDatasets(self):
@@ -119,11 +108,49 @@ class Dataloaders_factory(metaclass=ABCMeta):
         # self.dataset_valid = datasets.CIFAR10(root, train=False, download=True,
         #                                       transform=transforms.Compose(self.valid_transform_list))
 
-    def buildTransforms(self, resize=32):
-        self.train_transform_list = self.valid_transform_list = [
-            transforms.Resize(resize),
-            transforms.ToTensor(),
-            transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])]
+    def buildLoaders(self):
+        r""" Build datasets
+        The previous function ``self.buildDatasets()`` has created datasets.
+        Use these datasets to build their dataloader
+        """
+        assert self.dataset_train is not None, "`self.dataset_train` can't be `None`. " \
+                                               "Rewrite `buildDatasets` method and pass your own dataset to " \
+                                               "self.dataset_train"
+        assert self.dataset_valid is not None, "`self.dataset_valid` can't be `None`. " \
+                                               "Rewrite `buildDatasets` method and pass your own dataset to " \
+                                               "self.dataset_valid"
+        # Create dataloaders
+        self.loader_train = DataLoader(self.dataset_train, batch_size=self.batch_size, shuffle=self.shuffle)
+        self.loader_valid = DataLoader(self.dataset_valid, batch_size=self.batch_size, shuffle=self.shuffle)
+        self.nsteps_train = len(self.loader_train)
+        self.nsteps_valid = len(self.loader_valid)
+
+        if self.dataset_test is None:
+            self.dataset_test = self.dataset_valid
+
+        self.loader_test = DataLoader(self.dataset_test, batch_size=self.batch_size, shuffle=self.shuffle)
+        self.nsteps_test = len(self.loader_test)
+
+    @property
+    def samples_train(self):
+        return self._get_samples(self.dataset_train, self.sample_dataset_prop)
+
+    @property
+    def samples_valid(self):
+        return self._get_samples(self.dataset_train, self.sample_dataset_prop)
+
+    @property
+    def samples_test(self):
+        return self._get_samples(self.dataset_train, self.sample_dataset_prop)
+
+    def _get_samples(self, dataset, sample_dataset_prop=0.1):
+        import math
+        assert len(dataset) > 10, "Dataset is (%d) to small" % len(dataset)
+        subdata_size = math.floor(sample_dataset_prop * len(dataset))
+        sample_dataset, _ = random_split(dataset, [subdata_size, len(dataset) - subdata_size])
+        sample_loader = DataLoader(sample_dataset, batch_size=subdata_size, shuffle=True)
+        [samples_data] = list(sample_loader)
+        return samples_data
 
     @property
     def configure(self):
@@ -134,9 +161,9 @@ class Dataloaders_factory(metaclass=ABCMeta):
         configs["shuffle"] = [str(self.shuffle)]
         configs["root"] = [str(self.root)]
         configs["num_workers"] = [str(self.num_workers)]
-        configs["train_nsteps"] = [str(self.train_nsteps)]
-        configs["valid_nsteps"] = [str(self.valid_nsteps)]
-        configs["test_nsteps"] = [str(self.test_nsteps)]
+        configs["nsteps_train"] = [str(self.nsteps_train)]
+        configs["nsteps_valid"] = [str(self.nsteps_valid)]
+        configs["nsteps_test"] = [str(self.nsteps_test)]
         configs["dataset_train"] = [str(self.dataset_train)]
         configs["dataset_valid"] = [str(self.dataset_valid)]
         configs["dataset_test"] = [str(self.dataset_test)]
@@ -144,7 +171,45 @@ class Dataloaders_factory(metaclass=ABCMeta):
 
 
 class Hand_mnist(Dataloaders_factory):
-    def __init__(self, root=r'.\datasets\mnist',  batch_shape=(128, 1, 32, 32), num_workers=-1):
+    """ Hand writing mnist dataset.
+
+    Example::
+
+        >>> data = Hand_mnist(r"../datasets/mnist")
+        use 8 thread!
+        Downloading http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz
+        Downloading http://yann.lecun.com/exdb/mnist/train-labels-idx1-ubyte.gz
+        Downloading http://yann.lecun.com/exdb/mnist/t10k-images-idx3-ubyte.gz
+        Downloading http://yann.lecun.com/exdb/mnist/t10k-labels-idx1-ubyte.gz
+        Processing...
+        Done!
+        >>> data.dataset_train
+        Dataset MNIST
+        Number of datapoints: 60000
+        Split: train
+        Root Location: data
+        Transforms (if any): Compose(
+                                 Resize(size=32, interpolation=PIL.Image.BILINEAR)
+                                 ToTensor()
+                                 Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
+                             )
+        Target Transforms (if any): None
+        >>> # We don't set test dataset, so they are the same.
+        >>> data.dataset_valid is data.dataset_test
+        True
+        >>> # Number of steps at batch size 128.
+        >>> data.nsteps_train
+        469
+        >>> # Total samples of training datset.
+        >>> len(data.dataset_train)
+        60000
+        >>> # The batch size of sample load is 1. So, we get length of loader is equal to samples amount.
+        >>> len(data.samples_train)
+        6000
+
+    """
+
+    def __init__(self, root=r'.\datasets\mnist', batch_shape=(128, 1, 32, 32), num_workers=-1):
         super(Hand_mnist, self).__init__(root, batch_shape, num_workers)
 
     def buildDatasets(self):
@@ -155,7 +220,7 @@ class Hand_mnist(Dataloaders_factory):
 
 
 class Fashion_mnist(Dataloaders_factory):
-    def __init__(self, root=r'.\datasets\fashion_data',  batch_shape=(128, 1, 32, 32), num_workers=-1):
+    def __init__(self, root=r'.\datasets\fashion_data', batch_shape=(128, 1, 32, 32), num_workers=-1):
         super(Fashion_mnist, self).__init__(root, batch_shape, num_workers)
 
     def buildDatasets(self):
@@ -177,7 +242,7 @@ class Cifar10(Dataloaders_factory):
 
 
 class Lsun(Dataloaders_factory):
-    def __init__(self, root=r'.\datasets\LSUN',  batch_shape=(64, 3, 128, 128), num_workers=-1):
+    def __init__(self, root=r'.\datasets\LSUN', batch_shape=(64, 3, 128, 128), num_workers=-1):
         super(Lsun, self).__init__(root, batch_shape, num_workers)
 
     def buildDatasets(self):
@@ -194,7 +259,7 @@ def get_mnist_dataloaders(root=r'..\data', batch_size=128):
         transforms.Resize(28),
         transforms.ToTensor(),
         # transforms.Normalize([0.5],[0.5])
-    ])
+        ])
     # Get train and test data
     train_data = datasets.MNIST(root, train=True, download=True,
                                 transform=all_transforms)
@@ -218,7 +283,7 @@ def get_fashion_mnist_dataloaders(root=r'.\dataset\fashion_data', batch_size=128
             transforms.Resize(resize),
             transforms.ToTensor(),
             transforms.Normalize([0.5], [0.5])
-        ]
+            ]
     all_transforms = transforms.Compose(transform_list)
     # Get train and test data
     train_data = datasets.FashionMNIST(root, train=True, download=True,
@@ -243,7 +308,7 @@ def get_lsun_dataloader(path_to_data='/data/dgl/LSUN', dataset='bedroom_train',
         transforms.Resize(128),
         transforms.CenterCrop(128),
         transforms.ToTensor()
-    ])
+        ])
 
     # Get dataset
     lsun_dset = datasets.LSUN(root=path_to_data, classes=[dataset],

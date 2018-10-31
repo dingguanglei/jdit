@@ -5,27 +5,21 @@ setup(
     version="0.0.1",
     author="Guanglei Ding",
     author_email="dingguanglei.bupt@qq.com",
-    description=("This is a framework for research based on pytorch"),
+    maintainer='Guanglei Ding',
+    maintainer_email='dingguanglei.bupt@qq.com',
+    description=("Make it easy to do research on pytorch"),
+    long_description=open('docs/source/index.rst').read(),
+    long_description_content_type="text/x-rst",
     license="Apache License 2.0",
     keywords="pytorch research framework",
+    platforms=["all"],
     url="https://github.com/dingguanglei/jdit",
     packages=['jdit','jdit/trainer','jdit/trainer/gan','jdit/trainer/instances',
               'mypackage','mypackage/model','mypackage/metric','mypackage/model/shared'],  # 需要打包的目录列表
 
     # 需要安装的依赖
     install_requires=[
-        # 'pip>=18.0'
-        # 'torch>=0.4.1',
-        # 'setuptools>=16.0',
-        # 'torchvision',
-        # 'psutil>=5.4.6',
-        # 'tqdm>=4.23.4',
-        # 'pandas>=0.23.0',
-        # "tensorboardX>=1.4",
-        # # 'tensorboard>=1.7.0',
         "nvidia_ml_py3>=7.352.0",
-        # "pandas>=0.23.1",
-        # 'numpy>=1.14.5',
         'imageio>=2.4.1'
     ],
 
@@ -37,9 +31,16 @@ setup(
 
     # long_description=read('README.md'),
     classifiers=[  # 程序的所属分类列表
-        "Development Status :: 1 - Alpha",
-        "Topic :: Utilities",
-        "License :: Apache :: Apache License 2.0",
+        "Topic :: Scientific/Engineering :: Artificial Intelligence",
+        "License :: OSI Approved :: Apache Software License",
+        'Development Status :: 1 - Planning',
+
+        'Operating System :: OS Independent',
+        'Intended Audience :: Developers',
+        "Programming Language :: Python :: 3 :: Only",
+        'Programming Language :: Python :: Implementation',
+        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
     ],
     # 此项需要，否则卸载时报windows error
     zip_safe=False

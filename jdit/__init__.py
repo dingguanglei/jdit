@@ -1,6 +1,5 @@
 from jdit.model import Model
 from jdit.optimizer import Optimizer
-# import dataset
+# from dataset import *
 from jdit.trainer import *
-# import .metric
-# from .metric import *
+from jdit.assessment import FID_score

@@ -6,10 +6,11 @@ from jdit.trainer.gan.generate import GanTrainer
 from jdit.model import Model
 from jdit.optimizer import Optimizer
 from jdit.dataset import Cifar10
-from jdit.metric.inception import FID
+from jdit.assessment123.inception import FID
 # from mypackage.model.resnet import ResNet18, Tresnet18
 from mypackage.tricks import gradPenalty, spgradPenalty
 from mypackage.model.Tnet import NLayer_D, TWnet_G, NThickLayer_D
+
 
 # from mypackage.tricks import jcbClamp
 
@@ -19,11 +20,14 @@ class GenerateGanTrainer(GanTrainer):
     every_epoch_checkpoint = 50  # 2
     every_epoch_changelr = 2  # 1
     d_turn = 5
+
     def __init__(self, logdir, nepochs, gpu_ids_abs, netG, netD, optG, optD, dataset, latent_shape):
         super(GenerateGanTrainer, self).__init__(logdir, nepochs, gpu_ids_abs, netG, netD, optG, optD, dataset,
                                                  latent_shape=latent_shape)
 
         self.watcher.graph(netG, (4, *self.latent_shape), self.use_gpu)
+        data, label = self.datasets.samples_train
+        self.watcher.embedding(data, data, label)
 
     def compute_d_loss(self):
         d_fake = self.netD(self.fake.detach())
@@ -68,8 +72,8 @@ class GenerateGanTrainer(GanTrainer):
         self.netG.eval()
         with torch.no_grad():
             fake = self.netG(self.fixed_input).detach()
-        self.watcher.image(fake, self.current_epoch, tag="Valid/Fixed_fake",grid_size=(4,4),shuffle=False)
-        self.watcher.set_training_progress_images(fake, grid_size=(4,4))
+        self.watcher.image(fake, self.current_epoch, tag="Valid/Fixed_fake", grid_size=(4, 4), shuffle=False)
+        self.watcher.set_training_progress_images(fake, grid_size=(4, 4))
 
         var_dic = {}
         # var_dic["FID_SCORE"] = self.metric.evaluate_model_fid(self.netG, (256, *self.latent_shape), amount=8)
@@ -79,7 +83,7 @@ class GenerateGanTrainer(GanTrainer):
 
 if __name__ == '__main__':
 
-    gpus = [2,3]
+    gpus = [2, 3]
     batch_shape = (128, 3, 32, 32)
     image_channel = batch_shape[1]
     nepochs = 200
@@ -105,7 +109,8 @@ if __name__ == '__main__':
     print('===> Building model')
     # D_net = NThickLayer_D(input_nc=image_channel, mid_channels=D_mid_channel, depth=depth_D, norm_type=None,
     #                       active_type="ReLU")
-    D_net = NLayer_D(input_nc=image_channel, depth = depth_D, use_sigmoid=False,use_liner=False,norm_type="batch",active_type="ReLU")
+    D_net = NLayer_D(input_nc=image_channel, depth=depth_D, use_sigmoid=False, use_liner=False, norm_type="batch",
+                     active_type="ReLU")
     D = Model(D_net, gpu_ids_abs=gpus, init_method="kaiming")
     # -----------------------------------
     G_net = TWnet_G(input_nc=latent_shape[0], mid_channels=G_mid_channel, output_nc=image_channel, depth=depth_G,
