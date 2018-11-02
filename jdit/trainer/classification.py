@@ -86,7 +86,7 @@ class ClassificationTrainer(SupTrainer):
                     avg_dic[key] += dic[key]
 
         for key in avg_dic.keys():
-            avg_dic[key] = avg_dic[key] / self.datasets.nsteps_valid_
+            avg_dic[key] = avg_dic[key] / self.datasets.nsteps_valid
 
         self.watcher.scalars(var_dict=avg_dic, global_step=self.step, tag="Valid")
         self.loger.write(self.step, self.current_epoch, avg_dic, "Valid", header=self.current_epoch <= 1)

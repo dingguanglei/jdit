@@ -1,12 +1,11 @@
 # coding=utf-8
 import torch
 from torch.nn import CrossEntropyLoss
-# from torchvision.models.resnet import resnet18
 from jdit.trainer.classification import ClassificationTrainer
 from jdit.model import Model
 from jdit.optimizer import Optimizer
 from jdit.dataset import Cifar10, Fashion_mnist
-from mypackage.model.resnet import  resnet18
+from .resnet import  Resnet18
 
 
 class FashingClassTrainer(ClassificationTrainer):
@@ -81,7 +80,7 @@ def start_example():
     mnist = Fashion_mnist(batch_shape = batch_shape)
     torch.backends.cudnn.benchmark = True
     print('===> Building model')
-    net = Model(resnet18(), gpu_ids_abs=gpus, init_method="kaiming")
+    net = Model(Resnet18(64), gpu_ids_abs=gpus, init_method="kaiming")
     print('===> Building optimizer')
     opt = Optimizer(net.parameters(), lr, lr_decay, weight_decay, momentum, betas, opt_name)
     print('===> Training')

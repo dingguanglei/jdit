@@ -17,5 +17,6 @@ Desktop.ini
 *.so
 *.egg
 *.egg-info
+*.pypirc
 dist
 build
