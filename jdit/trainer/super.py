@@ -78,12 +78,13 @@ class SupTrainer(object):
         targert.data.resize_(source_to.size()).copy_(source_to)
 
     def update_config_info(self):
-        """
-        to register the `model` ,`optim` ,`trainer` and `performance` config info.
-            self.loger.regist_config(opt, self.current_epoch)  # for opt.configure
-            self.loger.regist_config(model, self.current_epoch ) # for model.configure
-            self.loger.regist_config(self.performance, self.current_epoch)# for self.performance.configure
-            self.loger.regist_config(self,self.current_epoch) # for trainer.configure
+        """to register the `model` ,`optim` ,`trainer` and `performance` config info.
+
+          * self.loger.regist_config(opt, self.current_epoch)  # for opt.configure
+          * self.loger.regist_config(model, self.current_epoch ) # for model.configure
+          * self.loger.regist_config(self.performance, self.current_epoch)# for self.performance.configure
+          * self.loger.regist_config(self,self.current_epoch) # for trainer.configure
+
         :return:
         """
         self.loger.regist_config(self, self.current_epoch)  # for trainer.configure

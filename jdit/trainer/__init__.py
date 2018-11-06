@@ -1,4 +1,7 @@
-from .super import *
-from .classification import *
-from .gan import *
-from .instances import *
+from .super import SupTrainer
+from .classification import ClassificationTrainer
+from .gan import GanTrainer
+# from .instances import *
+from jdit.trainer import instances
+
+__all__ = ['SupTrainer', 'GanTrainer', 'ClassificationTrainer','instances']

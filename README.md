@@ -12,15 +12,17 @@ You only need to implement you ideas and
 don't do anything with training framework, multiply-gpus, checkpoint, process visualization, performance evaluation and so on.
 
 ## Install 
-By using ``setup.py`` to install the package.
+By using `setup.py` to install the package.
 
-``python
+```
 python setup.py sdist bdist_wheel
-``
-You will find packages in ``jdit/dist/``. Using pip to install.
-``
-pip install jdit-0.0.1-py3-none-any.whl
-``
+```
+
+You will find packages in `jdit/dist/`. Use pip to install.
+
+```
+pip install jdit-0.0.2-py3-none-any.whl
+```
 
 ## Quick start
 After building and installing jdit package, you can make a new directory for a quick test.

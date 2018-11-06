@@ -14,6 +14,7 @@ Welcome to jdit's documentation!
    optimizer
    trainer
    assessment
+   parallel
 
 
 

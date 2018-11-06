@@ -99,23 +99,22 @@ class GanTrainer(SupTrainer):
 
     @abstractmethod
     def compute_d_loss(self):
-        """
-        An example!
-        __________________________________________
-        d_fake = self.netD(self.fake.detach())
-        d_real = self.netD(self.ground_truth)
+        """ Rewrite this method to compute your own loss discriminator.
 
-        var_dic = {}
-        var_dic["GP"] = gp = gradPenalty(self.netD, self.ground_truth, self.fake, input=self.input,
-                                         use_gpu=self.use_gpu)
-        var_dic["SGP"] = sgp = spgradPenalty(self.netD, self.ground_truth, self.fake, type="G",
-                                             use_gpu=self.use_gpu) * 0.5 + \
-                               spgradPenalty(self.netD, self.ground_truth, self.fake, type="X",
-                                             use_gpu=self.use_gpu) * 0.5
-        var_dic["WD"] = w_distance = (d_real.mean() - d_fake.mean()).detach()
-        var_dic["LOSS_D"] = loss_d = d_fake.mean() - d_real.mean() + gp + sgp
+        You should return a **loss** for the first position.
+        You can return a ``dict`` of loss that you want to visualize on the second position.like
 
-        :return: loss_d, var_dic
+        Example::
+
+            d_fake = self.netD(self.fake.detach())
+            d_real = self.netD(self.ground_truth)
+            var_dic = {}
+            var_dic["GP"] = gp = gradPenalty(self.netD, self.ground_truth, self.fake, input=self.input,
+                                             use_gpu=self.use_gpu)
+            var_dic["WD"] = w_distance = (d_real.mean() - d_fake.mean()).detach()
+            var_dic["LOSS_D"] = loss_d = d_fake.mean() - d_real.mean() + gp + sgp
+            return: loss_d, var_dic
+
         """
         loss_d = None
         var_dic = {}
@@ -124,14 +123,19 @@ class GanTrainer(SupTrainer):
 
     @abstractmethod
     def compute_g_loss(self):
-        """
-        An example!
-        __________________________________________
-        d_fake = self.netD(self.fake)
-        var_dic = {}
-        var_dic["JC"] = jc = jcbClamp(self.netG, self.input, use_gpu=self.use_gpu)
-        var_dic["LOSS_D"] = loss_g = -d_fake.mean() + jc
-        :return: loss_g, var_dic
+        """Rewrite this method to compute your own loss of generator.
+
+        You should return a **loss** for the first position.
+        You can return a ``dict`` of loss that you want to visualize on the second position.like
+
+        Example::
+
+            d_fake = self.netD(self.fake)
+            var_dic = {}
+            var_dic["JC"] = jc = jcbClamp(self.netG, self.input, use_gpu=self.use_gpu)
+            var_dic["LOSS_D"] = loss_g = -d_fake.mean() + jc
+            return: loss_g, var_dic
+
         """
         loss_g = None
         var_dic = {}

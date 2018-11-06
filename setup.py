@@ -8,13 +8,14 @@ setup(
     maintainer='Guanglei Ding',
     maintainer_email='dingguanglei.bupt@qq.com',
     description=("Make it easy to do research on pytorch"),
-    long_description=open('docs/source/index.rst').read(),
+    # long_description=open('docs/source/index.rst').read(),
+    long_description=open('README.md').read(),
     license="Apache License 2.0",
     keywords="pytorch research framework",
     platforms=["all"],
     url="https://github.com/dingguanglei/jdit",
     packages=['jdit','jdit/trainer','jdit/trainer/gan','jdit/trainer/instances',
-              'jdit/assessment'],
+              'jdit/assessment','jdit/parallel',],
               # 'mypackage','mypackage/model','mypackage/metric','mypackage/model/shared'],  # 需要打包的目录列表
 
     # 需要安装的依赖
@@ -33,7 +34,7 @@ setup(
     classifiers=[  # 程序的所属分类列表
         "Topic :: Scientific/Engineering :: Artificial Intelligence",
         "License :: OSI Approved :: Apache Software License",
-        'Development Status :: 1 - Planning',
+        'Development Status :: 2 - Pre-Alpha',
 
         'Operating System :: OS Independent',
         'Intended Audience :: Developers',
