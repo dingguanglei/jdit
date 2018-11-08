@@ -1,16 +1,39 @@
 # coding=utf-8
 import os, torch
+import torch.nn as nn
 from torch.nn import CrossEntropyLoss
 from torch.autograd import Variable
 from jdit.trainer.gan.generate import GanTrainer
 from jdit.model import Model
 from jdit.optimizer import Optimizer
 from jdit.dataset import Cifar10
-from mypackage.tricks import gradPenalty
-from mypackage.model.Tnet import NLayer_D, TWnet_G
 
 
-# from mypackage.tricks import jcbClamp
+def gradPenalty(D_net, real, fake, LAMBDA=10, use_gpu=False):
+    batch_size = real.size()[0]
+    # Calculate interpolation
+    alpha = torch.rand(batch_size, 1, 1, 1)
+    alpha = alpha.expand_as(real)
+
+    alpha = alpha.cuda() if use_gpu else alpha
+
+    interpolates = alpha * real + ((1 - alpha) * fake)
+
+    if use_gpu:
+        interpolates = interpolates.cuda()
+    interpolates = Variable(interpolates, requires_grad=True)
+    disc_interpolates = D_net(interpolates)
+    gradients = torch.autograd.grad(
+            outputs=disc_interpolates,
+            inputs=interpolates,
+            grad_outputs=torch.ones(disc_interpolates.size()).cuda()
+            if use_gpu else torch.ones(disc_interpolates.size()),
+            create_graph=True,
+            retain_graph=True,
+            only_inputs=True)[0]
+
+    gradient_penalty = ((gradients.norm(2, dim=1) - 1) ** 2).mean() * LAMBDA
+    return gradient_penalty
 
 
 class GenerateGanTrainer(GanTrainer):
@@ -32,7 +55,7 @@ class GenerateGanTrainer(GanTrainer):
         d_real = self.netD(self.ground_truth)
 
         var_dic = {}
-        var_dic["GP"] = gp = gradPenalty(self.netD, self.ground_truth, self.fake, input=None,
+        var_dic["GP"] = gp = gradPenalty(self.netD, self.ground_truth, self.fake,
                                          use_gpu=self.use_gpu)
         var_dic["WD"] = w_distance = (d_real.mean() - d_fake.mean()).detach()
         var_dic["LOSS_D"] = loss_d = d_fake.mean() - d_real.mean() + gp
@@ -42,22 +65,9 @@ class GenerateGanTrainer(GanTrainer):
     def compute_g_loss(self):
         d_fake = self.netD(self.fake)
         var_dic = {}
-        # var_dic["JC"] = jc = jcbClamp(self.netG, self.input, use_gpu=self.use_gpu)
         # var_dic["LOSS_D"] = loss_g = -d_fake.mean() + jc
         var_dic["LOSS_G"] = loss_g = -d_fake.mean()
         return loss_g, var_dic
-
-    # def compute_valid(self):
-    #     var_dic = {}
-    #     # fake = self.netG(self.input).detach()
-    #     d_fake = self.netD(self.fake).detach()
-    #     d_real = self.netD(self.ground_truth).detach()
-    #     # var_dic["G"] = loss_g = (-d_fake.mean()).detach()
-    #     # var_dic["GP"] = gp = (
-    #     #     gradPenalty(self.netD, self.ground_truth, self.fake, input=self.input, use_gpu=self.use_gpu)).detach()
-    #     # var_dic["D"] = loss_d = (d_fake.mean() - d_real.mean() + gp).detach()
-    #     var_dic["WD"] = w_distance = (d_real.mean() - d_fake.mean()).detach()
-    #     return var_dic
 
     def valid(self):
         if self.fixed_input is None:
@@ -77,6 +87,62 @@ class GenerateGanTrainer(GanTrainer):
         # var_dic["FID_SCORE"] = self.metric.evaluate_model_fid(self.netG, (256, *self.latent_shape), amount=8)
         # self.watcher.scalars(var_dic, self.step, tag="Valid")
         self.netG.train()
+
+
+class discriminator(nn.Module):
+    def __init__(self, input_nc=1, output_nc=1, depth=64):
+        super(discriminator, self).__init__()
+        # 32 x 32
+        self.layer1 = nn.Sequential(
+                nn.utils.spectral_norm(nn.Conv2d(input_nc, depth * 1, kernel_size=3, stride=1, padding=1)),
+                nn.LeakyReLU(0.1))
+        # 32 x 32
+        self.layer2 = nn.Sequential(
+                nn.utils.spectral_norm(nn.Conv2d(depth * 1, depth * 2, kernel_size=3, stride=1, padding=1)),
+                nn.LeakyReLU(0.1),
+                nn.MaxPool2d(2, 2))
+        # 16 x 16
+        self.layer3 = nn.Sequential(
+                nn.utils.spectral_norm(nn.Conv2d(depth * 2, depth * 4, kernel_size=3, stride=1, padding=1)),
+                nn.LeakyReLU(0.1),
+                nn.MaxPool2d(2, 2))
+        # 8 x 8
+        self.layer4 = nn.Sequential(nn.Conv2d(depth * 4, output_nc, kernel_size=8, stride=1, padding=0))
+        # 1 x 1
+
+    def forward(self, x):
+        out = self.layer1(x)
+        out = self.layer2(out)
+        out = self.layer3(out)
+        out = self.layer4(out)
+        return out
+
+
+class generator(nn.Module):
+    def __init__(self, input_nc=256, output_nc=1, depth=64):
+        super(generator, self).__init__()
+        self.depth = depth
+        self.in_channel = input_nc
+        self.latent_to_features = nn.Sequential(
+                nn.Conv2d(input_nc, 8 * depth, 4, 1, 0),  # 256,1,1 =>  512,4,4
+                nn.ReLU())
+        self.features_to_image = nn.Sequential(
+                nn.ConvTranspose2d(8 * depth, 4 * depth, 4, 2, 1),  # 512,4,4 =>  256,8,8
+                nn.ReLU(),
+                nn.BatchNorm2d(4 * depth),
+                nn.ConvTranspose2d(4 * depth, 2 * depth, 4, 2, 1),  # 256,8,8 =>  128,16,16
+                nn.ReLU(),
+                nn.BatchNorm2d(2 * depth),
+                nn.ConvTranspose2d(2 * depth, depth, 4, 2, 1),  # 128,16,16 =>  64,32,32
+                nn.ReLU(),
+                nn.BatchNorm2d(depth),
+                nn.ConvTranspose2d(depth, output_nc, 3, 1, 1),  # 64,32,32 =>  1,32,32
+                )
+
+    def forward(self, input_data):
+        out = self.latent_to_features(input_data)
+        out = self.features_to_image(out)
+        return out
 
 
 if __name__ == '__main__':
@@ -100,25 +166,20 @@ if __name__ == '__main__':
     momentum = 0
     D_mid_channel = 16
 
+    # the input shape of generator
     latent_shape = (256, 1, 1)
     print('===> Build dataset')
     cifar10 = Cifar10(batch_shape=batch_shape)
     torch.backends.cudnn.benchmark = True
     print('===> Building model')
-    # D_net = NThickLayer_D(input_nc=image_channel, mid_channels=D_mid_channel, depth=depth_D, norm_type=None,
-    #                       active_type="ReLU")
-    D_net = NLayer_D(input_nc=image_channel, depth=depth_D, use_sigmoid=False, use_liner=False, norm_type="batch",
-                     active_type="ReLU")
+    D_net = discriminator(input_nc=image_channel, depth=depth_D)
     D = Model(D_net, gpu_ids_abs=gpus, init_method="kaiming")
     # -----------------------------------
-    G_net = TWnet_G(input_nc=latent_shape[0], mid_channels=G_mid_channel, output_nc=image_channel, depth=depth_G,
-                    norm_type="batch",
-                    active_type="LeakyReLU")
+    G_net = generator(input_nc=latent_shape[0], output_nc=image_channel, depth=depth_G)
     G = Model(G_net, gpu_ids_abs=gpus, init_method="kaiming")
     print('===> Building optimizer')
     opt_D = Optimizer(D.parameters(), lr, lr_decay, weight_decay, momentum, betas, opt_D_name)
     opt_G = Optimizer(G.parameters(), lr, lr_decay, weight_decay, momentum, betas, opt_G_name)
-
     print('===> Training')
     Trainer = GenerateGanTrainer("log", nepochs, gpus, G, D, opt_G, opt_D, cifar10, latent_shape)
     Trainer.train()

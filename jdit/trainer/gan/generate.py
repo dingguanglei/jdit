@@ -6,8 +6,10 @@ from torch.autograd import Variable
 # from ...metric import FID
 import torch
 
+
 class GanTrainer(SupTrainer):
     d_turn = 1
+
     def __init__(self, logdir, nepochs, gpu_ids_abs, netG, netD, optG, optD, datasets, latent_shape):
         """ a gan super class
 
@@ -36,8 +38,8 @@ class GanTrainer(SupTrainer):
         self.loger.regist_config(datasets)
         self.loger.regist_config(self)
 
-    def train_epoch(self):
-        for iteration, batch in tqdm(enumerate(self.datasets.loader_train, 1), unit="step"):
+    def train_epoch(self, subbar_disable=False):
+        for iteration, batch in tqdm(enumerate(self.datasets.loader_train, 1), unit="step", disable=subbar_disable):
             self.step += 1
 
             input_cpu, ground_truth_cpu = self.get_data_from_loader(batch)
@@ -58,13 +60,13 @@ class GanTrainer(SupTrainer):
         input_cpu = Variable(torch.randn((len(ground_truth_cpu), *self.latent_shape)))
         return input_cpu, ground_truth_cpu
 
-    def _watch_images(self, tag, grid_size=(3, 3), shuffle=False, save_file = True):
+    def _watch_images(self, tag, grid_size=(3, 3), shuffle=False, save_file=True):
         self.watcher.image(self.fake,
                            self.current_epoch,
                            tag="%s/fake" % tag,
                            grid_size=grid_size,
                            shuffle=shuffle,
-                           save_file = save_file)
+                           save_file=save_file)
         self.watcher.image(self.ground_truth,
                            self.current_epoch,
                            tag="%s/real" % tag,

@@ -2,7 +2,6 @@
 from torch.nn import Module, Sequential, Conv2d, BatchNorm2d, InstanceNorm2d, LeakyReLU, Linear, Sigmoid, Upsample, \
     Tanh, Dropout, ReLU, MaxPool2d, AvgPool2d, ModuleList, Parameter, Softmax, LayerNorm, GroupNorm, ConvTranspose2d
 import torch
-from .spectral_normalization import SpectralNorm
 from torch.nn.utils import spectral_norm
 
 
@@ -60,7 +59,7 @@ class convLayer(Module):
         self.module_list = ModuleList([])
 
         if use_sn:
-            self.module_list += [SpectralNorm(Conv2d(c_in, c_out, kernel_size, stride, padding, groups=groups))]
+            self.module_list += [spectral_norm(Conv2d(c_in, c_out, kernel_size, stride, padding, groups=groups))]
         else:
             self.module_list += [Conv2d(c_in, c_out, kernel_size, stride, padding, groups=groups)]
         if norm:
@@ -84,7 +83,7 @@ class deconvLayer(Module):
         self.module_list = ModuleList([])
         if use_sn:
             self.module_list += [
-                SpectralNorm(ConvTranspose2d(c_in, c_out, kernel_size, stride, padding, groups=groups))]
+                spectral_norm(ConvTranspose2d(c_in, c_out, kernel_size, stride, padding, groups=groups))]
         else:
             self.module_list += [ConvTranspose2d(c_in, c_out, kernel_size, stride, padding, groups=groups)]
         if norm:
@@ -512,7 +511,7 @@ class TconvLayer(Module):
 
         if use_sn:
             self.module_list += [
-                SpectralNorm(
+                spectral_norm(
                     Tconv3x3(c_in, c_out, mid_channels, stride, use_group=use_group, is_decomposed=is_decomposed))]
         else:
             self.module_list += [
@@ -540,7 +539,7 @@ class InitTconvlayer(Module):
 
         if use_sn:
             self.module_list += [
-                SpectralNorm(
+                spectral_norm(
                     InitTconv(c_in, c_out, mid_channels, use_group=use_group, is_decomposed=is_decomposed))]
         else:
             self.module_list += [
@@ -568,7 +567,7 @@ class TdeconvLayer(Module):
 
         if use_sn:
             self.module_list += [
-                SpectralNorm(
+                spectral_norm(
                     Tdeconv3x3(c_in, c_out, mid_channels, stride, use_group=use_group, is_decomposed=is_decomposed))]
         else:
             self.module_list += [

@@ -26,14 +26,14 @@ GanTrainer
     :members:
 
 
-jdit.trainer.instances
-======================
+instances
+----------------------
 
 .. automodule:: jdit.trainer.instances
 .. currentmodule:: jdit.trainer.instances
 
 instances.FashingClassTrainer
------------------------------
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 .. autoclass:: FashingClassTrainer
     :members:

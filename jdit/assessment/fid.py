@@ -386,10 +386,10 @@ def FID_score(source, target, sample_prop=1.0, gpu_ids=(), dim=2048, batchsize=1
         >>> target_tensor = loader.samples_train[0]
         >>> source_tensor = loader.samples_valid[0]
         >>> # using Tensor to compute FID score
-        >>> fid_value = FID_score(source_tensor, target_tensor, sample_prop=0.01, dim=768)
+        >>> fid_value = FID_score(source_tensor, target_tensor, sample_prop=0.01, depth=768)
         >>> print('FID: ', fid_value)
         >>> # using DataLoader to compute FID score
-        >>> fid_value = FID_score(loader.loader_test, loader.loader_valid, dim=768)
+        >>> fid_value = FID_score(loader.loader_test, loader.loader_valid, depth=768)
         >>> print('FID: ', fid_value)
 
     """

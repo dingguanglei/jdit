@@ -29,21 +29,25 @@ class SupTrainer(object):
         self.loger = Loger(logdir)
 
         self.use_gpu = True if (len(self.gpu_ids) > 0) and torch.cuda.is_available() else False
-        self.input = Variable()
-        self.ground_truth = Variable()
-        if self.use_gpu:
-            self.input = self.input.cuda()
-            self.ground_truth = self.ground_truth.cuda()
+        self.device = torch.device("cuda") if self.use_gpu else torch.device("cpu")
+        self.input = Variable().to(self.device)
+        self.ground_truth = Variable().to(self.device)
+        # self.input = Variable()
+        # self.ground_truth = Variable()
+        # if self.use_gpu:
+        #     self.input = self.input.cuda()
+        #     self.ground_truth = self.ground_truth.cuda()
         self.nepochs = nepochs
         self.current_epoch = 1
         self.step = 0
 
-    def train(self):
+    def train(self, process_bar_header=None, process_bar_position=None, subbar_disable=False, **kwargs):
         START_EPOCH = 1
-        for epoch in tqdm(range(START_EPOCH, self.nepochs + 1), unit="epoch", total=self.nepochs):
+        for epoch in tqdm(range(START_EPOCH, self.nepochs + 1), total=self.nepochs,
+                          unit="epoch", desc=process_bar_header, position=process_bar_position, **kwargs):
             self.current_epoch = epoch
             self.update_config_info()
-            self.train_epoch()
+            self.train_epoch(subbar_disable)
             self.valid()
             # self.watcher.netParams(self.netG, epoch)
             if isinstance(self.every_epoch_changelr, int):
@@ -56,15 +60,61 @@ class SupTrainer(object):
                 self.checkPoint()
         self.test()
         self.watcher.close()
+    #
+    # def inspection(self,**k):
+    #     self.current_epoch = -1
+    #     # self.train_epoch(True)
+    #     self.valid()
+    #     self.change_lr()
+    #     self.checkPoint()
+    #     self.test()
+
+
 
     @abstractmethod
-    def train_epoch(self):
+    def train_epoch(self, subbar_disable=False):
         """
         You get train loader and do a loop to deal with data.
-        Using `self.mv_inplace(input_cpu, self.input)` to move your data to placeholder.
+
+        .. Caution::
+
+           You must record your training step on ``self.step`` in your loop by doing things like this ``self.step += 1``.
+
+        Example::
+
+           for iteration, batch in tqdm(enumerate(self.datasets.loader_train, 1)):
+               self.step += 1
+               self.input_cpu, self.ground_truth_cpu = self.get_data_from_batch(batch, self.device)
+               self.train_iteration(self.opt, self.compute_loss, tag="Train")
+
         :return:
         """
         pass
+
+    def get_data_from_batch(self, batch_data, device):
+        """ Split your data from one batch data to specify .
+
+        .. Caution::
+
+          Don't forget to move these data to device, by using ``input.to(device)`` .
+
+        :param batch_data: One batch data from dataloader.
+        :param device: the device that data will be located.
+        :return: The certain variable with correct device location.
+
+
+        Example::
+
+          # load and unzip the data from one batch tuple (input, ground_truth)
+          input, ground_truth = batch_data[0], batch_data[1]
+          # move these data to device
+          return input.to(device), ground_truth.to(device)
+
+
+        """
+        input, ground_truth = batch_data[0], batch_data[1]
+        return input.to(device), ground_truth.to(device)
+
 
     def train_iteration(self, opt, compute_loss_fc, tag="Train"):
         opt.zero_grad()
@@ -78,18 +128,27 @@ class SupTrainer(object):
         targert.data.resize_(source_to.size()).copy_(source_to)
 
     def update_config_info(self):
-        """to register the `model` ,`optim` ,`trainer` and `performance` config info.
+        """to register the ``model`` , ``optim`` , ``trainer`` and ``performance`` config info.
 
-          * self.loger.regist_config(opt, self.current_epoch)  # for opt.configure
-          * self.loger.regist_config(model, self.current_epoch ) # for model.configure
-          * self.loger.regist_config(self.performance, self.current_epoch)# for self.performance.configure
-          * self.loger.regist_config(self,self.current_epoch) # for trainer.configure
+          The default is record the info of ``trainer`` and ``performance`` config.
+          If you want to record more configures info, you can add more module to ``self.loger.regist_config`` .
+          The following is an example.
+
+          Example::
+
+            # for opt.configure
+            self.loger.regist_config(opt, self.current_epoch)
+            # for model.configure
+            self.loger.regist_config(model, self.current_epoch )
+            # for self.performance.configure
+            self.loger.regist_config(self.performance, self.current_epoch)
+            # for trainer.configure
+            self.loger.regist_config(self, self.current_epoch)
 
         :return:
         """
         self.loger.regist_config(self, self.current_epoch)  # for trainer.configure
         self.loger.regist_config(self.performance, self.current_epoch)  # for self.performance.configure
-        pass
 
     @abstractmethod
     def checkPoint(self):

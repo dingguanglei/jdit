@@ -3,40 +3,82 @@ from .super import *
 from abc import abstractmethod
 from tqdm import *
 
+
 class ClassificationTrainer(SupTrainer):
     """this is a classification trainer.
 
     """
     num_class = None
+
     def __init__(self, logdir, nepochs, gpu_ids, net, opt, datasets):
         super(ClassificationTrainer, self).__init__(nepochs, logdir, gpu_ids_abs=gpu_ids)
         self.net = net
         self.opt = opt
         self.datasets = datasets
 
-        self.labels = Variable().cuda() if self.use_gpu else Variable()
-
+        # self.labels = Variable().cuda() if self.use_gpu else Variable()
+        self.labels = Variable().to(self.device)
         self.loger.regist_config(net)
         self.loger.regist_config(datasets)
         self.loger.regist_config(self)
 
-    def train_epoch(self):
-        for iteration, batch in tqdm(enumerate(self.datasets.loader_train, 1), unit="step"):
+    def train_epoch(self, subbar_disable=False):
+        self._watch_images(show_imgs_num=3, tag="Train")
+        for iteration, batch in tqdm(enumerate(self.datasets.loader_train, 1), unit="step", disable=subbar_disable):
             self.step += 1
-
-            input_cpu, ground_truth_cpu, labels_cpu = self.get_data_from_loader(batch)
-            self.mv_inplace(input_cpu, self.input)
-            self.mv_inplace(ground_truth_cpu, self.ground_truth)
-            self.mv_inplace(labels_cpu, self.labels)
-
+            self.input, self.ground_truth, self.labels = self.get_data_from_batch(batch, self.device)
+            # input_cpu, ground_truth_cpu, labels_cpu = self.get_data_from_batch(batch)
+            # self.input = input_cpu.to(self.device)
+            # self.ground_truth = ground_truth_cpu.to(self.device)
+            # self.labels = labels_cpu.to(self.device)
+            # self.mv_inplace(input_cpu, self.input)
+            # self.mv_inplace(ground_truth_cpu, self.ground_truth)
+            # self.mv_inplace(labels_cpu, self.labels)
             self.output = self.net(self.input)
             self.train_iteration(self.opt, self.compute_loss, tag="Train")
 
-            if iteration == 1:
-                self._watch_images(show_imgs_num=3, tag="Train")
+            # if iteration == 1:
+            #     self._watch_images(show_imgs_num=3, tag="Train")
 
     @abstractmethod
     def compute_loss(self):
+        """Compute the main loss and observed variables.
+
+        Compute the loss and other caring variables.
+        You should return a main loss for doing backward propagation.
+
+        For the caring variables will only be used in tensorboard scalars visualization.
+        So, if you want some variables visualized. Make a ``dict()`` with key name is the variable's name.
+
+
+        .. note::
+
+          Only the main loss will do backward propagation, which is the first returned variable.
+          If you have the joint loss, please add them up and return one main loss.
+
+        .. note::
+
+          All of your variables in returned ``dict()`` will never do backward propagation with ``model.train()``.
+          However, It still compute grads, without using ``with torch.autograd.no_grad()``.
+          So, you can compute any grads variables for visualization.
+
+        Example::
+
+          var_dic = {}
+          # visualize the value of CrossEntropyLoss.
+          var_dic["CEP"] = loss = CrossEntropyLoss()(self.output, self.labels.squeeze().long())
+
+          _, predict = torch.max(self.output.detach(), 1)  # 0100=>1  0010=>2
+          total = predict.size(0) * 1.0
+          labels = self.labels.squeeze().long()
+          correct = predict.eq(labels).cpu().sum().float()
+          acc = correct / total
+          # visualize the value of accuracy.
+          var_dic["ACC"] = acc
+          # using CrossEntropyLoss as the main loss for backward, and return by visualized ``dict``
+          return loss, var_dic
+
+        """
         var_dic = {}
         # Input: (N,C) where C = number of classes
         # Target: (N) where each value is 0≤targets[i]≤C−1
@@ -53,6 +95,34 @@ class ClassificationTrainer(SupTrainer):
 
     @abstractmethod
     def compute_valid(self):
+        """Compute the valid variables for visualization.
+
+        Compute the caring variables.
+        For the caring variables will only be used in tensorboard scalars visualization.
+        So, if you want some variables visualized. Make a ``dict()`` with key name is the variable's name.
+
+        .. note::
+
+          All of your variables in returned ``dict()`` will never do backward propagation with ``model.eval()``.
+          However, It still compute grads, without using ``with torch.autograd.no_grad()``.
+          So, you can compute some grads variables for visualization.
+
+        Example::
+
+          var_dic = {}
+          # visualize the valid curve of CrossEntropyLoss
+          var_dic["CEP"] = loss = CrossEntropyLoss()(self.output, self.labels.squeeze().long())
+
+          _, predict = torch.max(self.output.detach(), 1)  # 0100=>1  0010=>2
+          total = predict.size(0) * 1.0
+          labels = self.labels.squeeze().long()
+          correct = predict.eq(labels).cpu().sum().float()
+          acc = correct / total
+          # visualize the valid curve of accuracy
+          var_dic["ACC"] = acc
+          return var_dic
+
+        """
         var_dic = {}
         # Input: (N,C) where C = number of classes
         # Target: (N) where each value is 0≤targets[i]≤C−1
@@ -71,10 +141,14 @@ class ClassificationTrainer(SupTrainer):
         avg_dic = {}
         self.net.eval()
         for iteration, batch in enumerate(self.datasets.loader_valid, 1):
-            input_cpu, ground_truth_cpu, labels_cpu = self.get_data_from_loader(batch)
-            self.mv_inplace(input_cpu, self.input)
-            self.mv_inplace(ground_truth_cpu, self.ground_truth)
-            self.mv_inplace(labels_cpu, self.labels)
+            self.input, self.ground_truth, self.labels = self.get_data_from_batch(batch, self.device)
+            # input_cpu, ground_truth_cpu, labels_cpu = self.get_data_from_batch(batch)
+            # self.input = input_cpu.to(self.device)
+            # self.ground_truth = ground_truth_cpu.to(self.device)
+            # self.labels = labels_cpu.to(self.device)
+            # self.mv_inplace(input_cpu, self.input)
+            # self.mv_inplace(ground_truth_cpu, self.ground_truth)
+            # self.mv_inplace(labels_cpu, self.labels)
             self.output = self.net(self.input).detach()
 
             dic = self.compute_valid()
@@ -92,7 +166,7 @@ class ClassificationTrainer(SupTrainer):
         self.loger.write(self.step, self.current_epoch, avg_dic, "Valid", header=self.current_epoch <= 1)
         self.net.train()
 
-    def get_data_from_loader(self, batch_data, use_onehot=True):
+    def get_data_from_batch(self, batch_data, device, use_onehot=True):
         input_cpu, labels = batch_data[0], batch_data[1]
         if use_onehot:
             # label => onehot
@@ -106,7 +180,7 @@ class ClassificationTrainer(SupTrainer):
             ground_truth_cpu = labels
             labels_cpu = torch.max(self.labels.detach(), 1)
 
-        return input_cpu, ground_truth_cpu, labels_cpu
+        return input_cpu.to(device), ground_truth_cpu.to(device), labels_cpu.to(device)
 
     def _watch_images(self, show_imgs_num=4, tag="Train"):
         pass

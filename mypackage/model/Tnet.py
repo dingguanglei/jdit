@@ -1,10 +1,4 @@
-# from torch.nn import Module, Sequential, Conv2d, BatchNorm2d, InstanceNorm2d, LeakyReLU, Linear, Sigmoid, Upsample, \
-#     Tanh, Dropout, ReLU, MaxPool2d, AvgPool2d
-# import torch
 from .shared.basic import *
-
-
-# import numpy as np
 
 
 class NThickLayer_D(Module):
@@ -115,9 +109,6 @@ class TWnet_G(Module):
         self.layer1 = InitTconvlayer(input_nc, depth * 8, mid_channels, active_type=active_type,
                                    norm_type=norm_type,
                                    is_decomposed=False, use_group=False)
-        # self.layer1 = TdeconvLayer(input_nc, depth * 8, mid_channels, stride=1, active_type=active_type,
-        #                            norm_type=norm_type,
-        #                            is_decomposed=False, use_group=False)
         self.layer2 = TdeconvLayer(depth * 8, depth * 4, mid_channels, stride=2, active_type=active_type,
                                    norm_type=norm_type,
                                    is_decomposed=False)

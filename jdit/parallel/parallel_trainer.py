@@ -3,23 +3,24 @@ import os
 from abc import abstractmethod
 from multiprocessing import Pool
 
+
 class SuperParallelTrainer(object):
     def __init__(self, default_params, unfixed_params_list):
         self.default_params = default_params
-        self.unfixed_params_list = unfixed_params_list  # [{'depth':12},{'depth':18},{'depth':24},{'depth':26}]
+        self.unfixed_params_list = unfixed_params_list  #
+        # self.unfixed_params_list =[{'depth':12},{'depth':18},{'depth':24},{'depth':26}]
 
-        self.candidate_params_list = self._build_candidate_params(default_params, unfixed_params_list)  # [{..},{...}]
-        self.parallel_plans = self._distribute_task_on_devices(self.candidate_params_list)  # {(gpu_id):[{param1},
-        # {param2}]}
+        self.candidate_params_list = self._build_candidate_params(default_params, unfixed_params_list)
+        # [{params1..},{params2...}]
+        self.parallel_plans = self._distribute_task_on_devices(self.candidate_params_list)
+        # self.parallel_plans = {(gpu_id):[{param1},{param2}]}
 
     @abstractmethod
     def build_task_trainer(self, params):
         """You need to write this method to build your own ``Trainer``.
 
         This will run in a certain subprocess.
-        The keys of ``params`` are compatible with
-         ``dataset`` , ``Model`` , ``Optimizer`` and ``Trainer`` .
-
+        The keys of ``params`` are compatible with ``dataset`` , ``Model`` , ``Optimizer`` and ``Trainer`` .
         You can see parameters in the following example.
 
         These two parameters are special.
@@ -73,22 +74,29 @@ class SuperParallelTrainer(object):
         :param max_processes: A max amount of processes for setting ``Pool(processes = ?)`` method.
         """
         print("Main process ID: %d" % os.getpid())
-        p = Pool(max_processes)
-        p.map_async(self._startTrain, self.parallel_plans.items(), callback=self.finish, error_callback=self.error)
         print('Waiting for all subprocesses done...\n%s' % ('=' * 36))
+        p = Pool(max_processes)
+        # {(gpu_id1):[{param1}, {param2}], (gpu_id2):[{param1}, {param2}]}
+        for position, parallel_plan in enumerate(self.parallel_plans.items()):
+            gpu_id, candidate_params = parallel_plan
+            p.apply_async(self._startTrain, (gpu_id, candidate_params, position),
+                          callback=self.finish, error_callback=self.error)
+        # p.map_async(self._startTrain, self.parallel_plans.items(), callback=self.finish, error_callback=self.error)
+
         p.close()
         p.join()
         print('All subprocesses done.')
 
-    def _startTrain(self, parallel_plan):
-        gpu_id, candidate_params = parallel_plan
+    def _startTrain(self, gpu_id, candidate_params, position):
+        # gpu_id, candidate_params = parallel_plan
+        nums_tasks = len(candidate_params)
         print("Child process ID: %d" % os.getpid())
         for index, params in enumerate(candidate_params):
             tag = "CPU" if not gpu_id else "GPU%s" % str(gpu_id)
-            print(">>> start %d Task on %s" % (index, tag))
+            process_bar_header = ">>>Task(%d/%d)|%s" % (index, nums_tasks, tag)
             trainer = self.build_task_trainer(params)
-            trainer.train()
-            print("<<< finish %d Task on %s" % (index, str(gpu_id)))
+            trainer.train(process_bar_header=process_bar_header, process_bar_position=position, subbar_disable=True)
+            # print("<<< finish Task %d|%s" % (index, str(gpu_id)))
 
     def _distribute_task_on_devices(self, candidate_params_list):
         candidate_gpu_ids_abs_list = self._get_gpu_ids_abs(candidate_params_list)
@@ -189,7 +197,7 @@ class SuperParallelTrainer(object):
         You can rewrite this method for your purpose.
         :param msg: fin
         """
-        print("%s finished!"% os.getpid(), msg)
+        print("%s finished!" % os.getpid(), msg)
 
     def error(self, msg):
         """When a subprocess failed, it will be called.
