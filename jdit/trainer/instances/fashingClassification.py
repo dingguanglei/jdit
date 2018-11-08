@@ -1,38 +1,46 @@
 # coding=utf-8
 import torch
-from torch.nn import CrossEntropyLoss
+import torch.nn as nn
 from jdit.trainer.classification import ClassificationTrainer
 from jdit.model import Model
 from jdit.optimizer import Optimizer
-from jdit.dataset import Cifar10, Fashion_mnist
-from .resnet import  Resnet18
+from jdit.dataset import Fashion_mnist
+
+
+class LinearModel(nn.Module):
+    def __init__(self, depth=64):
+        super(LinearModel, self).__init__()
+        self.layer1 = nn.Linear(32 * 32, depth * 8)
+        self.layer2 = nn.Linear(512, depth * 4)
+        self.layer3 = nn.Linear(256, depth * 2)
+        self.layer4 = nn.Linear(128, depth * 1)
+        self.layer5 = nn.Linear(depth * 1, 1)
+        self.drop = nn.Dropout(0.2)
+
+    def forward(self, input):
+        out = input.view(input.size()[0], -1)
+        out = self.layer1(out)
+        out = self.drop(self.layer2(out))
+        out = self.drop(self.layer3(out))
+        out = self.drop(self.layer4(out))
+        out = self.layer5(out)
+        return out
 
 
 class FashingClassTrainer(ClassificationTrainer):
-    """this is an instance of how to use `ClassificationTrainer` to build your own trainer
-
-    """
     mode = "L"
     num_class = 10
     every_epoch_checkpoint = 20  # 2
-    every_epoch_changelr = 1  # 1
+    every_epoch_changelr = 10  # 1
 
     def __init__(self, logdir, nepochs, gpu_ids, net, opt, dataset):
         super(FashingClassTrainer, self).__init__(logdir, nepochs, gpu_ids, net, opt, dataset)
-        print("using `tensorboard --logdir=%s` to see learning curves and net structure." % logdir)
-        print("training and valid data, configures info and checkpoint were save in `%s` directory." % logdir)
+
         self.watcher.graph(net, (4, 1, 32, 32), self.use_gpu)
-        data, label = self.datasets.samples_train
-        self.watcher.embedding(data, data, label)
 
     def compute_loss(self):
         var_dic = {}
-        # Input: (N,C) where C = number of classes
-        # Target: (N) where each value is 0≤targets[i]≤C−1
-        # ground_truth = self.ground_truth.long().squeeze()
-        # var_dic["GP"] = gp =gradPenalty()
-        # var_dic["SGP"] = gp = spgradPenalty(self.net,self.input,self.input)
-        var_dic["CEP"] = loss = CrossEntropyLoss()(self.output, self.labels.squeeze().long())
+        var_dic["CEP"] = loss = nn.CrossEntropyLoss()(self.output, self.labels.squeeze().long())
 
         _, predict = torch.max(self.output.detach(), 1)  # 0100=>1  0010=>2
         total = predict.size(0) * 1.0
@@ -44,10 +52,7 @@ class FashingClassTrainer(ClassificationTrainer):
 
     def compute_valid(self):
         var_dic = {}
-        # Input: (N,C) where C = number of classes
-        # Target: (N) where each value is 0≤targets[i]≤C−1
-        # ground_truth = self.ground_truth.long().squeeze()
-        var_dic["CEP"] = cep = CrossEntropyLoss()(self.output, self.labels.squeeze().long())
+        var_dic["CEP"] = cep = nn.CrossEntropyLoss()(self.output, self.labels.squeeze().long())
 
         _, predict = torch.max(self.output.detach(), 1)  # 0100=>1  0010=>2
         total = predict.size(0) * 1.0
@@ -58,31 +63,26 @@ class FashingClassTrainer(ClassificationTrainer):
         return var_dic
 
 
-def start_example():
-    """ run this to test a `FashingClassTrainer` instance
-
-    :return:
-    """
-    gpus = [0]
-    batch_shape = (32, 3, 32, 32)
-    nepochs = 10
-
-    lr = 1e-3
-    lr_decay = 0.94  # 0.94
-    weight_decay = 0  # 2e-5
+def start_fashingClassTrainer(gpus=(), nepochs=100, lr=1e-3, depth=32):
+    gpus = gpus
+    batch_shape = (64, 1, 32, 32)
+    nepochs = nepochs
+    opt_name = "RMSprop"
+    lr = lr
+    lr_decay = 0.9  # 0.94
+    weight_decay = 2e-5  # 2e-5
     momentum = 0
     betas = (0.9, 0.999)
 
-    opt_name = "RMSprop"
-    # opt_name = "Adam"
-
     print('===> Build dataset')
-    mnist = Fashion_mnist(batch_shape = batch_shape)
+    mnist = Fashion_mnist(batch_shape=batch_shape)
     torch.backends.cudnn.benchmark = True
     print('===> Building model')
-    net = Model(Resnet18(64), gpu_ids_abs=gpus, init_method="kaiming")
+    net = Model(LinearModel(depth=depth), gpu_ids_abs=gpus, init_method="kaiming")
     print('===> Building optimizer')
     opt = Optimizer(net.parameters(), lr, lr_decay, weight_decay, momentum, betas, opt_name)
     print('===> Training')
+    print("using `tensorboard --logdir=log` to see learning curves and net structure."
+          "training and valid data, configures info and checkpoint were save in `log` directory.")
     Trainer = FashingClassTrainer("log", nepochs, gpus, net, opt, mnist)
     Trainer.train()

@@ -25,12 +25,16 @@ pip install jdit-0.0.2-py3-none-any.whl
 ```
 
 ## Quick start
+Here I will give you some instances by using jdit.
 After building and installing jdit package, you can make a new directory for a quick test.
 Assuming that you get a new directory `example`.
-run this code in `ipython` cmd.(Create a `main.py` file is also acceptable.)
+
+### Fashing Classification
+run this code in `ipython`.(Create a `main.py` file is also acceptable.)
 ```python
-from jdit.trainer.instances.fashingClassification import start_example
-start_example()
+from jdit.trainer.instances.fashingClassification import start_fashingClassTrainer
+
+start_fashingClassTrainer()
 ```
 Then you will see something like this as following.
 ```
@@ -61,6 +65,37 @@ For training process, you can find learning curves in `tensorboard`.
 
 It will create a `log` directory in `example/`, which saves training processing data and configures.
 
+### Fashing Generate GAN
+
+run this code in `ipython` .(Create a `main.py` file is also acceptable.)
+```python
+from jdit.trainer.instances.fashingGenerateGan import start_fashingGenerateGanTrainer
+
+start_fashingGenerateGanTrainer()
+```
+Then you will see something like this as following.
+
+```
+===> Build dataset
+use 2 thread!
+===> Building model
+discriminator Total number of parameters: 100865
+discriminator model use GPU(0)!
+apply kaiming weight init!
+generator Total number of parameters: 951361
+generator model use GPU(0)!
+apply kaiming weight init!
+===> Building optimizer
+===> Training
+  0%|          | 0/200 [00:00<?, ?epoch/s]
+0step [00:00, ?step/s]
+1step [00:22, 22.23s/step]
+```
+
+It will create a `log` directory in `example/`, which saves training processing data and configures.
+Besides, you can see training processes in the tensorboard.
+
+### Make your instances
 Although it is just an example, you still can build your own project easily by using jdit framework.
 Jdit framework can deal with 
 * Data visualization. (learning curves, images in pilot process)

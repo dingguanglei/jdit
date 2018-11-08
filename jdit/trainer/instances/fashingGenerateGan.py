@@ -35,16 +35,15 @@ def gradPenalty(D_net, real, fake, LAMBDA=10, use_gpu=False):
     return gradient_penalty
 
 
-class GenerateGanTrainer(GanTrainer):
+class FashingGenerateGanTrainer(GanTrainer):
     mode = "RGB"
     every_epoch_checkpoint = 50  # 2
     every_epoch_changelr = 2  # 1
     d_turn = 5
 
     def __init__(self, logdir, nepochs, gpu_ids_abs, netG, netD, optG, optD, dataset, latent_shape):
-        super(GenerateGanTrainer, self).__init__(logdir, nepochs, gpu_ids_abs, netG, netD, optG, optD, dataset,
-                                                 latent_shape=latent_shape)
-
+        super(FashingGenerateGanTrainer, self).__init__(logdir, nepochs, gpu_ids_abs, netG, netD, optG, optD, dataset,
+                                                        latent_shape=latent_shape)
         self.watcher.graph(netG, (4, *self.latent_shape), self.use_gpu)
         data, label = self.datasets.samples_train
         self.watcher.embedding(data, data, label)
@@ -115,13 +114,11 @@ class discriminator(nn.Module):
 class generator(nn.Module):
     def __init__(self, input_nc=256, output_nc=1, depth=64):
         super(generator, self).__init__()
-        self.depth = depth
-        self.in_channel = input_nc
         self.latent_to_features = nn.Sequential(
-                nn.Conv2d(input_nc, 8 * depth, 4, 1, 0),  # 256,1,1 =>  512,4,4
+                nn.ConvTranspose2d(input_nc, 4 * depth, 4, 1, 0),  # 256,1,1 =>  256,4,4
                 nn.ReLU())
         self.features_to_image = nn.Sequential(
-                nn.ConvTranspose2d(8 * depth, 4 * depth, 4, 2, 1),  # 512,4,4 =>  256,8,8
+                nn.ConvTranspose2d(4 * depth, 4 * depth, 4, 2, 1),  # 256,4,4 =>  256,8,8
                 nn.ReLU(),
                 nn.BatchNorm2d(4 * depth),
                 nn.ConvTranspose2d(4 * depth, 2 * depth, 4, 2, 1),  # 256,8,8 =>  128,16,16
@@ -139,26 +136,25 @@ class generator(nn.Module):
         return out
 
 
-if __name__ == '__main__':
-
-    gpus = [] # set `gpus = []` to use cpu
-    batch_shape = (128, 1, 32, 32)
+def start_fashingGenerateGanTrainer(gpus=(), nepochs=200, lr=1e-3, depth_G=32, depth_D=32, latent_shape=(256, 1, 1)):
+    gpus = gpus  # set `gpus = []` to use cpu
+    batch_shape = (64, 1, 32, 32)
     image_channel = batch_shape[1]
-    nepochs = 200
+    nepochs = nepochs
 
     opt_G_name = "Adam"
-    depth_G = 8
-    lr = 1e-3
+    depth_G = depth_G
+    lr = lr
     lr_decay = 0.94  # 0.94
     weight_decay = 0  # 2e-5
     betas = (0.9, 0.999)
 
     opt_D_name = "RMSprop"
-    depth_D = 64
+    depth_D = depth_D
     momentum = 0
 
     # the input shape of generator
-    latent_shape = (256, 1, 1)
+    latent_shape = latent_shape
     print('===> Build dataset')
     cifar10 = Fashion_mnist(batch_shape=batch_shape)
     torch.backends.cudnn.benchmark = True
@@ -172,5 +168,5 @@ if __name__ == '__main__':
     opt_D = Optimizer(D.parameters(), lr, lr_decay, weight_decay, momentum, betas, opt_D_name)
     opt_G = Optimizer(G.parameters(), lr, lr_decay, weight_decay, momentum, betas, opt_G_name)
     print('===> Training')
-    Trainer = GenerateGanTrainer("log", nepochs, gpus, G, D, opt_G, opt_D, cifar10, latent_shape)
+    Trainer = FashingGenerateGanTrainer("log", nepochs, gpus, G, D, opt_G, opt_D, cifar10, latent_shape)
     Trainer.train()

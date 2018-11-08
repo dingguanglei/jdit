@@ -52,7 +52,7 @@ class Dataloaders_factory(metaclass=ABCMeta):
 
     """
 
-    def __init__(self, root, batch_shape, num_workers=-1, shuffle=True, subdata_prop=0.1):
+    def __init__(self, root, batch_shape, num_workers=-1, shuffle=True, subdata_size=0.1):
         """ Build data loaders.
 
         :param root: root path of datasets.
@@ -81,7 +81,7 @@ class Dataloaders_factory(metaclass=ABCMeta):
         self.nsteps_valid = None
         self.nsteps_test = None
 
-        self.sample_dataset_prop = subdata_prop
+        self.sample_dataset_size = subdata_size
 
         self.buildTransforms()
         self.buildDatasets()
@@ -133,20 +133,32 @@ class Dataloaders_factory(metaclass=ABCMeta):
 
     @property
     def samples_train(self):
-        return self._get_samples(self.dataset_train, self.sample_dataset_prop)
+        return self._get_samples(self.dataset_train, self.sample_dataset_size)
 
     @property
     def samples_valid(self):
-        return self._get_samples(self.dataset_train, self.sample_dataset_prop)
+        return self._get_samples(self.dataset_train, self.sample_dataset_size)
 
     @property
     def samples_test(self):
-        return self._get_samples(self.dataset_train, self.sample_dataset_prop)
+        return self._get_samples(self.dataset_train, self.sample_dataset_size)
 
-    def _get_samples(self, dataset, sample_dataset_prop=0.1):
+    def _get_samples(self, dataset, sample_dataset_size=0.1):
         import math
         assert len(dataset) > 10, "Dataset is (%d) to small" % len(dataset)
-        subdata_size = math.floor(sample_dataset_prop * len(dataset))
+        size_is_prop = isinstance(sample_dataset_size, float)
+        size_is_amount = isinstance(sample_dataset_size, int)
+        if size_is_prop:
+            assert sample_dataset_size <= 1 and sample_dataset_size > 0, \
+                "sample_dataset_size proportion should between 0. and 1."
+            subdata_size = math.floor(sample_dataset_size * len(dataset))
+        elif size_is_amount:
+            assert sample_dataset_size < len(dataset), \
+                "sample_dataset_size amount should be smaller than length of dataset"
+            subdata_size = math.floor(sample_dataset_size * len(dataset))
+        else:
+            raise Exception("sample_dataset_size should be float or int."
+                            "%s was given" % str(sample_dataset_size))
         sample_dataset, _ = random_split(dataset, [subdata_size, len(dataset) - subdata_size])
         sample_loader = DataLoader(sample_dataset, batch_size=subdata_size, shuffle=True)
         [samples_data] = list(sample_loader)
@@ -154,13 +166,13 @@ class Dataloaders_factory(metaclass=ABCMeta):
 
     @property
     def configure(self):
-        # configs = dict(vars(self))
         configs = dict()
         configs["dataset_name"] = [str(self.dataset_train.__class__.__name__)]
         configs["batch_size"] = [str(self.batch_size)]
         configs["shuffle"] = [str(self.shuffle)]
         configs["root"] = [str(self.root)]
         configs["num_workers"] = [str(self.num_workers)]
+        configs["sample_dataset_size"] = [str(self.sample_dataset_size)]
         configs["nsteps_train"] = [str(self.nsteps_train)]
         configs["nsteps_valid"] = [str(self.nsteps_valid)]
         configs["nsteps_test"] = [str(self.nsteps_test)]

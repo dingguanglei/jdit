@@ -42,6 +42,30 @@ class FashingClassTrainer(ClassificationTrainer):
         var_dic["ACC"] = acc
         return var_dic
 
+    def quickStart(self):
+        gpus = [0]
+        batch_shape = (64, 1, 32, 32)
+        nepochs = 100
+
+        lr = 1e-3
+        lr_decay = 0.9  # 0.94
+        weight_decay = 2e-5  # 2e-5
+        momentum = 0
+        betas = (0.9, 0.999)
+
+        opt_name = "RMSprop"
+        # opt_name = "Adam"
+
+        print('===> Build dataset')
+        mnist = Fashion_mnist(batch_shape=batch_shape)
+        torch.backends.cudnn.benchmark = True
+        print('===> Building model')
+        net = Model(LinearModel(depth=64), gpu_ids_abs=gpus, init_method="kaiming")
+        print('===> Building optimizer')
+        opt = Optimizer(net.parameters(), lr, lr_decay, weight_decay, momentum, betas, opt_name)
+        print('===> Training')
+        Trainer = FashingClassTrainer("log", nepochs, gpus, net, opt, mnist)
+        Trainer.train()
 
 class LinearModel(nn.Module):
     def __init__(self, depth=64):
@@ -54,7 +78,8 @@ class LinearModel(nn.Module):
         self.drop = nn.Dropout(0.2)
 
     def forward(self, input):
-        out = self.layer1(input)
+        out = input.view(input.size()[0],-1)
+        out = self.layer1(out)
         out = self.drop(self.layer2(out))
         out = self.drop(self.layer3(out))
         out = self.drop(self.layer4(out))
@@ -63,7 +88,7 @@ class LinearModel(nn.Module):
 
 
 if __name__ == '__main__':
-    gpus = []
+    gpus = [0]
     batch_shape = (64, 1, 32, 32)
     nepochs = 100
 

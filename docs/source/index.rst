@@ -33,8 +33,8 @@ run this code in `ipython` cmd.(Create a `main.py` file is also acceptable.)
 .. code:: python
 
     from jdit.trainer.instances.fashingClassification
-    import start_example
-    start_example()
+    import start_fashingClassTrainer
+    start_fashingClassTrainer()
 
 Then you will see something like this as following.
 
