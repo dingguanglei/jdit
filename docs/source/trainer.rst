@@ -35,5 +35,5 @@ instances
 instances.FashingClassTrainer
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-.. autoclass:: FashingClassTrainer
-    :members:
+.. autofunction:: start_fashingClassTrainer
+

@@ -40,7 +40,7 @@ for mod_name in MOCK_MODULES:
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '../../'))
 # sys.path.insert(0, os.path.abspath('../../'))
-import jdit
+# import jdit
 
 
 # -- Project information -----------------------------------------------------
@@ -51,7 +51,7 @@ author = 'dingguanglei'
 # The short X.Y version
 version = ''
 # The full version, including alpha/beta/rc tags
-release = '0.0.1'
+release = '0.0.2'
 
 
 # -- General configuration ---------------------------------------------------

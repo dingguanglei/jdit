@@ -2,7 +2,7 @@
 import torch
 import torch.nn as nn
 from jdit.trainer.classification import ClassificationTrainer
-from jdit.model import Model
+from jdit import Model
 from jdit.optimizer import Optimizer
 from jdit.dataset import Fashion_mnist
 
@@ -64,6 +64,9 @@ class FashingClassTrainer(ClassificationTrainer):
 
 
 def start_fashingClassTrainer(gpus=(), nepochs=100, lr=1e-3, depth=32):
+    """" An example of fashing-mnist classification
+
+    """
     gpus = gpus
     batch_shape = (64, 1, 32, 32)
     nepochs = nepochs

@@ -88,6 +88,21 @@ class Dataloaders_factory(metaclass=ABCMeta):
         self.buildLoaders()
 
     def buildTransforms(self, resize=32):
+        """ This will build transforms for training and valid.
+
+        You can rewrite this method to build your own transforms.
+        Don't forget to register your transforms to ``self.train_transform_list`` and ``self.valid_transform_list``
+
+        The following is the default set.
+
+        .. code::
+
+            self.train_transform_list = self.valid_transform_list = [
+                transforms.Resize(resize),
+                transforms.ToTensor(),
+                transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])]
+
+        """
         self.train_transform_list = self.valid_transform_list = [
             transforms.Resize(resize),
             transforms.ToTensor(),
@@ -97,21 +112,24 @@ class Dataloaders_factory(metaclass=ABCMeta):
     def buildDatasets(self):
         """ You must to rewrite this method to load your own datasets.
 
-        * :attr:`self.dataset_train` . Assign a training dataset to this.
-        * :attr:`self.dataset_valid` . Assign a valid dataset to this.
-        * :attr:`self.dataset_test` is optional. Assign a test dataset to this.
+        * :attr:`self.dataset_train` . Assign a training ``dataset`` to this.
+        * :attr:`self.dataset_valid` . Assign a valid ``dataset`` to this.
+        * :attr:`self.dataset_test` is optional. Assign a test ``dataset`` to this.
 
+        Example::
+
+            self.dataset_train = datasets.CIFAR10(root, train=True, download=True,
+                                                  transform=transforms.Compose(self.train_transform_list))
+            self.dataset_valid = datasets.CIFAR10(root, train=False, download=True,
+                                                  transform=transforms.Compose(self.valid_transform_list))
         """
         pass
-        # self.dataset_train = datasets.CIFAR10(root, train=True, download=True,
-        #                                       transform=transforms.Compose(self.train_transform_list))
-        # self.dataset_valid = datasets.CIFAR10(root, train=False, download=True,
-        #                                       transform=transforms.Compose(self.valid_transform_list))
+
 
     def buildLoaders(self):
         r""" Build datasets
         The previous function ``self.buildDatasets()`` has created datasets.
-        Use these datasets to build their dataloader
+        Use these datasets to build their's dataloaders
         """
         assert self.dataset_train is not None, "`self.dataset_train` can't be `None`. " \
                                                "Rewrite `buildDatasets` method and pass your own dataset to " \
@@ -225,6 +243,11 @@ class Hand_mnist(Dataloaders_factory):
         super(Hand_mnist, self).__init__(root, batch_shape, num_workers)
 
     def buildDatasets(self):
+        """Build datasets by using ``datasets.MNIST`` in pytorch
+
+
+
+        """
         self.dataset_train = datasets.MNIST(self.root, train=True, download=True,
                                             transform=transforms.Compose(self.train_transform_list))
         self.dataset_valid = datasets.MNIST(self.root, train=False, download=True,

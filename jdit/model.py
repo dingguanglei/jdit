@@ -188,9 +188,9 @@ class Model(object):
 
         :param model_or_path: Pytorch model or model file path.
         :param weights_or_path: Pytorch weights or weights file path.
-        :param to_cpu: If this is true, it will keep the location of module
-        without any moving operation. Otherwise, it will move to cpu, especially in ``DataParallel``.
-        default:``False``
+        :param to_cpu: If this is true, it will keep the location of module.
+         without any moving operation. Otherwise, it will move to cpu, especially in ``DataParallel``.
+         default:``False``
 
         Example::
 

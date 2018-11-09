@@ -7,6 +7,13 @@ Welcome to jdit's documentation!
 
 .. toctree::
    :maxdepth: 1
+   :caption: User Guide
+
+   quick start
+   Build your own trainer
+
+.. toctree::
+   :maxdepth: 1
    :caption: Package Reference
 
    dataset
