@@ -2,7 +2,7 @@
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
-from jdit.trainer import GanTrainer
+from jdit.trainer import GenerateGanTrainer
 from jdit.model import Model
 from jdit.optimizer import Optimizer
 from jdit.dataset import Fashion_mnist
@@ -35,15 +35,16 @@ def gradPenalty(D_net, real, fake, LAMBDA=10, use_gpu=False):
     return gradient_penalty
 
 
-class FashingGenerateGanTrainer(GanTrainer):
-    mode = "RGB"
+class FashingGenerateGenerateGanTrainer(GenerateGanTrainer):
+    mode = "L"
     every_epoch_checkpoint = 50  # 2
     every_epoch_changelr = 2  # 1
     d_turn = 5
 
     def __init__(self, logdir, nepochs, gpu_ids_abs, netG, netD, optG, optD, dataset, latent_shape):
-        super(FashingGenerateGanTrainer, self).__init__(logdir, nepochs, gpu_ids_abs, netG, netD, optG, optD, dataset,
-                                                        latent_shape=latent_shape)
+        super(FashingGenerateGenerateGanTrainer, self).__init__(logdir, nepochs, gpu_ids_abs, netG, netD, optG, optD, dataset,
+                                                                latent_shape=latent_shape)
+
         self.watcher.graph(netG, (4, *self.latent_shape), self.use_gpu)
         data, label = self.datasets.samples_train
         self.watcher.embedding(data, data, label)
@@ -156,7 +157,7 @@ def start_fashingGenerateGanTrainer(gpus=(), nepochs=200, lr=1e-3, depth_G=32, d
     # the input shape of generator
     latent_shape = latent_shape
     print('===> Build dataset')
-    cifar10 = Fashion_mnist(batch_shape=batch_shape)
+    mnist = Fashion_mnist(batch_shape=batch_shape)
     torch.backends.cudnn.benchmark = True
     print('===> Building model')
     D_net = discriminator(input_nc=image_channel, depth=depth_D)
@@ -168,5 +169,8 @@ def start_fashingGenerateGanTrainer(gpus=(), nepochs=200, lr=1e-3, depth_G=32, d
     opt_D = Optimizer(D.parameters(), lr, lr_decay, weight_decay, momentum, betas, opt_D_name)
     opt_G = Optimizer(G.parameters(), lr, lr_decay, weight_decay, momentum, betas, opt_G_name)
     print('===> Training')
-    Trainer = FashingGenerateGanTrainer("log", nepochs, gpus, G, D, opt_G, opt_D, cifar10, latent_shape)
+    Trainer = FashingGenerateGenerateGanTrainer("log", nepochs, gpus, G, D, opt_G, opt_D, mnist, latent_shape)
     Trainer.train()
+
+if __name__ == '__main__':
+    start_fashingGenerateGanTrainer()

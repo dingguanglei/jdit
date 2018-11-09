@@ -32,11 +32,6 @@ class SupTrainer(object):
         self.device = torch.device("cuda") if self.use_gpu else torch.device("cpu")
         self.input = Variable().to(self.device)
         self.ground_truth = Variable().to(self.device)
-        # self.input = Variable()
-        # self.ground_truth = Variable()
-        # if self.use_gpu:
-        #     self.input = self.input.cuda()
-        #     self.ground_truth = self.ground_truth.cuda()
         self.nepochs = nepochs
         self.current_epoch = 1
         self.step = 0
@@ -60,15 +55,6 @@ class SupTrainer(object):
                 self.checkPoint()
         self.test()
         self.watcher.close()
-    #
-    # def inspection(self,**k):
-    #     self.current_epoch = -1
-    #     # self.train_epoch(True)
-    #     self.valid()
-    #     self.change_lr()
-    #     self.checkPoint()
-    #     self.test()
-
 
 
     @abstractmethod
@@ -302,6 +288,7 @@ class Watcher(object):
             img = transforms.ToPILImage()(sampled_images).convert(self.mode)
             filename = "%s/plots/%s/E%03d.png" % (self.logdir, tag, global_step)
             img.save(filename)
+
 
     def embedding(self, data, label_img=None, label=None, global_step=None, tag="embedding"):
         """ Show PCA, t-SNE of `mat` on tensorboard

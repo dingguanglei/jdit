@@ -197,7 +197,9 @@ class SuperParallelTrainer(object):
         You can rewrite this method for your purpose.
         :param msg: fin
         """
-        print("%s finished!" % os.getpid(), msg)
+
+        # print("%s finished!" % os.getpid(), msg)
+        pass
 
     def error(self, msg):
         """When a subprocess failed, it will be called.

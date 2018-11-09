@@ -37,7 +37,7 @@ After building and installing jdit package, you can make a new directory for a q
 Assuming that you get a new directory `example`.
 run this code in `ipython` cmd.(Create a `main.py` file is also acceptable.)
 
-.. code:: python
+.. code-block:: python
 
     from jdit.trainer.instances.fashingClassification
     import start_fashingClassTrainer
@@ -45,7 +45,7 @@ run this code in `ipython` cmd.(Create a `main.py` file is also acceptable.)
 
 Then you will see something like this as following.
 
-.. code:: python
+.. code-block:: python
 
     ===> Build dataset
     use 8 thread!

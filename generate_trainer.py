@@ -2,7 +2,7 @@
 import os, torch
 from torch.nn import CrossEntropyLoss
 from torch.autograd import Variable
-from jdit.trainer import GanTrainer
+from jdit.trainer import SupGanTrainer
 from jdit.model import Model
 from jdit.optimizer import Optimizer
 from jdit.dataset import Cifar10
@@ -13,15 +13,15 @@ from mypackage.model.Tnet import NLayer_D, TWnet_G, NThickLayer_D
 
 # from mypackage.tricks import jcbClamp
 
-class GenerateGanTrainer(GanTrainer):
+class GenerateGenerateGanTrainer(SupGanTrainer):
     mode = "RGB"
     every_epoch_checkpoint = 50  # 2
     every_epoch_changelr = 2  # 1
     d_turn = 5
 
     def __init__(self, logdir, nepochs, gpu_ids_abs, netG, netD, optG, optD, dataset, latent_shape):
-        super(GenerateGanTrainer, self).__init__(logdir, nepochs, gpu_ids_abs, netG, netD, optG, optD, dataset,
-                                                 latent_shape=latent_shape)
+        super(GenerateGenerateGanTrainer, self).__init__(logdir, nepochs, gpu_ids_abs, netG, netD, optG, optD, dataset,
+                                                         latent_shape=latent_shape)
 
         self.watcher.graph(netG, (4, *self.latent_shape), self.use_gpu)
         data, label = self.datasets.samples_train
@@ -120,5 +120,5 @@ if __name__ == '__main__':
     opt_G = Optimizer(G.parameters(), lr, lr_decay, weight_decay, momentum, betas, opt_G_name)
 
     print('===> Training')
-    Trainer = GenerateGanTrainer("log", nepochs, gpus, G, D, opt_G, opt_D, cifar10, latent_shape)
+    Trainer = GenerateGenerateGanTrainer("log", nepochs, gpus, G, D, opt_G, opt_D, cifar10, latent_shape)
     Trainer.train()

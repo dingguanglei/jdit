@@ -8,13 +8,13 @@ from jdit.dataset import Fashion_mnist
 
 
 class LinearModel(nn.Module):
-    def __init__(self, depth=64):
+    def __init__(self, depth=64, num_class=10):
         super(LinearModel, self).__init__()
         self.layer1 = nn.Linear(32 * 32, depth * 8)
-        self.layer2 = nn.Linear(512, depth * 4)
-        self.layer3 = nn.Linear(256, depth * 2)
-        self.layer4 = nn.Linear(128, depth * 1)
-        self.layer5 = nn.Linear(depth * 1, 1)
+        self.layer2 = nn.Linear(depth * 8, depth * 4)
+        self.layer3 = nn.Linear(depth * 4, depth * 2)
+        self.layer4 = nn.Linear(depth * 2, depth * 1)
+        self.layer5 = nn.Linear(depth * 1, num_class)
         self.drop = nn.Dropout(0.2)
 
     def forward(self, input):
@@ -33,10 +33,12 @@ class FashingClassTrainer(ClassificationTrainer):
     every_epoch_checkpoint = 20  # 2
     every_epoch_changelr = 10  # 1
 
-    def __init__(self, logdir, nepochs, gpu_ids, net, opt, dataset):
-        super(FashingClassTrainer, self).__init__(logdir, nepochs, gpu_ids, net, opt, dataset)
+    def __init__(self, logdir, nepochs, gpu_ids, net, opt, datasets):
+        super(FashingClassTrainer, self).__init__(logdir, nepochs, gpu_ids, net, opt, datasets)
 
-        self.watcher.graph(net, (4, 1, 32, 32), self.use_gpu)
+        self.watcher.graph(net, self.datasets.batch_shape, self.use_gpu)
+        data, label = self.datasets.samples_train
+        self.watcher.embedding(data, data, label)
 
     def compute_loss(self):
         var_dic = {}
@@ -89,3 +91,7 @@ def start_fashingClassTrainer(gpus=(), nepochs=100, lr=1e-3, depth=32):
           "training and valid data, configures info and checkpoint were save in `log` directory.")
     Trainer = FashingClassTrainer("log", nepochs, gpus, net, opt, mnist)
     Trainer.train()
+
+
+if __name__ == '__main__':
+    start_fashingClassTrainer()

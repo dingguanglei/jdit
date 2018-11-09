@@ -115,6 +115,7 @@ class Dataloaders_factory(metaclass=ABCMeta):
         * :attr:`self.dataset_train` . Assign a training ``dataset`` to this.
         * :attr:`self.dataset_valid` . Assign a valid ``dataset`` to this.
         * :attr:`self.dataset_test` is optional. Assign a test ``dataset`` to this.
+          If not, it will be replaced by ``self.dataset_valid`` .
 
         Example::
 
