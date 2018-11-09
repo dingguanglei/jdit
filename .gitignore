@@ -3,6 +3,7 @@
 #mypackage/metric/Cifar10_M.csv
 #mypackage/metric/Cifar10_S.csv
 
+log
 jdit/data
 .idea
 datasets

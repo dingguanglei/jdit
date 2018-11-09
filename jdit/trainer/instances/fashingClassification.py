@@ -35,7 +35,6 @@ class FashingClassTrainer(ClassificationTrainer):
 
     def __init__(self, logdir, nepochs, gpu_ids, net, opt, datasets):
         super(FashingClassTrainer, self).__init__(logdir, nepochs, gpu_ids, net, opt, datasets)
-
         self.watcher.graph(net, self.datasets.batch_shape, self.use_gpu)
         data, label = self.datasets.samples_train
         self.watcher.embedding(data, data, label)

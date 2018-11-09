@@ -108,7 +108,7 @@ class CifarPix2pixGanTrainer(Pix2pixGanTrainer):
     def __init__(self, logdir, nepochs, gpu_ids_abs, netG, netD, optG, optD, datasets):
         super(CifarPix2pixGanTrainer, self).__init__(logdir, nepochs, gpu_ids_abs, netG, netD, optG, optD,
                                                      datasets)
-        self.datasets.dataset_train = self.datasets.dataset_valid
+
         self.watcher.graph(netG, (4, 1, 32, 32), self.use_gpu)
 
     def get_data_from_loader(self, batch_data):
