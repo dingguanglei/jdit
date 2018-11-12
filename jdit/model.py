@@ -67,14 +67,14 @@ class Model(object):
 
     """
 
-    def __init__(self, proto_model=None, gpu_ids_abs=(), init_method="kaiming", show_structure=False):
+    def __init__(self, proto_model=None, gpu_ids_abs=(), init_method="kaiming", show_structure=False, verbose = True):
         os.environ["CUDA_VISIBLE_DEVICES"] = ",".join([str(i) for i in gpu_ids_abs])
         self.gpu_ids = [i for i in range(len(gpu_ids_abs))]
         self.model = None
         self.weights_init = None
         self.init_fc = None
         self.num_params = 0
-
+        self.verbose = verbose
         if proto_model is not None:
             self.define(proto_model, self.gpu_ids, init_method, show_structure)
 
@@ -100,7 +100,7 @@ class Model(object):
         self.num_params = self.print_network(proto_model, show_structure)
         self.model = self._set_device(proto_model, gpu_ids)
         init_name = self._apply_weight_init(init_method, proto_model)
-        print("apply %s weight init!" % init_name)
+        self._print("apply %s weight init!" % init_name)
 
     def print_network(self, net, show_structure=False):
         """Print total number of parameters and structure of network
@@ -112,9 +112,9 @@ class Model(object):
         model_name = net.__class__.__name__
         num_params = self.countParams(net)
         if show_structure:
-            print(net)
+            self._print(net)
         num_params_log = '%s Total number of parameters: %d' % (model_name, num_params)
-        print(num_params_log)
+        self._print(num_params_log)
         return num_params
 
     def loadModel(self, model_or_path, weights_or_path=None, gpu_ids=()):
@@ -298,7 +298,7 @@ class Model(object):
             pass
 
     def _extract_module(self, data_parallel_model, extract_weights=True):
-        print("from `DataParallel` extract `module`...")
+        self._print("from `DataParallel` extract `module`...")
         model = data_parallel_model.module
         weights = self.model.state_dict()
         if extract_weights:
@@ -319,13 +319,17 @@ class Model(object):
         model_name = proto_model.__class__.__name__
         if (len(gpu_ids) == 1) & gpu_available:
             proto_model = proto_model.cuda(gpu_ids[0])
-            print("%s model use GPU(%d)!" % (model_name, gpu_ids[0]))
+            self._print("%s model use GPU(%d)!" % (model_name, gpu_ids[0]))
         elif (len(gpu_ids) > 1) & gpu_available:
             proto_model = DataParallel(proto_model.cuda(), gpu_ids)
-            print("%s dataParallel use GPUs%s!" % (model_name, gpu_ids))
+            self._print("%s dataParallel use GPUs%s!" % (model_name, gpu_ids))
         else:
-            print("%s model use CPU!" % (model_name))
+            self._print("%s model use CPU!" % (model_name))
         return proto_model
+
+    def _print(self, str):
+        if self.verbose:
+            print(str)
 
     @property
     def configure(self):
