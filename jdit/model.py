@@ -117,7 +117,7 @@ class Model(object):
         self._print(num_params_log)
         return num_params
 
-    def loadModel(self, model_or_path, weights_or_path=None, gpu_ids=()):
+    def loadModel(self, model_or_path, weights_or_path=None, gpu_ids=(), strict = True):
         """Assemble a model and weights from paths or passing parameters.
 
         You can load a model from a file, passing parameters or both.
@@ -125,6 +125,7 @@ class Model(object):
         :param model_or_path: Pytorch model or model file path.
         :param weights_or_path: Pytorch weights or weights file path.
         :param gpu_ids: If using gpus. default:``()``
+        :param strict: The same function in pytorch ``model.load_state_dict(weights,strict = strict)`` . default:``True``
         :return: ``module``
 
         Example::
@@ -151,30 +152,56 @@ class Model(object):
         """
 
         assert self.model or model_or_path, "You must use `self.define()` or passing a model to load."
+        # if isinstance(model_or_path, str):
 
-        model_is_path = isinstance(model_or_path, str)
-        weights_is_path = isinstance(weights_or_path, str)
-
-        if model_is_path:
-            model = load(model_or_path, map_location=lambda storage, loc: storage)
-        else:
-            if model_or_path:
-                model = model_or_path
+        if model_or_path:
+            if isinstance(model_or_path, torch.nn.Module):
+                model = model_or_path.cpu()
+            elif isinstance(model_or_path, torch.nn.DataParallel):
+                model, _ = self._extract_module(model_or_path.cpu(), extract_weights=False)
             else:
-                model = self.model
-
-        if weights_is_path:
-            weights = load(weights_or_path, map_location=lambda storage, loc: storage)
+                model = load(model_or_path, map_location=lambda storage, loc: storage)
         else:
-            weights = weights_or_path
+            # model_or_path is None
+            model = self.model.cpu()
+            if isinstance(model, torch.nn.DataParallel):
+                model, _ = self._extract_module(model, extract_weights=False)
 
-        if hasattr(model, "module"):
-            model, _ = self._extract_module(model, extract_weights=False)
+        if weights_or_path:
+            if isinstance(weights_or_path, dict):
+                weights = weights_or_path
+            elif isinstance(weights_or_path, str):
+                weights = load(weights_or_path, map_location=lambda storage, loc: storage)
+            else:
+                raise TypeError("`weights_or_path` must be a `dict` or a path of weights file, such as '.pth'")
             weights = self._fix_weights(weights)
-        if weights is not None:
-            model.load_state_dict(weights)
+            model.load_state_dict(weights, strict=strict)
 
-        self.model = self._set_device(model, gpu_ids)
+        # self.model = self._set_device(model, gpu_ids)
+        # # --------------------------------------------------------------
+        # model_is_path = isinstance(model_or_path, str)
+        # weights_is_path = isinstance(weights_or_path, str)
+        #
+        # if model_is_path:
+        #     model = load(model_or_path, map_location=lambda storage, loc: storage)
+        # else:
+        #     if model_or_path:
+        #         model = model_or_path
+        #     else:
+        #         model = self.model
+        #
+        # if weights_is_path:
+        #     weights = load(weights_or_path, map_location=lambda storage, loc: storage)
+        # else:
+        #     weights = weights_or_path
+        #
+        # if hasattr(model, "module"):
+        #     model, _ = self._extract_module(model, extract_weights=False)
+        #     weights = self._fix_weights(weights)
+        # if weights is not None:
+        #     model.load_state_dict(weights,strict = strict)
+        #
+        # self.model = self._set_device(model, gpu_ids)
 
     def saveModel(self, model_path=None, weights_path=None, to_cpu=False):
         """Save a model and weights to files.
