@@ -10,7 +10,6 @@ from tqdm import tqdm
 import pandas as pd
 import numpy as np
 
-
 class SupTrainer(object):
     """this is a super class of all trainers
 
@@ -56,7 +55,6 @@ class SupTrainer(object):
         self.test()
         self.watcher.close()
 
-
     @abstractmethod
     def train_epoch(self, subbar_disable=False):
         """
@@ -64,7 +62,8 @@ class SupTrainer(object):
 
         .. Caution::
 
-           You must record your training step on ``self.step`` in your loop by doing things like this ``self.step += 1``.
+           You must record your training step on ``self.step`` in your loop by doing things like this ``self.step +=
+           1``.
 
         Example::
 
@@ -100,7 +99,6 @@ class SupTrainer(object):
         """
         input, ground_truth = batch_data[0], batch_data[1]
         return input.to(device), ground_truth.to(device)
-
 
     def train_iteration(self, opt, compute_loss_fc, tag="Train"):
         opt.zero_grad()
@@ -289,7 +287,6 @@ class Watcher(object):
             filename = "%s/plots/%s/E%03d.png" % (self.logdir, tag, global_step)
             img.save(filename)
 
-
     def embedding(self, data, label_img=None, label=None, global_step=None, tag="embedding"):
         """ Show PCA, t-SNE of `mat` on tensorboard
 
@@ -330,12 +327,20 @@ class Watcher(object):
                 "param 'input_shape' should be list or tuple."
             input_tensor = torch.ones(input_shape).cuda() if use_gpu else torch.ones(input_shape)
             input_tensor = torch.autograd.Variable(input_tensor, requires_grad=True)
+
+
+            self.scalars({'ParamsNum': net.paramNum}, 0, tag="ParamsNum")
             res = net(input_tensor)
+            self.scalars({'ParamsNum': net.paramNum}, 1, tag="ParamsNum")
             del res
             self.writer.add_graph(net, input_tensor)
         else:
+            self.scalars({'ParamsNum': net.paramNum}, 0, tag="ParamsNum")
             res = net(*input)
+            self.scalars({'ParamsNum': net.paramNum}, 1, tag="ParamsNum")
+            del res
             self.writer.add_graph(net, *input)
+
 
     def close(self):
         # self.writer.export_scalars_to_json("%s/scalers.json" % self.logdir)

@@ -4,6 +4,27 @@ from torch.nn import init, Conv2d, Linear, ConvTranspose2d, InstanceNorm2d, Batc
 from torch import save, load
 
 
+class cached_property(object):
+    """
+    Decorator that converts a method with a single self argument into a
+    property cached on the instance.
+
+    Optional ``name`` argument allows you to make cached properties of other
+    methods. (e.g.  url = cached_property(get_absolute_url, name='url') )
+    """
+
+    def __init__(self, func, name=None):
+        self.func = func
+        self.__doc__ = getattr(func, '__doc__')
+        self.name = name or func.__name__
+
+    def __get__(self, instance, cls=None):
+        if instance is None:
+            return self
+        res = instance.__dict__[self.name] = self.func(instance)
+        return res
+
+
 class Model(object):
     r"""A warapper of pytorch ``module`` .
 
@@ -283,6 +304,10 @@ class Model(object):
         for param in proto_model.parameters():
             num_params += param.numel()
         return num_params
+
+    @cached_property
+    def paramNum(self):
+        return self.countParams(self.model)
 
     def _apply_weight_init(self, init_method, proto_model):
         init_name = "No"
