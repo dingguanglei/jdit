@@ -160,7 +160,7 @@ class SuperParallelTrainer(object):
                 for key, value in params_dict.items():  # params_dict = {p1:1, p2:2}
                     param_name = "=".join([str(key), str(value)])
                     logdir_name.append(param_name)
-                    final_unfixed_params_list[index]["logdir"] = "plog/" + "_".join(logdir_name)
+                    final_unfixed_params_list[index]["logdir"] = "plog/" + ",".join(logdir_name)
         else:
             for index, params_dict in enumerate(unfixed_params_list):  # [dict(),dict()]
                 final_unfixed_params_list[index]["logdir"] = self._convert_to_dirname(
