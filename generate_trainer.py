@@ -21,8 +21,8 @@ class GenerateGenerateGanTrainer(SupGanTrainer):
 
     def __init__(self, logdir, nepochs, gpu_ids_abs, netG, netD, optG, optD, dataset, latent_shape):
         super(GenerateGenerateGanTrainer, self).__init__(logdir, nepochs, gpu_ids_abs, netG, netD, optG, optD, dataset,
-                                                         latent_shape=latent_shape)
-
+                                                         )
+        self.latent_shape = latent_shape
         self.watcher.graph(netG, (4, *self.latent_shape), self.use_gpu)
         data, label = self.datasets.samples_train
         self.watcher.embedding(data, data, label)

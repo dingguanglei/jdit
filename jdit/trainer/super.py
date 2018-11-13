@@ -329,15 +329,15 @@ class Watcher(object):
             input_tensor = torch.autograd.Variable(input_tensor, requires_grad=True)
 
 
-            self.scalars({'ParamsNum': net.paramNum}, 0, tag="ParamsNum")
+            self.scalars({'ParamsNum': net.num_params}, 0, tag="ParamsNum")
             res = net(input_tensor)
-            self.scalars({'ParamsNum': net.paramNum}, 1, tag="ParamsNum")
+            self.scalars({'ParamsNum': net.num_params}, 1, tag="ParamsNum")
             del res
             self.writer.add_graph(net, input_tensor)
         else:
-            self.scalars({'ParamsNum': net.paramNum}, 0, tag="ParamsNum")
+            self.scalars({'ParamsNum': net.num_params}, 0, tag="ParamsNum")
             res = net(*input)
-            self.scalars({'ParamsNum': net.paramNum}, 1, tag="ParamsNum")
+            self.scalars({'ParamsNum': net.num_params}, 1, tag="ParamsNum")
             del res
             self.writer.add_graph(net, *input)
 

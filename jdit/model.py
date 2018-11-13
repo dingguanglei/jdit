@@ -304,10 +304,13 @@ class Model(object):
         for param in proto_model.parameters():
             num_params += param.numel()
         return num_params
-
-    @cached_property
-    def paramNum(self):
-        return self.countParams(self.model)
+    #
+    # @cached_property
+    # def paramNum(self):
+    #     if isinstance(self.model, DataParallel):
+    #         return self.countParams(self.model.module)
+    #     else:
+    #         return self.countParams(self.model)
 
     def _apply_weight_init(self, init_method, proto_model):
         init_name = "No"
