@@ -1,3 +1,3 @@
-from .parallel_trainer import SuperParallelTrainer
+from .parallel_trainer import SupParallelTrainer
 
-__all__ = ["SuperParallelTrainer"]
+__all__ = ["SupParallelTrainer"]

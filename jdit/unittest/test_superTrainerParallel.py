@@ -1,5 +1,5 @@
 from unittest import TestCase
-from ..parallel import SuperParallelTrainer
+from ..parallel import SupParallelTrainer
 
 
 class TestSuperTrainerParallel(TestCase):
@@ -56,7 +56,7 @@ class TestSuperTrainerParallel(TestCase):
             "depth=3_gpu_ids_abs=[1, 2]",
             "depth=4_gpu_ids_abs=[3, 4]"]
         self.trainers_list = ["Trainer_A", "Trainer_B", "Trainer_C", "Trainer_D"]
-        self.pt = SuperParallelTrainer(self.default_params, self.unfixed_params)
+        self.pt = SupParallelTrainer(self.default_params, self.unfixed_params)
 
     def test_train(self):
         pass

@@ -4,7 +4,7 @@ import torch.nn as nn
 from jdit.trainer.classification import ClassificationTrainer
 from jdit import Model
 from jdit.optimizer import Optimizer
-from jdit.dataset import Fashion_mnist
+from jdit.dataset import FashionMNIST
 
 
 class LinearModel(nn.Module):
@@ -79,7 +79,7 @@ def start_fashingClassTrainer(gpus=(), nepochs=100, lr=1e-3, depth=32):
     betas = (0.9, 0.999)
 
     print('===> Build dataset')
-    mnist = Fashion_mnist(batch_shape=batch_shape)
+    mnist = FashionMNIST(batch_shape=batch_shape)
     torch.backends.cudnn.benchmark = True
     print('===> Building model')
     net = Model(LinearModel(depth=depth), gpu_ids_abs=gpus, init_method="kaiming")

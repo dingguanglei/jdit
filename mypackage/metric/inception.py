@@ -11,7 +11,7 @@ from torch.nn.functional import adaptive_avg_pool2d
 
 
 class InceptionV3(nn.Module):
-    """Pretrained InceptionV3 network returning feature maps"""
+    """Pretrained _InceptionV3 network returning feature maps"""
 
     # Index of default block of inception to return,
     # corresponds to output of final average pooling
@@ -30,7 +30,7 @@ class InceptionV3(nn.Module):
                  resize_input=True,
                  normalize_input=True,
                  requires_grad=False):
-        """Build pretrained InceptionV3
+        """Build pretrained _InceptionV3
 
         Parameters
         ----------
@@ -242,7 +242,7 @@ class Metric(object):
     #     from jdit.dataset import Cifar10
     #     loader = Cifar10(batch_size=32).loader_test
     #     metric = Metric()
-    #     m1, s1 = metric.compute_act_statistics_from_loader(loader, InceptionV3([InceptionV3.BLOCK_INDEX_BY_DIM[2048]]), [])
+    #     m1, s1 = metric.compute_act_statistics_from_loader(loader, _InceptionV3([_InceptionV3.BLOCK_INDEX_BY_DIM[2048]]), [])
     #     fid_value = metric.FID(m1, s1, m1, s1)
 
     # print('FID: ', fid_value)

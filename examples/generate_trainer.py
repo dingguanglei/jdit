@@ -5,7 +5,7 @@ from torch.autograd import Variable
 from jdit.trainer import SupGanTrainer
 from jdit.model import Model
 from jdit.optimizer import Optimizer
-from jdit.dataset import Fashion_mnist
+from jdit.dataset import FashionMNIST
 
 
 def gradPenalty(D_net, real, fake, LAMBDA=10, use_gpu=False):
@@ -160,7 +160,7 @@ if __name__ == '__main__':
     # the input shape of generator
     latent_shape = (256, 1, 1)
     print('===> Build dataset')
-    cifar10 = Fashion_mnist(batch_shape=batch_shape)
+    cifar10 = FashionMNIST(batch_shape=batch_shape)
     torch.backends.cudnn.benchmark = True
     print('===> Building model')
     D_net = discriminator(input_nc=image_channel, depth=depth_D)

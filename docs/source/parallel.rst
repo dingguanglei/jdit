@@ -7,8 +7,8 @@ jdit.parallel
 .. automodule:: jdit.parallel
 .. currentmodule:: jdit.parallel
 
-SuperParallelTrainer
+SupParallelTrainer
 --------------------
 
-.. autoclass:: SuperParallelTrainer
+.. autoclass:: SupParallelTrainer
     :members:

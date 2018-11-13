@@ -1,6 +1,7 @@
 # coding=utf-8
+from typing import Union
+from torch.optim import Adam, RMSprop, SGD
 
-from torch.optim import Adam, RMSprop
 
 class Optimizer(object):
     """This is a wrapper of ``optimizer`` class in pytorch.
@@ -70,6 +71,7 @@ class Optimizer(object):
         )
 
     """
+
     def __init__(self, params, lr=1e-3, lr_decay=0.92, weight_decay=2e-5, momentum=0., betas=(0.9, 0.999),
                  opt_name="Adam", lr_minimum=1e-5):
         self.lr = lr
@@ -85,7 +87,7 @@ class Optimizer(object):
     def __getattr__(self, item):
         return getattr(self.opt, item)
 
-    def do_lr_decay(self, reset_lr_decay=None, reset_lr=None):
+    def do_lr_decay(self, reset_lr_decay: float = None, reset_lr: float = None):
         """Do learning rate decay, or reset them.
 
         Passing parameters both None:
@@ -115,6 +117,9 @@ class Optimizer(object):
         elif self.opt_name == "RMSprop":
             opt = RMSprop(filter(lambda p: p.requires_grad, params), self.lr, weight_decay=self.weight_decay,
                           momentum=self.momentum)
+        elif self.opt_name == "SGD":
+            opt = SGD(filter(lambda p: p.requires_grad, params), self.lr, weight_decay=self.weight_decay,
+                      momentum=self.momentum)
         else:
             raise ValueError('%s is not a optimizer method!' % self.opt_name)
         return opt

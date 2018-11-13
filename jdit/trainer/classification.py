@@ -16,29 +16,21 @@ class ClassificationTrainer(SupTrainer):
         self.opt = opt
         self.datasets = datasets
 
-        # self.labels = Variable().cuda() if self.use_gpu else Variable()
         self.labels = Variable().to(self.device)
         self.loger.regist_config(net)
         self.loger.regist_config(datasets)
         self.loger.regist_config(self)
 
     def train_epoch(self, subbar_disable=False):
-        self._watch_images(show_imgs_num=3, tag="Train")
+        # self._watch_images(show_imgs_num=3, tag="Train")
         for iteration, batch in tqdm(enumerate(self.datasets.loader_train, 1), unit="step", disable=subbar_disable):
             self.step += 1
             self.input, self.ground_truth, self.labels = self.get_data_from_batch(batch, self.device)
-            # input_cpu, ground_truth_cpu, labels_cpu = self.get_data_from_batch(batch)
-            # self.input = input_cpu.to(self.device)
-            # self.ground_truth = ground_truth_cpu.to(self.device)
-            # self.labels = labels_cpu.to(self.device)
-            # self.mv_inplace(input_cpu, self.input)
-            # self.mv_inplace(ground_truth_cpu, self.ground_truth)
-            # self.mv_inplace(labels_cpu, self.labels)
             self.output = self.net(self.input)
             self.train_iteration(self.opt, self.compute_loss, tag="Train")
 
-            # if iteration == 1:
-            #     self._watch_images(show_imgs_num=3, tag="Train")
+            if iteration == 1:
+                self._watch_images(show_imgs_num=3, tag="Train")
 
     @abstractmethod
     def compute_loss(self):
@@ -142,15 +134,7 @@ class ClassificationTrainer(SupTrainer):
         self.net.eval()
         for iteration, batch in enumerate(self.datasets.loader_valid, 1):
             self.input, self.ground_truth, self.labels = self.get_data_from_batch(batch, self.device)
-            # input_cpu, ground_truth_cpu, labels_cpu = self.get_data_from_batch(batch)
-            # self.input = input_cpu.to(self.device)
-            # self.ground_truth = ground_truth_cpu.to(self.device)
-            # self.labels = labels_cpu.to(self.device)
-            # self.mv_inplace(input_cpu, self.input)
-            # self.mv_inplace(ground_truth_cpu, self.ground_truth)
-            # self.mv_inplace(labels_cpu, self.labels)
             self.output = self.net(self.input).detach()
-
             dic = self.compute_valid()
             if avg_dic == {}:
                 avg_dic = dic
@@ -188,8 +172,8 @@ class ClassificationTrainer(SupTrainer):
     def change_lr(self):
         self.opt.do_lr_decay()
 
-    def checkPoint(self):
-        self.net.checkPoint("classmodel", self.current_epoch, self.logdir)
+    def check_point(self):
+        self.net.check_point("classmodel", self.current_epoch, self.logdir)
 
     def update_config_info(self):
         self.loger.regist_config(self.opt, self.current_epoch)

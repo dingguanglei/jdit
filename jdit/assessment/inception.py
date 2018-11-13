@@ -11,7 +11,7 @@ from torch.nn.functional import adaptive_avg_pool2d
 
 
 class InceptionV3(nn.Module):
-    """Pretrained InceptionV3 network returning feature maps"""
+    """Pretrained _InceptionV3 network returning feature maps"""
 
     # Index of default block of inception to return,
     # corresponds to output of final average pooling
@@ -30,7 +30,7 @@ class InceptionV3(nn.Module):
                  resize_input=True,
                  normalize_input=True,
                  requires_grad=False):
-        """Build pretrained InceptionV3
+        """Build pretrained _InceptionV3
 
         Parameters
         ----------

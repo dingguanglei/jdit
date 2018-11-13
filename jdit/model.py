@@ -1,16 +1,17 @@
 # coding=utf-8
 import torch, os
-from torch.nn import init, Conv2d, Linear, ConvTranspose2d, InstanceNorm2d, BatchNorm2d, DataParallel
+from torch.nn import init, Conv2d, Linear, ConvTranspose2d, InstanceNorm2d, BatchNorm2d, DataParallel, Module
 from torch import save, load
+from typing import Union
+from collections import OrderedDict
 
-
-class cached_property(object):
+class _cached_property(object):
     """
     Decorator that converts a method with a single self argument into a
     property cached on the instance.
 
     Optional ``name`` argument allows you to make cached properties of other
-    methods. (e.g.  url = cached_property(get_absolute_url, name='url') )
+    methods. (e.g.  url = _cached_property(get_absolute_url, name='url') )
     """
 
     def __init__(self, func, name=None):
@@ -29,7 +30,7 @@ class Model(object):
     r"""A warapper of pytorch ``module`` .
 
     In the simplest case, we use a raw pytorch ``module`` to assemble a ``Model`` of this class.
-    It can be more convenient to use some feather method, such ``checkPoint`` , ``loadModel`` and so on.
+    It can be more convenient to use some feather method, such ``check_point`` , ``load_model`` and so on.
 
     * :attr:`proto_model` is the core model in this class.
       It is no necessary to passing a ``module`` when you init a ``Model`` .
@@ -88,7 +89,10 @@ class Model(object):
 
     """
 
-    def __init__(self, proto_model=None, gpu_ids_abs=(), init_method="kaiming", show_structure=False, verbose = True):
+    def __init__(self, proto_model: Module = Module, gpu_ids_abs: Union[list,tuple]=(), init_method: [str, function] = "kaiming",
+                 show_structure=False, verbose=True):
+        if not gpu_ids_abs:
+            gpu_ids_abs = []
         os.environ["CUDA_VISIBLE_DEVICES"] = ",".join([str(i) for i in gpu_ids_abs])
         self.gpu_ids = [i for i in range(len(gpu_ids_abs))]
         self.model = None
@@ -105,7 +109,8 @@ class Model(object):
     def __getattr__(self, item):
         return getattr(self.model, item)
 
-    def define(self, proto_model, gpu_ids, init_method, show_structure):
+    def define(self, proto_model: Module, gpu_ids: Union[list, tuple], init_method: Union[str, function],
+               show_structure: bool):
         """Define and wrap a pytorch module, according to CPU, GPU and multi-GPUs.
 
         * Print the module's info.
@@ -123,22 +128,25 @@ class Model(object):
         init_name = self._apply_weight_init(init_method, proto_model)
         self._print("apply %s weight init!" % init_name)
 
-    def print_network(self, net, show_structure=False):
+    def print_network(self, proto_model: Module, show_structure=False):
         """Print total number of parameters and structure of network
 
-        :param net: Pytorch module
+        :param proto_model: Pytorch module
         :param show_structure: If show network's structure. default: ``False``
         :return: Total number of parameters
         """
-        model_name = net.__class__.__name__
-        num_params = self.countParams(net)
+        model_name = proto_model.__class__.__name__
+        num_params = self.count_params(proto_model)
         if show_structure:
-            self._print(net)
+            self._print(str(proto_model))
         num_params_log = '%s Total number of parameters: %d' % (model_name, num_params)
         self._print(num_params_log)
         return num_params
 
-    def loadModel(self, model_or_path, weights_or_path=None, gpu_ids=(), strict = True):
+    def load_model(self, model_or_path: Union[Module, DataParallel, str, None] = None,
+                   weights_or_path: Union[OrderedDict, str, None] = None,
+                   gpu_ids: list = (),
+                   strict=True):
         """Assemble a model and weights from paths or passing parameters.
 
         You can load a model from a file, passing parameters or both.
@@ -146,7 +154,8 @@ class Model(object):
         :param model_or_path: Pytorch model or model file path.
         :param weights_or_path: Pytorch weights or weights file path.
         :param gpu_ids: If using gpus. default:``()``
-        :param strict: The same function in pytorch ``model.load_state_dict(weights,strict = strict)`` . default:``True``
+        :param strict: The same function in pytorch ``model.load_state_dict(weights,strict = strict)`` .
+        default:``True``
         :return: ``module``
 
         Example::
@@ -157,17 +166,17 @@ class Model(object):
             ResNet Total number of parameters: 11689512
             ResNet model use CPU!
             apply kaiming weight init!
-            >>> resnet.saveModel("model.pth", "weights.pth", True)
+            >>> resnet.save_model("model.pth", "weights.pth", True)
             move to cpu...
             >>> resnet_load = Model()
             >>> # only load module structure
-            >>> resnet_load.loadModel("model.pth", None)
+            >>> resnet_load.load_model("model.pth", None)
             ResNet model use CPU!
             >>> # only load weights
-            >>> resnet_load.loadModel(None, "weights.pth")
+            >>> resnet_load.load_model(None, "weights.pth")
             ResNet model use CPU!
             >>> # load both
-            >>> resnet_load.loadModel("model.pth", "weights.pth")
+            >>> resnet_load.load_model("model.pth", "weights.pth")
             ResNet model use CPU!
 
         """
@@ -176,16 +185,16 @@ class Model(object):
         # if isinstance(model_or_path, str):
 
         if model_or_path:
-            if isinstance(model_or_path, torch.nn.Module):
+            if isinstance(model_or_path, Module):
                 model = model_or_path.cpu()
-            elif isinstance(model_or_path, torch.nn.DataParallel):
+            elif isinstance(model_or_path, DataParallel):
                 model, _ = self._extract_module(model_or_path.cpu(), extract_weights=False)
             else:
                 model = load(model_or_path, map_location=lambda storage, loc: storage)
         else:
             # model_or_path is None
             model = self.model.cpu()
-            if isinstance(model, torch.nn.DataParallel):
+            if isinstance(model, DataParallel):
                 model, _ = self._extract_module(model, extract_weights=False)
 
         if weights_or_path:
@@ -198,33 +207,9 @@ class Model(object):
             weights = self._fix_weights(weights)
             model.load_state_dict(weights, strict=strict)
 
-        # self.model = self._set_device(model, gpu_ids)
-        # # --------------------------------------------------------------
-        # model_is_path = isinstance(model_or_path, str)
-        # weights_is_path = isinstance(weights_or_path, str)
-        #
-        # if model_is_path:
-        #     model = load(model_or_path, map_location=lambda storage, loc: storage)
-        # else:
-        #     if model_or_path:
-        #         model = model_or_path
-        #     else:
-        #         model = self.model
-        #
-        # if weights_is_path:
-        #     weights = load(weights_or_path, map_location=lambda storage, loc: storage)
-        # else:
-        #     weights = weights_or_path
-        #
-        # if hasattr(model, "module"):
-        #     model, _ = self._extract_module(model, extract_weights=False)
-        #     weights = self._fix_weights(weights)
-        # if weights is not None:
-        #     model.load_state_dict(weights,strict = strict)
-        #
-        # self.model = self._set_device(model, gpu_ids)
+        self.model = self._set_device(model, gpu_ids)
 
-    def saveModel(self, model_path=None, weights_path=None, to_cpu=False):
+    def save_model(self, model_path: str = None, weights_path: str = None, to_cpu=False):
         """Save a model and weights to files.
 
         You can save a model, weights or both to file.
@@ -247,11 +232,11 @@ class Model(object):
            ResNet Total number of parameters: 11689512
            ResNet model use CPU!
            apply kaiming weight init!
-           >>> model.saveModel("model.pth", "weights.pth")
+           >>> model.save_model("model.pth", "weights.pth")
            >>> #you have had the model. Only get weights from path.
-           >>> model.loadModel(None, "weights.pth")
+           >>> model.load_model(None, "weights.pth")
            ResNet model use CPU!
-           >>> model.loadModel("model.pth", None)
+           >>> model.load_model("model.pth", None)
            ResNet model use CPU!
 
         """
@@ -274,7 +259,7 @@ class Model(object):
         if model_path:
             save(model, model_path)
 
-    def loadPoint(self, model_name, epoch, logdir="log"):
+    def load_point(self, model_name: str, epoch: int, logdir="log"):
         """load model and weights from a certain checkpoint.
 
         this method is cooperate with method `self.chechPoint()`
@@ -282,9 +267,9 @@ class Model(object):
         dir = os.path.join(logdir, "checkpoint")
         model_weights_path = os.path.join(dir, "Weights_%s_%d.pth" % (model_name, epoch))
         model_path = os.path.join(dir, "Model_%s_%d.pth" % (model_name, epoch))
-        self.loadModel(model_path, model_weights_path)
+        self.load_model(model_path, model_weights_path)
 
-    def checkPoint(self, model_name, epoch, logdir="log"):
+    def check_point(self, model_name: str, epoch: int, logdir="log"):
         dir = os.path.join(logdir, "checkpoint")
         if not os.path.exists(dir):
             os.makedirs(dir)
@@ -294,7 +279,7 @@ class Model(object):
         save(self.model.state_dict(), model_weights_path)
         save(self.model, model_path)
 
-    def countParams(self, proto_model):
+    def count_params(self, proto_model: Module):
         """count the total parameters of model.
 
         :param proto_model: pytorch module
@@ -304,15 +289,16 @@ class Model(object):
         for param in proto_model.parameters():
             num_params += param.numel()
         return num_params
+
     #
-    # @cached_property
+    # @_cached_property
     # def paramNum(self):
     #     if isinstance(self.model, DataParallel):
-    #         return self.countParams(self.model.module)
+    #         return self.count_params(self.model.module)
     #     else:
-    #         return self.countParams(self.model)
+    #         return self.count_params(self.model)
 
-    def _apply_weight_init(self, init_method, proto_model):
+    def _apply_weight_init(self, init_method: Union[str, function], proto_model: Module):
         init_name = "No"
         if init_method:
             if init_method == 'kaiming':
@@ -352,15 +338,15 @@ class Model(object):
         else:
             pass
 
-    def _extract_module(self, data_parallel_model, extract_weights=True):
+    def _extract_module(self, data_parallel_model: DataParallel, extract_weights=True):
         self._print("from `DataParallel` extract `module`...")
-        model = data_parallel_model.module
+        model: Module = data_parallel_model.module
         weights = self.model.state_dict()
         if extract_weights:
             weights = self._fix_weights(weights)
         return model, weights
 
-    def _fix_weights(self, weights):
+    def _fix_weights(self, weights: OrderedDict):
         # fix params' key
         from collections import OrderedDict
         new_state_dict = OrderedDict()
@@ -369,7 +355,7 @@ class Model(object):
             new_state_dict[name] = v
         return new_state_dict
 
-    def _set_device(self, proto_model, gpu_ids):
+    def _set_device(self, proto_model: Module, gpu_ids: list):
         gpu_available = torch.cuda.is_available()
         model_name = proto_model.__class__.__name__
         if (len(gpu_ids) == 1) & gpu_available:
@@ -382,7 +368,7 @@ class Model(object):
             self._print("%s model use CPU!" % (model_name))
         return proto_model
 
-    def _print(self, str):
+    def _print(self, str: str):
         if self.verbose:
             print(str)
 

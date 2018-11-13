@@ -13,16 +13,16 @@ Dataloaders_factory
 .. autoclass:: Dataloaders_factory
     :members:
 
-Hand_mnist
+HandMNIST
 ----------
 
-.. autoclass:: Hand_mnist
+.. autoclass:: HandMNIST
     :members:
 
-Fashion_mnist
+FashionMNIST
 -------------
 
-.. autoclass:: Fashion_mnist
+.. autoclass:: FashionMNIST
     :members:
 
 Cifar10

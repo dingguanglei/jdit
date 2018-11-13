@@ -4,7 +4,7 @@ import torch.nn as nn
 from jdit.trainer.classification import ClassificationTrainer
 from jdit.model import Model
 from jdit.optimizer import Optimizer
-from jdit.dataset import Cifar10, Fashion_mnist
+from jdit.dataset import Cifar10, FashionMNIST
 
 
 class FashingClassTrainer(ClassificationTrainer):
@@ -57,7 +57,7 @@ class FashingClassTrainer(ClassificationTrainer):
         # opt_name = "Adam"
 
         print('===> Build dataset')
-        mnist = Fashion_mnist(batch_shape=batch_shape)
+        mnist = FashionMNIST(batch_shape=batch_shape)
         torch.backends.cudnn.benchmark = True
         print('===> Building model')
         net = Model(LinearModel(depth=64), gpu_ids_abs=gpus, init_method="kaiming")
@@ -102,7 +102,7 @@ if __name__ == '__main__':
     # opt_name = "Adam"
 
     print('===> Build dataset')
-    mnist = Fashion_mnist(batch_shape=batch_shape)
+    mnist = FashionMNIST(batch_shape=batch_shape)
     torch.backends.cudnn.benchmark = True
     print('===> Building model')
     net = Model(LinearModel(depth=64), gpu_ids_abs=gpus, init_method="kaiming")

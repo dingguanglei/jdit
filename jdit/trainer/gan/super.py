@@ -33,11 +33,8 @@ class SupGanTrainer(SupTrainer):
     def train_epoch(self, subbar_disable=False):
         for iteration, batch in tqdm(enumerate(self.datasets.loader_train, 1), unit="step", disable=subbar_disable):
             self.step += 1
-
             self.input, self.ground_truth = self.get_data_from_loader(batch)
-
             self.fake = self.netG(self.input)
-
             self.train_iteration(self.optD, self.compute_d_loss, tag="LOSS_D")
             if (self.step % self.d_turn) == 0:
                 self.train_iteration(self.optG, self.compute_g_loss, tag="LOSS_G")
@@ -67,9 +64,7 @@ class SupGanTrainer(SupTrainer):
         self.netG.eval()
         self.netD.eval()
         for iteration, batch in enumerate(self.datasets.loader_valid, 1):
-            input_cpu, ground_truth_cpu = self.get_data_from_loader(batch)
-            self.mv_inplace(input_cpu, self.input)  # input data
-            self.mv_inplace(ground_truth_cpu, self.ground_truth)  # real data
+            self.input, self.ground_truth = self.get_data_from_loader(batch)
             self.fake = self.netG(self.input)
             dic = self.compute_valid()
             if avg_dic == {}:
@@ -142,9 +137,9 @@ class SupGanTrainer(SupTrainer):
         self.optD.do_lr_decay()
         self.optG.do_lr_decay()
 
-    def checkPoint(self):
-        self.netG.checkPoint("G", self.current_epoch, self.logdir)
-        self.netD.checkPoint("D", self.current_epoch, self.logdir)
+    def check_point(self):
+        self.netG.check_point("G", self.current_epoch, self.logdir)
+        self.netD.check_point("D", self.current_epoch, self.logdir)
 
     @property
     def configure(self):

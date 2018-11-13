@@ -52,7 +52,7 @@ from .inception import InceptionV3
 # parser.add_argument('--batch-size', type=int, default=64,
 #                     help='Batch size to use')
 # parser.add_argument('--dims', type=int, default=2048,
-#                     choices=list(InceptionV3.BLOCK_INDEX_BY_DIM),
+#                     choices=list(_InceptionV3.BLOCK_INDEX_BY_DIM),
 #                     help=('Dimensionality of Inception features to use. '
 #                           'By default, uses pool3 features'))
 # parser.add_argument('-c', '--gpu', default='', type=str,

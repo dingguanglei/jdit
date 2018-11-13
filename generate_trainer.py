@@ -65,7 +65,7 @@ class GenerateGenerateGanTrainer(SupGanTrainer):
             if self.use_gpu:
                 self.fixed_input = self.fixed_input.cuda()
             fixed_input_cpu = Variable(torch.randn((32, *self.latent_shape)))
-            self.mv_inplace(fixed_input_cpu, self.fixed_input)
+            self.fixed_input = fixed_input_cpu.to(self.device)
 
         self.netG.eval()
         with torch.no_grad():
@@ -115,6 +115,7 @@ if __name__ == '__main__':
                     norm_type="batch",
                     active_type="LeakyReLU")
     G = Model(G_net, gpu_ids_abs=gpus, init_method="kaiming")
+    G.load_model()
     print('===> Building optimizer')
     opt_D = Optimizer(D.parameters(), lr, lr_decay, weight_decay, momentum, betas, opt_D_name)
     opt_G = Optimizer(G.parameters(), lr, lr_decay, weight_decay, momentum, betas, opt_G_name)

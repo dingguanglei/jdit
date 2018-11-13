@@ -47,8 +47,8 @@ from torch.autograd import Variable
 from torch.nn.functional import adaptive_avg_pool2d
 
 
-class InceptionV3(nn.Module):
-    """Pretrained InceptionV3 network returning feature maps"""
+class _InceptionV3(nn.Module):
+    """Pretrained _InceptionV3 network returning feature maps"""
 
     # Index of default block of inception to return,
     # corresponds to output of final average pooling
@@ -67,7 +67,7 @@ class InceptionV3(nn.Module):
                  resize_input=True,
                  normalize_input=True,
                  requires_grad=False):
-        """Build pretrained InceptionV3
+        """Build pretrained _InceptionV3
 
         Parameters
         ----------
@@ -89,7 +89,7 @@ class InceptionV3(nn.Module):
             If true, parameters of the model require gradient. Possibly useful
             for finetuning the network
         """
-        super(InceptionV3, self).__init__()
+        super(_InceptionV3, self).__init__()
 
         self.resize_input = resize_input
         self.normalize_input = normalize_input
@@ -376,7 +376,7 @@ def FID_score(source, target, sample_prop=1.0, gpu_ids=(), dim=2048, batchsize=1
     .. attention ::
 
         If you are passing ``Tensor`` as source and target.
-        Make sure you have enough memory to load these data in InceptionV3.
+        Make sure you have enough memory to load these data in _InceptionV3.
         Otherwise, please passing ``path`` of ``DataLoader`` to compute them step by step.
 
     Example::
@@ -394,7 +394,7 @@ def FID_score(source, target, sample_prop=1.0, gpu_ids=(), dim=2048, batchsize=1
 
     """
     assert sample_prop <= 1 and sample_prop > 0, "sample_prop must between 0 and 1, but %s got" % sample_prop
-    model = InceptionV3([InceptionV3.BLOCK_INDEX_BY_DIM[dim]])
+    model = _InceptionV3([_InceptionV3.BLOCK_INDEX_BY_DIM[dim]])
     if isinstance(source, Tensor) and isinstance(target, Tensor):
         # source[?,C,H,W] target[?,C,H,W]
         s_length = len(source)

@@ -119,20 +119,20 @@ class Dataloaders_factory(metaclass=ABCMeta):
 
     def __init__(self, root, batch_size=128, num_workers=-1, shuffle=True):
         """set config to `.self` """
-        self.buildTransforms()
-        self.buildDatasets()
-        self.buildLoaders()
+        self.build_transforms()
+        self.build_datasets()
+        self.build_loaders()
 
-    def buildLoaders(self):
+    def build_loaders(self):
         """using dataset to build dataloaders"""
         
     @abstractmethod
-    def buildDatasets(self):
+    def build_datasets(self):
         """rewrite this function to register 
         `self.dataset_train`,``self.dataset_valid``and ``self.dataset_test``
         """
 
-    def buildTransforms(self, resize=32):
+    def build_transforms(self, resize=32):
         """rewrite this function to register `self.train_transform_list`. 
         Default set available.
         """
@@ -158,12 +158,12 @@ Using default transform.
 Don't define test dataset and using valid dataset  instead of test dataset. 
 
 ```python
-class Fashion_mnist(Dataloaders_factory):
+class FashionMNIST(Dataloaders_factory):
     def __init__(self, root=r'.\datasets\fashion_data', batch_size=128, num_workers=-1):
 
-        super(Fashion_mnist, self).__init__(root, batch_size, num_workers)
+        super(FashionMNIST, self).__init__(root, batch_size, num_workers)
 
-    def buildDatasets(self):
+    def build_datasets(self):
         self.dataset_train = datasets.FashionMNIST(self.root, train=True, download=True,
                                                    transform=transforms.Compose(self.train_transform_list))
         self.dataset_valid = datasets.FashionMNIST(self.root, train=False, download=True,
@@ -210,17 +210,16 @@ class Model(object):
     def print_network(self, net, show_structure=False):
     """print total number of parameters and structure of network"""
             
-    def loadModel(self, model_or_path, weights_or_path=None, gpu_ids=(), is_eval=True):
+    def load_model(self, model_or_path, weights_or_path=None, gpu_ids=(), is_eval=True):
     """to assemble a model and weights from paths or passing parameters."""
     
-    def loadPoint(self, model_name, epoch, logdir="log"):
-    """load model and weights from a certain checkpoint. cooperate with `checkPoint()`"""
+    def load_point(self, model_name, epoch, logdir="log"):
+    check_point
     
-    def checkPoint(self, model_name, epoch, logdir="log"):
-    """save model and weights for a checkpoint. cooperate with `loadPoint()`"""
+    def check_point(self, model_name, epoch, logdir="check_point load_point
     
-    def countParams(self, proto_model):
-    """count the total parameters of model."""
+   check_pointParams(self, proto_model):
+    load_pointthe total parameters of model."""
     
     @property
     def configure(self):
@@ -235,18 +234,18 @@ To wrap your pytorch model. You need to do as following.
     * Using `Model()` to get a `None` model.
   Then, using  `Model.define(resnet18())` other place to init your model.
 * Load pytoch model from a file.
-    * Using `Model.loadModel(model_or_path, weight_or_path)`, to load your model.
+    * Using `Model.load_model(model_or_path, weight_or_path)`, to load your model.
     * You must pass a model to this method whether it is path or model.
     * For `weight_or_path`, if it is not None. 
    It can be a path or weight OrderedDict and it will be applied in model.
-* Do checkPoint.
-    * Using `checkPoint(model_name, epoch, logdir="log")` to save your model checkpoint in `./log/checkpoint/`.
+* Do check_point.
+    * Using `check_point(model_name, epoch, logdir="log")` to scheck_pointodel checkpointcheck_point/checkpoint/`.
     * The Filename is `Weights_{model_name}_{epoch}.pth` and `Model_{model_name}_{epoch}.pth`
     * The `loadPoint()` is exact the opposite.
     
 Example:
 
-Load a `resnet18()` from `torchvision`.
+Load a `resnetload_pointm `torchvision`.
 
 ```python
 from torchvision.models.resnet import resnet18

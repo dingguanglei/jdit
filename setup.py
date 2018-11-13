@@ -15,7 +15,7 @@ setup(
     platforms=["all"],
     url="https://github.com/dingguanglei/jdit",
     packages=['jdit','jdit/trainer','jdit/trainer/gan','jdit/trainer/instances',
-              'jdit/assessment','jdit/parallel',],
+              'jdit/assessment','jdit/parallel'],
               # 'mypackage','mypackage/model','mypackage/metric','mypackage/model/shared'],  # 需要打包的目录列表
 
     # 需要安装的依赖

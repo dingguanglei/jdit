@@ -28,8 +28,8 @@ For these common datasets, you only need to reset the batch size.
 
 .. code-block:: python
 
-    >>> from jdit.dataset import Fashion_mnist
-    >>> Hand_mnist = Fashion_mnist(batch_shape=(64, 1, 32, 32))  # now you get a ``dataset``
+    >>> from jdit.dataset import FashionMNIST
+    >>> HandMNIST = FashionMNIST(batch_shape=(64, 1, 32, 32))  # now you get a ``dataset``
 
 Custom dataset
 >>>>>>>>>>>>>>
@@ -38,7 +38,7 @@ If you want your own data to build a dataset, you need to inherit the class
 
 ``jdit.dataset.Dataloaders_factory``
 
-and rewrite it's ``buildTransforms()`` and ``buildDatasets()``
+and rewrite it's ``build_transforms()`` and ``build_datasets()``
 (If you want to use default set, rewrite this is not necessary.)
 
 Following these setps:
@@ -49,14 +49,14 @@ Following these setps:
 
 Example::
 
-    def buildTransforms(self, resize=32):
+    def build_transforms(self, resize=32):
         # This is a default set, you can rewrite it.
         self.train_transform_list = self.valid_transform_list = [
             transforms.Resize(resize),
             transforms.ToTensor(),
             transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])]
 
-    def buildDatasets(self):
+    def build_datasets(self):
         self.dataset_train = datasets.CIFAR10(root, train=True, download=True,
             transform=transforms.Compose(self.train_transform_list))
         self.dataset_valid = datasets.CIFAR10(root, train=False, download=True,
@@ -171,7 +171,7 @@ Something like this::
             self.train_epoch(subbar_disable)
             self.valid()
             self.change_lr()
-            self.checkPoint()
+            self.check_point()
         self.test()
 
 Every method will be rewrite by the second level templates. It only defines a rough framework.
@@ -266,9 +266,9 @@ For some other things. These are not necessary
         # If you need lr decay strategy, write this.
         self.opt.do_lr_decay()
 
-    def checkPoint(self):
+    def check_point(self):
         # If you need checkpoint, write this.
-        self.net.checkPoint("classmodel", self.current_epoch, self.logdir)
+        self.net.check_point("classmodel", self.current_epoch, self.logdir)
 
     def update_config_info(self):
         # If you need to record the params changing such as lr changing.
@@ -324,7 +324,7 @@ Finally, build this task.
 
 .. code-block:: python
 
-    >>> mnist = Fashion_mnist(batch_shape=batch_shape)
+    >>> mnist = FashionMNIST(batch_shape=batch_shape)
     >>> net = Model(LinearModel(depth=depth), gpu_ids_abs=gpus, init_method="kaiming")
     >>> opt = Optimizer(net.parameters(), lr, lr_decay, weight_decay, momentum, betas, opt_name)
     >>> Trainer = FashingClassTrainer("log", nepochs, gpus, net, opt, mnist)

@@ -28,8 +28,8 @@ class TestModel(TestCase):
     def test_loadModel(self):
         print(self.mode)
         net = Model(self.mode, show_structure=False)
-        net.checkPoint("tm", self.epoch, "test_model")
-        net.loadModel("test_model/checkpoint/Model_tm_%d.pth" % self.epoch,
+        net.check_point("tm", self.epoch, "test_model")
+        net.load_model("test_model/checkpoint/Model_tm_%d.pth" % self.epoch,
                       "test_model/checkpoint/Weights_tm_%d.pth" % self.epoch)
         dir = "test_model/"
         shutil.rmtree(dir)
@@ -37,15 +37,15 @@ class TestModel(TestCase):
 
     def test_loadPoint(self):
         net = Model(self.mode, show_structure=False)
-        net.checkPoint("tm", self.epoch, "test_model")
-        net.loadPoint("tm", self.epoch, "test_model")
+        net.check_point("tm", self.epoch, "test_model")
+        net.load_point("tm", self.epoch, "test_model")
         dir = "test_model/"
         shutil.rmtree(dir)
 
 
     def test_checkPoint(self):
         net = Model(self.mode, show_structure=False)
-        net.checkPoint("tm", self.epoch, "test_model")
+        net.check_point("tm", self.epoch, "test_model")
         dir = "test_model/"
         shutil.rmtree(dir)
 

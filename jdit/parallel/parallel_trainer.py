@@ -1,22 +1,42 @@
 # coding=utf-8
-import os
 from abc import abstractmethod
 from multiprocessing import Pool
 
 
-class SuperParallelTrainer(object):
-    def __init__(self, default_params, unfixed_params_list):
+class SupParallelTrainer(object):
+    """ Training parallel.
+
+    .. attr::`default_params` is the default params.
+
+    .. attr::`unfixed_params_list` is the different params.
+
+
+    """
+    def __init__(self, default_params:dict, unfixed_params_list:list):
+        """
+
+        :param default_params: a ``dict()`` like {param:v1, param:v2 ...}
+        :param unfixed_params_list:  a ``list`` like [{param:v1, param:v2}, {param:v1, param:v2}, ...].
+        You must set the value of `task_id` and `gpu_ids_abs`, like {'task_id': 1}. {'gpu_ids_abs': [0,1]},
+        regardless in ``default_params`` or ``unfixed_params_list``.
+
+        .. note ::
+
+            You must set the value of `task_id` and `gpu_ids_abs`, like {'task_id': 1}. {'gpu_ids_abs': [0,1]}
+
+        """
         self.default_params = default_params
+        # {params:123}
         self.unfixed_params_list = unfixed_params_list  #
         # self.unfixed_params_list =[{'depth':12},{'depth':18},{'depth':24},{'depth':26}]
 
         self.candidate_params_list = self._build_candidate_params(default_params, unfixed_params_list)
         # [{params1..},{params2...}]
         self.parallel_plans = self._distribute_task_on_devices(self.candidate_params_list)
-        # self.parallel_plans = {(gpu_id):[{param1},{param2}]}
+        # self.parallel_plans = {(task_id):[{param1},{param2}]}
 
     @abstractmethod
-    def build_task_trainer(self, params):
+    def build_task_trainer(self, params:dict):
         """You need to write this method to build your own ``Trainer``.
 
         This will run in a certain subprocess.
@@ -54,7 +74,7 @@ class SuperParallelTrainer(object):
             nepochs = params["nepochs"]
 
             torch.backends.cudnn.benchmark = use_benchmark
-            mnist = Fashion_mnist(root=data_root, batch_shape=batch_shape)
+            mnist = FashionMNIST(root=data_root, batch_shape=batch_shape)
             T_net = Model(Tresnet18(depth=depth, mid_channels=mid_channels), gpu_ids_abs=gpu_ids_abs,
                           init_method=init_method)
             opt = Optimizer(T_net.parameters(), lr, lr_decay, weight_decay, momentum, betas, opt_name,
@@ -73,72 +93,49 @@ class SuperParallelTrainer(object):
         To start the parallel task that were saved in  ``self.parallel_plans`` dictionary.
         :param max_processes: A max amount of processes for setting ``Pool(processes = ?)`` method.
         """
-        print("Main process ID: %d" % os.getpid())
+        # print("Main process ID: %d" % os.getpid())
         print('Waiting for all subprocesses done...\n%s' % ('=' * 36))
         p = Pool(max_processes)
         # {(gpu_id1):[{param1}, {param2}], (gpu_id2):[{param1}, {param2}]}
         for position, parallel_plan in enumerate(self.parallel_plans.items()):
-            gpu_id, candidate_params = parallel_plan
-            p.apply_async(self._startTrain, (gpu_id, candidate_params, position),
+            # task_id, candidate_params = parallel_plan
+            p.apply_async(self._start_train, (parallel_plan, position),
                           callback=self.finish, error_callback=self.error)
-        # p.map_async(self._startTrain, self.parallel_plans.items(), callback=self.finish, error_callback=self.error)
+        # p.map_async(self._start_train, self.parallel_plans.items(), callback=self.finish, error_callback=self.error)
 
         p.close()
         p.join()
         print('All subprocesses done.')
 
-    def _startTrain(self, gpu_id, candidate_params, position):
-        # gpu_id, candidate_params = parallel_plan
+    def _start_train(self, parallel_plan:tuple, position:int):
+        task_id, candidate_params = parallel_plan
+        # task_id, candidate_params = parallel_planChild process ID:
         nums_tasks = len(candidate_params)
-        print("Child process ID: %d" % os.getpid())
+        # print("Task %s child process ID: %d" % (task_id, os.getpid()))
         for index, params in enumerate(candidate_params):
-            tag = "CPU" if not gpu_id else "GPU%s" % str(gpu_id)
-            process_bar_header = ">>>Task(%d/%d)|%s" % (index, nums_tasks, tag)
+            tag = "CPU" if not params["gpu_ids_abs"] else "GPU%s" % str(params["gpu_ids_abs"])
+            process_bar_header = ">>>T%d:(%d/%d)|%s" % (task_id, index, nums_tasks, tag)
             trainer = self.build_task_trainer(params)
             trainer.train(process_bar_header=process_bar_header, process_bar_position=position, subbar_disable=True)
-            # print("<<< finish Task %d|%s" % (index, str(gpu_id)))
+            # print("<<< finish Task %d|%s" % (index, str(task_id)))
 
-    def _distribute_task_on_devices(self, candidate_params_list):
-        candidate_gpu_ids_abs_list = self._get_gpu_ids_abs(candidate_params_list)
-        candidate_gpu_ids_abs_tuple = self._check_overlap(candidate_gpu_ids_abs_list)
-        gpu_used_plan = dict({})  # (gpu_ids_1):[t3],(gpu_ids_2):[t1,t2]
-        for candidate_params, gpu_ids_abs in zip(candidate_params_list, candidate_gpu_ids_abs_tuple):
-            if gpu_ids_abs in gpu_used_plan:
-                # if these gpus have been use, append to the former tasks.
-                gpu_used_plan[gpu_ids_abs].append(candidate_params)
+    def _distribute_task_on_devices(self, candidate_params_list:list):
+        for params in candidate_params_list:
+            assert "gpu_ids_abs" in params and "task_id" in params, "You must pass params `gpu_ids_abs` to set device"
+            assert "task_id" in params, "You must pass params `task_id` to set a task ID"
+        tasks_plan = dict({})  # (task_id):[t3],(task_id):[t1,t2]
+        for candidate_params in candidate_params_list:
+            task_id = candidate_params["task_id"]
+            if task_id in tasks_plan:
+                # if task_id have been used, append to the former tasks.
+                tasks_plan[task_id].append(candidate_params)
             else:
-                # if these gpus not have been use, create a new task list.
-                gpu_used_plan[gpu_ids_abs] = [candidate_params]
+                # if task_id  have not been used, create a new task list.
+                tasks_plan[task_id] = [candidate_params]
         # trainers_plan = list(gpu_used_plan.values)  # [[t1,t2],[t3]...]
-        return gpu_used_plan
+        return tasks_plan
 
-    def _get_gpu_ids_abs(self, candidate_params_list):
-        candidate_gpu_ids_abs_list = list(list(params["gpu_ids_abs"]) for params in candidate_params_list)
-        return candidate_gpu_ids_abs_list
-
-    def _check_overlap(self, candidate_gpu_ids_abs_list):
-        # print(candidate_gpu_ids_abs_list)
-        gpu_ids_list = []
-        for gpu_ids in candidate_gpu_ids_abs_list:
-            if isinstance(gpu_ids, list) or isinstance(gpu_ids, tuple):
-                gpu_ids_list.append(tuple(gpu_ids))
-            else:
-                gpu_ids_list.append(gpu_ids)
-        # print(gpu_ids_list)
-        # candidate_gpu_ids_abs_tuple = tuple(
-        #         tuple(gpu_ids) if isinstance(gpu_ids, tuple) else gpu_ids
-        #         for gpu_ids in candidate_gpu_ids_abs_list)
-        candidate_gpu_ids_abs_list = tuple(gpu_ids_list)
-        for gpus_set in candidate_gpu_ids_abs_list:
-            for gpu_set_2 in candidate_gpu_ids_abs_list:
-                no_overlaped = not set(gpus_set) & set(gpu_set_2)
-                is_same = set(gpus_set) == set(gpu_set_2)
-                assert no_overlaped or is_same, \
-                    "Can't assign different tasks on overlapped used gpus." \
-                    " gpus_ids %s and %s was given." % (gpus_set, gpu_set_2)
-        return candidate_gpu_ids_abs_list
-
-    def _build_candidate_params(self, default_params, unfixed_params_list):
+    def _build_candidate_params(self, default_params:dict, unfixed_params_list:list):
         final_unfixed_params_list = self._add_logdirs_to_unfixed_params(unfixed_params_list)
         total_params = []
         import copy
@@ -149,7 +146,7 @@ class SuperParallelTrainer(object):
             total_params.append(copy.deepcopy(params))
         return total_params
 
-    def _add_logdirs_to_unfixed_params(self, unfixed_params_list):
+    def _add_logdirs_to_unfixed_params(self, unfixed_params_list:list):
         import copy
         final_unfixed_params_list = copy.deepcopy(unfixed_params_list)
         use_auto_logdir = not "logdir" in unfixed_params_list[0]
@@ -158,6 +155,10 @@ class SuperParallelTrainer(object):
             for index, params_dict in enumerate(unfixed_params_list):  # [dict(),dict()]
                 logdir_name = []
                 for key, value in params_dict.items():  # params_dict = {p1:1, p2:2}
+                    if key == "task_id":
+                        continue
+                    if key == 'gpu_ids_abs':
+                        key = 'gpu'
                     param_name = "=".join([str(key), str(value)])
                     logdir_name.append(param_name)
                     final_unfixed_params_list[index]["logdir"] = "plog/" + ",".join(logdir_name)
@@ -170,12 +171,11 @@ class SuperParallelTrainer(object):
 
         return final_unfixed_params_list  # [dir1, dir2, dir3]
 
-    def _convert_to_dirname(self, item):
+    def _convert_to_dirname(self, item:str):
         dir_name = item.strip()
         replace_dict = {"*": "",
                         ">": "greater",
                         "<": "smaller",
-                        ",": "_",
                         "|": "-",
                         ":": "%",
                         "?": "$",

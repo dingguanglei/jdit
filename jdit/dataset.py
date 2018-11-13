@@ -1,10 +1,11 @@
 from torch.utils.data import DataLoader, random_split
 from torchvision import datasets, transforms
 import psutil
+from typing import Union
 from abc import ABCMeta, abstractmethod
 
 
-class Dataloaders_factory(metaclass=ABCMeta):
+class DataLoadersFactory(metaclass=ABCMeta):
     """This is a super class of dataloader.
 
     It defines same basic attributes and methods.
@@ -16,28 +17,28 @@ class Dataloaders_factory(metaclass=ABCMeta):
 
     It will build dataset following these setps:
 
-      #. ``buildTransforms()`` To build transforms for training dataset and valid.
-         You can rewrite this method for your own transform. It will be used in ``buildDatasets()``
-      #. ``buildDatasets()`` You must rewrite this method to load your own dataset
+      #. ``build_transforms()`` To build transforms for training dataset and valid.
+         You can rewrite this method for your own transform. It will be used in ``build_datasets()``
+      #. ``build_datasets()`` You must rewrite this method to load your own dataset
          by passing datasets to ``self.dataset_train`` and ``self.dataset_valid`` .
          ``self.dataset_test`` is optional. If you don't pass a test dataset,
          it will be replaced by ``self.dataset_valid`` .
 
          Example::
 
-           def buildTransforms(self, resize=32):
+           def build_transforms(self, resize=32):
                self.train_transform_list = self.valid_transform_list = [
                    transforms.Resize(resize),
                    transforms.ToTensor(),
                    transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])]
            # Inherit this class and write this method.
-           def buildDatasets(self):
+           def build_datasets(self):
                self.dataset_train = datasets.CIFAR10(root, train=True, download=True,
                    transform=transforms.Compose(self.train_transform_list))
                self.dataset_valid = datasets.CIFAR10(root, train=False, download=True,
                    transform=transforms.Compose(self.valid_transform_list))
 
-      #. ``buildLoaders()`` It will use dataset, and passed parameters to
+      #. ``build_loaders()`` It will use dataset, and passed parameters to
          build dataloaders for ``self.loader_train``, ``self.loader_valid`` and ``self.loader_test``.
 
 
@@ -52,7 +53,7 @@ class Dataloaders_factory(metaclass=ABCMeta):
 
     """
 
-    def __init__(self, root, batch_shape, num_workers=-1, shuffle=True, subdata_size=0.1):
+    def __init__(self, root: str, batch_shape: Union[tuple, list], num_workers=-1, shuffle=True, subdata_size=0.1):
         """ Build data loaders.
 
         :param root: root path of datasets.
@@ -69,25 +70,25 @@ class Dataloaders_factory(metaclass=ABCMeta):
         else:
             self.num_workers = num_workers
 
-        self.dataset_train = None
-        self.dataset_valid = None
-        self.dataset_test = None
+        self.dataset_train: datasets = None
+        self.dataset_valid: datasets = None
+        self.dataset_test: datasets = None
 
-        self.loader_train = None
-        self.loader_valid = None
-        self.loader_test = None
+        self.loader_train:DataLoader = None
+        self.loader_valid:DataLoader = None
+        self.loader_test:DataLoader = None
 
-        self.nsteps_train = None
-        self.nsteps_valid = None
-        self.nsteps_test = None
+        self.nsteps_train:int = None
+        self.nsteps_valid:int = None
+        self.nsteps_test:int = None
 
         self.sample_dataset_size = subdata_size
 
-        self.buildTransforms()
-        self.buildDatasets()
-        self.buildLoaders()
+        self.build_transforms()
+        self.build_datasets()
+        self.build_loaders()
 
-    def buildTransforms(self, resize=32):
+    def build_transforms(self, resize:int=32):
         """ This will build transforms for training and valid.
 
         You can rewrite this method to build your own transforms.
@@ -109,7 +110,7 @@ class Dataloaders_factory(metaclass=ABCMeta):
             transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])]
 
     @abstractmethod
-    def buildDatasets(self):
+    def build_datasets(self):
         """ You must to rewrite this method to load your own datasets.
 
         * :attr:`self.dataset_train` . Assign a training ``dataset`` to this.
@@ -126,17 +127,16 @@ class Dataloaders_factory(metaclass=ABCMeta):
         """
         pass
 
-
-    def buildLoaders(self):
+    def build_loaders(self):
         r""" Build datasets
-        The previous function ``self.buildDatasets()`` has created datasets.
+        The previous function ``self.build_datasets()`` has created datasets.
         Use these datasets to build their's dataloaders
         """
         assert self.dataset_train is not None, "`self.dataset_train` can't be `None`. " \
-                                               "Rewrite `buildDatasets` method and pass your own dataset to " \
+                                               "Rewrite `build_datasets` method and pass your own dataset to " \
                                                "self.dataset_train"
         assert self.dataset_valid is not None, "`self.dataset_valid` can't be `None`. " \
-                                               "Rewrite `buildDatasets` method and pass your own dataset to " \
+                                               "Rewrite `build_datasets` method and pass your own dataset to " \
                                                "self.dataset_valid"
         # Create dataloaders
         self.loader_train = DataLoader(self.dataset_train, batch_size=self.batch_size, shuffle=self.shuffle)
@@ -201,12 +201,12 @@ class Dataloaders_factory(metaclass=ABCMeta):
         return configs
 
 
-class Hand_mnist(Dataloaders_factory):
+class HandMNIST(DataLoadersFactory):
     """ Hand writing mnist dataset.
 
     Example::
 
-        >>> data = Hand_mnist(r"../datasets/mnist")
+        >>> data = HandMNIST(r"../datasets/mnist")
         use 8 thread!
         Downloading http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz
         Downloading http://yann.lecun.com/exdb/mnist/train-labels-idx1-ubyte.gz
@@ -241,9 +241,9 @@ class Hand_mnist(Dataloaders_factory):
     """
 
     def __init__(self, root=r'.\datasets\mnist', batch_shape=(128, 1, 32, 32), num_workers=-1):
-        super(Hand_mnist, self).__init__(root, batch_shape, num_workers)
+        super(HandMNIST, self).__init__(root, batch_shape, num_workers)
 
-    def buildDatasets(self):
+    def build_datasets(self):
         """Build datasets by using ``datasets.MNIST`` in pytorch
 
 
@@ -255,33 +255,33 @@ class Hand_mnist(Dataloaders_factory):
                                             transform=transforms.Compose(self.valid_transform_list))
 
 
-class Fashion_mnist(Dataloaders_factory):
+class FashionMNIST(DataLoadersFactory):
     def __init__(self, root=r'.\datasets\fashion_data', batch_shape=(128, 1, 32, 32), num_workers=-1):
-        super(Fashion_mnist, self).__init__(root, batch_shape, num_workers)
+        super(FashionMNIST, self).__init__(root, batch_shape, num_workers)
 
-    def buildDatasets(self):
+    def build_datasets(self):
         self.dataset_train = datasets.FashionMNIST(self.root, train=True, download=True,
                                                    transform=transforms.Compose(self.train_transform_list))
         self.dataset_valid = datasets.FashionMNIST(self.root, train=False, download=True,
                                                    transform=transforms.Compose(self.valid_transform_list))
 
 
-class Cifar10(Dataloaders_factory):
+class Cifar10(DataLoadersFactory):
     def __init__(self, root='datasets/cifar10', batch_shape=(128, 3, 32, 32), num_workers=-1):
         super(Cifar10, self).__init__(root, batch_shape, num_workers)
 
-    def buildDatasets(self):
+    def build_datasets(self):
         self.dataset_train = datasets.CIFAR10(self.root, train=True, download=True,
                                               transform=transforms.Compose(self.train_transform_list))
         self.dataset_valid = datasets.CIFAR10(self.root, train=False, download=True,
                                               transform=transforms.Compose(self.valid_transform_list))
 
 
-class Lsun(Dataloaders_factory):
+class Lsun(DataLoadersFactory):
     def __init__(self, root=r'.\datasets\LSUN', batch_shape=(64, 3, 128, 128), num_workers=-1):
         super(Lsun, self).__init__(root, batch_shape, num_workers)
 
-    def buildDatasets(self):
+    def build_datasets(self):
         self.dataset_train = datasets.CIFAR10(self.root, train=True, download=True,
                                               transform=transforms.Compose(self.train_transform_list))
         self.dataset_valid = datasets.CIFAR10(self.root, train=False, download=True,
