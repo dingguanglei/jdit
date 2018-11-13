@@ -10,6 +10,7 @@ from tqdm import tqdm
 import pandas as pd
 import numpy as np
 from typing import Union
+from types import FunctionType
 
 from jdit.optimizer import Optimizer
 from jdit.model import Model
@@ -106,7 +107,7 @@ class SupTrainer(object):
         input, ground_truth = batch_data[0], batch_data[1]
         return input.to(device), ground_truth.to(device)
 
-    def train_iteration(self, opt: Optimizer, compute_loss_fc: function, tag: str = "Train"):
+    def train_iteration(self, opt: Optimizer, compute_loss_fc: FunctionType, tag: str = "Train"):
         opt.zero_grad()
         loss, var_dic = compute_loss_fc()
         loss.backward()

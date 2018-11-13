@@ -186,7 +186,7 @@ class _InceptionV3(nn.Module):
 
 # ______________________________________________________________
 
-def compute_act_statistics_from_loader(dataloader, model, gpu_ids):
+def compute_act_statistics_from_loader(dataloader:DataLoader, model, gpu_ids):
     """
 
     :param dataloader:

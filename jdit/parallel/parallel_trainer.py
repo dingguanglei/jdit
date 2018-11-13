@@ -1,7 +1,7 @@
 # coding=utf-8
 from abc import abstractmethod
 from multiprocessing import Pool
-
+from types import FunctionType
 
 class SupParallelTrainer(object):
     """ Training parallel.

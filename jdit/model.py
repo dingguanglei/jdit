@@ -4,7 +4,7 @@ from torch.nn import init, Conv2d, Linear, ConvTranspose2d, InstanceNorm2d, Batc
 from torch import save, load
 from typing import Union
 from collections import OrderedDict
-
+from types import FunctionType
 class _cached_property(object):
     """
     Decorator that converts a method with a single self argument into a
@@ -89,7 +89,7 @@ class Model(object):
 
     """
 
-    def __init__(self, proto_model: Module = Module, gpu_ids_abs: Union[list,tuple]=(), init_method: [str, function] = "kaiming",
+    def __init__(self, proto_model: Module = Module, gpu_ids_abs: Union[list,tuple]=(), init_method: [str, FunctionType] = "kaiming",
                  show_structure=False, verbose=True):
         if not gpu_ids_abs:
             gpu_ids_abs = []
@@ -109,7 +109,7 @@ class Model(object):
     def __getattr__(self, item):
         return getattr(self.model, item)
 
-    def define(self, proto_model: Module, gpu_ids: Union[list, tuple], init_method: Union[str, function],
+    def define(self, proto_model: Module, gpu_ids: Union[list, tuple], init_method: Union[str, FunctionType],
                show_structure: bool):
         """Define and wrap a pytorch module, according to CPU, GPU and multi-GPUs.
 
@@ -298,7 +298,7 @@ class Model(object):
     #     else:
     #         return self.count_params(self.model)
 
-    def _apply_weight_init(self, init_method: Union[str, function], proto_model: Module):
+    def _apply_weight_init(self, init_method: Union[str, FunctionType], proto_model: Module):
         init_name = "No"
         if init_method:
             if init_method == 'kaiming':
