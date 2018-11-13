@@ -320,26 +320,30 @@ class Watcher(object):
         self.training_progress_images = None
 
     def graph(self, net, input_shape=None, use_gpu=False, *input):
-        if hasattr(net, 'module'):
-            net = net.module
+        if isinstance(net, torch.nn.Module):
+            proto_model = net
+        elif isinstance(net, torch.nn.DataParallel):
+            proto_model = net.module
+        else:
+            proto_model = net.model
+
         if input_shape is not None:
             assert (isinstance(input_shape, tuple) or isinstance(input_shape, list)), \
                 "param 'input_shape' should be list or tuple."
             input_tensor = torch.ones(input_shape).cuda() if use_gpu else torch.ones(input_shape)
             input_tensor = torch.autograd.Variable(input_tensor, requires_grad=True)
 
-
             self.scalars({'ParamsNum': net.num_params}, 0, tag="ParamsNum")
-            res = net(input_tensor)
+            res = proto_model(input_tensor)
             self.scalars({'ParamsNum': net.num_params}, 1, tag="ParamsNum")
             del res
             self.writer.add_graph(net, input_tensor)
         else:
             self.scalars({'ParamsNum': net.num_params}, 0, tag="ParamsNum")
-            res = net(*input)
+            res = proto_model(*input)
             self.scalars({'ParamsNum': net.num_params}, 1, tag="ParamsNum")
             del res
-            self.writer.add_graph(net, *input)
+            self.writer.add_graph(proto_model, *input)
 
 
     def close(self):
