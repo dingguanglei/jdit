@@ -157,8 +157,8 @@ class SupTrainer(object):
     @property
     def configure(self):
         config_dict = dict()
-        config_dict["every_epoch_checkpoint"] = self.every_epoch_checkpoint
-        config_dict["every_epoch_changelr"] = self.every_epoch_changelr
+        config_dict["every_epoch_checkpoint"] = str(self.every_epoch_checkpoint)
+        config_dict["every_epoch_changelr"] = str(self.every_epoch_changelr)
         config_dict["image_mode"] = self.mode
         config_dict["nepochs"] = int(self.nepochs)
 
