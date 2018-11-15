@@ -360,7 +360,7 @@ class Watcher(object):
             res = proto_model(*input)
             self.scalars({'ParamsNum': num_params}, 1, tag="ParamsNum")
             del res
-            self.writer.add_graph(proto_model, *input)
+            self.writer.add_graph(proto_model, input)
 
     def _count_params(self, proto_model: torch.nn.Module):
         """count the total parameters of model.
