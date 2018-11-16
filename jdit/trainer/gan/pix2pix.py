@@ -70,18 +70,24 @@ class Pix2pixGanTrainer(SupGanTrainer):
 
         if self.fixed_input is None:
             for iteration, batch in enumerate(self.datasets.loader_test, 1):
-                self.fixed_input, fixed_ground_truth = self.get_data_from_loader(batch)
-                self.watcher.image(fixed_ground_truth, self.current_epoch, tag="Valid/Fixed_groundtruth",
-                                   grid_size=(4, 4),
+                if isinstance(batch,list):
+                    self.fixed_input, fixed_ground_truth = self.get_data_from_loader(batch)
+                    self.watcher.image(self.fixed_input, self.current_epoch, tag="Fixed/groundtruth",
+                                       grid_size=(6, 6),
+                                       shuffle=False)
+                else:
+                    self.fixed_input = batch.to(self.device)
+                self.watcher.image(self.fixed_input, self.current_epoch, tag="Fixed/input",
+                                   grid_size=(6, 6),
                                    shuffle=False)
                 break
         # watching the variation during training by a fixed input
         with torch.no_grad():
             fake = self.netG(self.fixed_input).detach()
-        self.watcher.image(fake, self.current_epoch, tag="Valid/Fixed_fake", grid_size=(4, 4), shuffle=False)
+        self.watcher.image(fake, self.current_epoch, tag="Fixed/fake", grid_size=(6, 6), shuffle=False)
 
         # saving training processes to build a .gif.
-        self.watcher.set_training_progress_images(fake, grid_size=(4, 4))
+        self.watcher.set_training_progress_images(fake, grid_size=(6, 6))
 
         self.netG.train()
         self.netD.train()
