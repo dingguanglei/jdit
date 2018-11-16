@@ -7,12 +7,11 @@ import numpy as np
 from PIL.ImageEnhance import *
 
 
-def gradPenalty(D_net, real, fake, LAMBDA=10, input=None, use_gpu=False):
+def gradPenalty(D_net, real, fake, LAMBDA=10, input=None, use_gpu=False,use_half = False):
     batch_size = real.size()[0]
     # Calculate interpolation
     alpha = torch.rand(batch_size, 1, 1, 1)
     alpha = alpha.expand_as(real)
-
     alpha = alpha.cuda() if use_gpu else alpha
 
     interpolates = alpha * real + ((1 - alpha) * fake)

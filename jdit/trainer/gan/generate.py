@@ -1,4 +1,4 @@
-from .super import SupGanTrainer
+from .sup_gan import SupGanTrainer
 from abc import abstractmethod
 from torch.autograd import Variable
 import torch

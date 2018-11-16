@@ -1,4 +1,4 @@
-from .super import SupGanTrainer
+from .sup_gan import SupGanTrainer
 from abc import abstractmethod
 import torch
 
@@ -66,6 +66,22 @@ class Pix2pixGanTrainer(SupGanTrainer):
 
         self.watcher.scalars(avg_dic, self.step, tag="Valid")
         self._watch_images(tag="Valid")
+
+        if self.fixed_input is None:
+            for iteration, batch in enumerate(self.datasets.loader_test, 1):
+                self.fixed_input, fixed_ground_truth = self.get_data_from_loader(batch)
+                self.watcher.image(fixed_ground_truth, self.current_epoch, tag="Valid/Fixed_groundtruth", grid_size=(4, 4),
+                                   shuffle=False)
+                break
+        # watching the variation during training by a fixed input
+        with torch.no_grad():
+            fake = self.netG(self.fixed_input).detach()
+        self.watcher.image(fake, self.current_epoch, tag="Valid/Fixed_fake", grid_size=(4, 4), shuffle=False)
+
+        # saving training processes to build a .gif.
+        self.watcher.set_training_progress_images(fake, grid_size=(4, 4))
+
+
         self.netG.train()
         self.netD.train()
 

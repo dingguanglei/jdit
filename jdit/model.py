@@ -89,7 +89,7 @@ class Model(object):
 
     """
 
-    def __init__(self, proto_model: Module = Module, gpu_ids_abs: Union[list,tuple]=(), init_method: [str, FunctionType] = "kaiming",
+    def __init__(self, proto_model: Module =None, gpu_ids_abs: Union[list,tuple]=(), init_method: [str, FunctionType] = "kaiming",
                  show_structure=False, verbose=True):
         if not gpu_ids_abs:
             gpu_ids_abs = []
@@ -375,8 +375,11 @@ class Model(object):
     @property
     def configure(self):
         config_dic = dict()
-        config_dic["model_name"] = self.model.__class__.__name__
-        config_dic["init_method"] = self.init_fc.__name__
+        config_dic["model_name"] = str(self.model.__class__.__name__)
+        if hasattr(self.init_fc, __name__):
+            config_dic["init_method"] = str(self.init_fc.__name__)
+        else:
+            config_dic["init_method"] = str(self.init_fc)
         config_dic["gpus"] = len(self.gpu_ids)
         config_dic["total_params"] = self.num_params
         config_dic["structure"] = []
