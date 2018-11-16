@@ -164,6 +164,63 @@ class SupTrainer(object):
 
         return config_dict
 
+class Performance(object):
+    """this is a performance watcher.
+
+    """
+
+    def __init__(self, gpu_ids_abs: Union[list, tuple] = ()):
+        self.config_dic = dict()
+        self.gpu_ids = gpu_ids_abs
+
+    def mem_info(self):
+        from psutil import virtual_memory
+        mem = virtual_memory()
+        self.config_dic['mem_total_GB'] = round(mem.total / 1024 ** 3, 2)
+        self.config_dic['mem_used_GB'] = round(mem.used / 1024 ** 3, 2)
+        self.config_dic['mem_percent'] = mem.percent
+        # self.config_dic['mem_free_GB'] = round(mem.free // 1024 ** 3, 2)
+        # self._set_dict_smooth("mem_total_M", mem.total // 1024 ** 2, smooth=0.3)
+        # self._set_dict_smooth("mem_used_M", mem.used // 1024 ** 2, smooth=0.3)
+        # self._set_dict_smooth("mem_free_M", mem.free // 1024 ** 2, smooth=0.3)
+        # self._set_dict_smooth("mem_percent", mem.percent, smooth=0.3)
+
+    def gpu_info(self):
+        # pip install nvidia-ml-py3
+        if len(self.gpu_ids) >= 0 and torch.cuda.is_available():
+            import pynvml
+            pynvml.nvmlInit()
+            self.config_dic['gpu_driver_version'] = pynvml.nvmlSystemGetDriverVersion()
+            for gpu_id in self.gpu_ids:
+                handle = pynvml.nvmlDeviceGetHandleByIndex(gpu_id)
+                gpu_id_name = "gpu%s" % gpu_id
+                mem_info = pynvml.nvmlDeviceGetMemoryInfo(handle)
+                gpu_utilize = pynvml.nvmlDeviceGetUtilizationRates(handle)
+                self.config_dic['%s_device_name' % gpu_id_name] = pynvml.nvmlDeviceGetName(handle)
+                self.config_dic['%s_mem_total' % gpu_id_name] = gpu_mem_total = round(mem_info.total / 1024 ** 3, 2)
+                self.config_dic['%s_mem_used' % gpu_id_name] = gpu_mem_used = round(mem_info.used / 1024 ** 3, 2)
+                # self.config_dic['%s_mem_free' % gpu_id_name] = gpu_mem_free = mem_info.free // 1024 ** 2
+                self.config_dic['%s_mem_percent' % gpu_id_name] = round((gpu_mem_used / gpu_mem_total) * 100, 1)
+                self._set_dict_smooth('%s_utilize_gpu' % gpu_id_name, gpu_utilize.gpu, 0.8)
+                # self.config_dic['%s_utilize_gpu' % gpu_id_name] = gpu_utilize.gpu
+                # self.config_dic['%s_utilize_memory' % gpu_id_name] = gpu_utilize.memory
+
+            pynvml.nvmlShutdown()
+
+    def _set_dict_smooth(self, key: str, value, smooth: float = 0.3):
+        now = value
+        if key in self.config_dic:
+            last = self.config_dic[key]
+            self.config_dic[key] = now * (1 - smooth) + last * smooth
+        else:
+            self.config_dic[key] = now
+
+    @property
+    def configure(self):
+        self.mem_info()
+        self.gpu_info()
+        self.gpu_info()
+        return self.config_dic
 
 class Loger(object):
     """this is a log recorder.
@@ -180,7 +237,7 @@ class Loger(object):
             print("%s directory is not found. Build now!" % dir)
             os.makedirs(self.logdir)
 
-    def regist_config(self, opt_model_data: Union[SupTrainer, Optimizer, Model, DataLoadersFactory], flag=None,
+    def regist_config(self, opt_model_data: Union[SupTrainer, Optimizer, Model, DataLoadersFactory,Performance], flag=None,
                       flag_name="epoch",
                       config_filename: str = None):
         """
@@ -385,60 +442,4 @@ class Watcher(object):
             os.makedirs(dirs)
 
 
-class Performance(object):
-    """this is a performance watcher.
 
-    """
-
-    def __init__(self, gpu_ids_abs: Union[list, tuple] = ()):
-        self.config_dic = dict()
-        self.gpu_ids = gpu_ids_abs
-
-    def mem_info(self):
-        from psutil import virtual_memory
-        mem = virtual_memory()
-        self.config_dic['mem_total_GB'] = round(mem.total / 1024 ** 3, 2)
-        self.config_dic['mem_used_GB'] = round(mem.used / 1024 ** 3, 2)
-        self.config_dic['mem_percent'] = mem.percent
-        # self.config_dic['mem_free_GB'] = round(mem.free // 1024 ** 3, 2)
-        # self._set_dict_smooth("mem_total_M", mem.total // 1024 ** 2, smooth=0.3)
-        # self._set_dict_smooth("mem_used_M", mem.used // 1024 ** 2, smooth=0.3)
-        # self._set_dict_smooth("mem_free_M", mem.free // 1024 ** 2, smooth=0.3)
-        # self._set_dict_smooth("mem_percent", mem.percent, smooth=0.3)
-
-    def gpu_info(self):
-        # pip install nvidia-ml-py3
-        if len(self.gpu_ids) >= 0 and torch.cuda.is_available():
-            import pynvml
-            pynvml.nvmlInit()
-            self.config_dic['gpu_driver_version'] = pynvml.nvmlSystemGetDriverVersion()
-            for gpu_id in self.gpu_ids:
-                handle = pynvml.nvmlDeviceGetHandleByIndex(gpu_id)
-                gpu_id_name = "gpu%s" % gpu_id
-                mem_info = pynvml.nvmlDeviceGetMemoryInfo(handle)
-                gpu_utilize = pynvml.nvmlDeviceGetUtilizationRates(handle)
-                self.config_dic['%s_device_name' % gpu_id_name] = pynvml.nvmlDeviceGetName(handle)
-                self.config_dic['%s_mem_total' % gpu_id_name] = gpu_mem_total = round(mem_info.total / 1024 ** 3, 2)
-                self.config_dic['%s_mem_used' % gpu_id_name] = gpu_mem_used = round(mem_info.used / 1024 ** 3, 2)
-                # self.config_dic['%s_mem_free' % gpu_id_name] = gpu_mem_free = mem_info.free // 1024 ** 2
-                self.config_dic['%s_mem_percent' % gpu_id_name] = round((gpu_mem_used / gpu_mem_total) * 100, 1)
-                self._set_dict_smooth('%s_utilize_gpu' % gpu_id_name, gpu_utilize.gpu, 0.8)
-                # self.config_dic['%s_utilize_gpu' % gpu_id_name] = gpu_utilize.gpu
-                # self.config_dic['%s_utilize_memory' % gpu_id_name] = gpu_utilize.memory
-
-            pynvml.nvmlShutdown()
-
-    def _set_dict_smooth(self, key: str, value, smooth: float = 0.3):
-        now = value
-        if key in self.config_dic:
-            last = self.config_dic[key]
-            self.config_dic[key] = now * (1 - smooth) + last * smooth
-        else:
-            self.config_dic[key] = now
-
-    @property
-    def configure(self):
-        self.mem_info()
-        self.gpu_info()
-        self.gpu_info()
-        return self.config_dic

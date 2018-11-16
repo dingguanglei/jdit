@@ -1,6 +1,6 @@
 from ..super import SupTrainer
 from tqdm import tqdm
-
+import torch
 
 class SupGanTrainer(SupTrainer):
     d_turn = 1
@@ -65,10 +65,11 @@ class SupGanTrainer(SupTrainer):
         self.netD.eval()
         for iteration, batch in enumerate(self.datasets.loader_valid, 1):
             self.input, self.ground_truth = self.get_data_from_loader(batch)
-            self.fake = self.netG(self.input)
-            dic = self.compute_valid()
+            with torch.no_grad():
+                self.fake = self.netG(self.input)
+                dic: dict = self.compute_valid()
             if avg_dic == {}:
-                avg_dic = dic
+                avg_dic: dict = dic
             else:
                 # 求和
                 for key in dic.keys():
@@ -125,9 +126,10 @@ class SupGanTrainer(SupTrainer):
         return loss_g, var_dic
 
     def compute_valid(self):
-        g_loss, _ = self.compute_g_loss()
-        d_loss, _ = self.compute_d_loss()
-        var_dic = {"LOSS_D": d_loss, "LOSS_G": g_loss}
+        var_dic = {}
+        # g_loss, _ = self.compute_g_loss()
+        # d_loss, _ = self.compute_d_loss()
+        # var_dic = {"LOSS_D": d_loss, "LOSS_G": g_loss}
         return var_dic
 
     def test(self):
@@ -144,5 +146,5 @@ class SupGanTrainer(SupTrainer):
     @property
     def configure(self):
         dict = super(SupGanTrainer, self).configure
-        dict["d_turn"] = self.d_turn
+        dict["d_turn"] = str(self.d_turn)
         return dict

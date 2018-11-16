@@ -52,10 +52,11 @@ class Pix2pixGanTrainer(SupGanTrainer):
         self.netD.eval()
         for iteration, batch in enumerate(self.datasets.loader_valid, 1):
             self.input, self.ground_truth = self.get_data_from_loader(batch)
-            self.fake = self.netG(self.input)
-            dic = self.compute_valid()
+            with torch.no_grad():
+                self.fake = self.netG(self.input)
+                dic: dict = self.compute_valid()
             if avg_dic == {}:
-                avg_dic = dic
+                avg_dic: dict = dic
             else:
                 # 求和
                 for key in dic.keys():
@@ -70,7 +71,8 @@ class Pix2pixGanTrainer(SupGanTrainer):
         if self.fixed_input is None:
             for iteration, batch in enumerate(self.datasets.loader_test, 1):
                 self.fixed_input, fixed_ground_truth = self.get_data_from_loader(batch)
-                self.watcher.image(fixed_ground_truth, self.current_epoch, tag="Valid/Fixed_groundtruth", grid_size=(4, 4),
+                self.watcher.image(fixed_ground_truth, self.current_epoch, tag="Valid/Fixed_groundtruth",
+                                   grid_size=(4, 4),
                                    shuffle=False)
                 break
         # watching the variation during training by a fixed input
@@ -80,7 +82,6 @@ class Pix2pixGanTrainer(SupGanTrainer):
 
         # saving training processes to build a .gif.
         self.watcher.set_training_progress_images(fake, grid_size=(4, 4))
-
 
         self.netG.train()
         self.netD.train()
@@ -131,15 +132,16 @@ class Pix2pixGanTrainer(SupGanTrainer):
 
     @abstractmethod
     def compute_valid(self):
-
-        g_loss, _ = self.compute_g_loss()
-        d_loss, _ = self.compute_d_loss()
-        var_dic = {"LOSS_D": d_loss, "LOSS_G": g_loss}
+        var_dic = {}
+        # g_loss, _ = self.compute_g_loss()
+        # d_loss, _ = self.compute_d_loss()
+        # var_dic = {"LOSS_D": d_loss, "LOSS_G": g_loss}
         return var_dic
 
     def test(self):
         for index, batch in enumerate(self.datasets.loader_test, 1):
-            self.input, self.ground_truth = batch[0].to(self.device), batch[1].to(self.device)
+            # For test only have input without groundtruth
+            self.input = batch.to(self.device)
             self.netG.eval()
             with torch.no_grad():
                 fake = self.netG(self.input).detach()
@@ -151,5 +153,3 @@ class Pix2pixGanTrainer(SupGanTrainer):
         dict = super(Pix2pixGanTrainer, self).configure
         dict["d_turn"] = self.d_turn
         return dict
-
-
