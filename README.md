@@ -53,7 +53,7 @@ apply kaiming weight init!
 ===> Building optimizer
 ===> Training
 using `tensorboard --logdir=log` to see learning curves and net structure.
-training and valid data, configures info and checkpoint were save in `log` directory.
+training and valid_epoch data, configures info and checkpoint were save in `log` directory.
   0%|                                                                                        | 0/10 [00:00<?, ?epoch/s]
 0step [00:00, ?step/s]
 ```
@@ -146,8 +146,8 @@ class Dataloaders_factory(metaclass=ABCMeta):
         nsteps_train
 
 ```
-To build your dataset class, including train, valid and test. You need to do as following. 
-* Define datasets. (If you don't define test dataset, it will be replaced by valid datasaet)
+To build your dataset class, including train, valid_epoch and test. You need to do as following. 
+* Define datasets. (If you don't define test dataset, it will be replaced by valid_epoch datasaet)
 * Define transforms. (Default is available)
 
 Example:
@@ -155,7 +155,7 @@ Define a datasets by using `FashionMNIST()`.
 
 Using default transform.
 
-Don't define test dataset and using valid dataset  instead of test dataset. 
+Don't define test dataset and using valid_epoch dataset  instead of test dataset. 
 
 ```python
 class FashionMNIST(Dataloaders_factory):
@@ -214,9 +214,9 @@ class Model(object):
     """to assemble a model and weights from paths or passing parameters."""
     
     def load_point(self, model_name, epoch, logdir="log"):
-    check_point
+    _check_point
     
-    def check_point(self, model_name, epoch, logdir="check_point load_point
+    def _check_point(self, model_name, epoch, logdi_check_pointint
     
    check_pointParams(self, proto_model):
     load_pointthe total parameters of model."""
@@ -238,8 +238,8 @@ To wrap your pytorch model. You need to do as following.
     * You must pass a model to this method whether it is path or model.
     * For `weight_or_path`, if it is not None. 
    It can be a path or weight OrderedDict and it will be applied in model.
-* Do check_point.
-    * Using `check_point(model_name, epoch, logdir="log")` to scheck_pointodel checkpointcheck_point/checkpoint/`.
+* Do _check_point.
+    * Using `_check_point(model_name, epoch, logdir="log")` to scheck_pointodel checkpointcheck_point/checkpoint/`.
     * The Filename is `Weights_{model_name}_{epoch}.pth` and `Model_{model_name}_{epoch}.pth`
     * The `loadPoint()` is exact the opposite.
     

@@ -4,20 +4,19 @@ import psutil
 from typing import Union
 from abc import ABCMeta, abstractmethod
 
-
 class DataLoadersFactory(metaclass=ABCMeta):
     """This is a super class of dataloader.
 
     It defines same basic attributes and methods.
 
     * For training data: ``train_dataset``, ``loader_train``, ``nsteps_train`` .
-      Others such as ``valid`` and ``test`` have the same naming format.
+      Others such as ``valid_epoch`` and ``test`` have the same naming format.
     * For transform, you can define your own transforms.
-    * If you don't have test set, it will be replaced by valid dataset.
+    * If you don't have test set, it will be replaced by valid_epoch dataset.
 
     It will build dataset following these setps:
 
-      #. ``build_transforms()`` To build transforms for training dataset and valid.
+      #. ``build_transforms()`` To build transforms for training dataset and valid_epoch.
          You can rewrite this method for your own transform. It will be used in ``build_datasets()``
       #. ``build_datasets()`` You must rewrite this method to load your own dataset
          by passing datasets to ``self.dataset_train`` and ``self.dataset_valid`` .
@@ -74,13 +73,13 @@ class DataLoadersFactory(metaclass=ABCMeta):
         self.dataset_valid: datasets = None
         self.dataset_test: datasets = None
 
-        self.loader_train:DataLoader = None
-        self.loader_valid:DataLoader = None
-        self.loader_test:DataLoader = None
+        self.loader_train: DataLoader = None
+        self.loader_valid: DataLoader = None
+        self.loader_test: DataLoader = None
 
-        self.nsteps_train:int = None
-        self.nsteps_valid:int = None
-        self.nsteps_test:int = None
+        self.nsteps_train: int = None
+        self.nsteps_valid: int = None
+        self.nsteps_test: int = None
 
         self.sample_dataset_size = subdata_size
 
@@ -88,8 +87,8 @@ class DataLoadersFactory(metaclass=ABCMeta):
         self.build_datasets()
         self.build_loaders()
 
-    def build_transforms(self, resize:int=32):
-        """ This will build transforms for training and valid.
+    def build_transforms(self, resize: int = 32):
+        """ This will build transforms for training and valid_epoch.
 
         You can rewrite this method to build your own transforms.
         Don't forget to register your transforms to ``self.train_transform_list`` and ``self.valid_transform_list``
@@ -114,7 +113,7 @@ class DataLoadersFactory(metaclass=ABCMeta):
         """ You must to rewrite this method to load your own datasets.
 
         * :attr:`self.dataset_train` . Assign a training ``dataset`` to this.
-        * :attr:`self.dataset_valid` . Assign a valid ``dataset`` to this.
+        * :attr:`self.dataset_valid` . Assign a valid_epoch ``dataset`` to this.
         * :attr:`self.dataset_test` is optional. Assign a test ``dataset`` to this.
           If not, it will be replaced by ``self.dataset_valid`` .
 
@@ -286,6 +285,9 @@ class Lsun(DataLoadersFactory):
                                               transform=transforms.Compose(self.train_transform_list))
         self.dataset_valid = datasets.CIFAR10(self.root, train=False, download=True,
                                               transform=transforms.Compose(self.valid_transform_list))
+
+    def build_transforms(self, resize: int = 32):
+        super(Lsun, self).build_transforms(resize)
 
 
 def get_mnist_dataloaders(root=r'..\data', batch_size=128):

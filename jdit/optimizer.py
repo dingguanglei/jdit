@@ -1,8 +1,25 @@
 # coding=utf-8
-from typing import Union
+import torch
 from torch.optim import Adam, RMSprop, SGD
+from functools import wraps
 
 
+# def debug_opt(cls):
+#     @wraps(cls)
+#     def wrapper(*args, **kwargs):
+#         global DEBUG
+#         if not DEBUG:
+#             result = cls(*args, **kwargs)
+#         else:
+#             print(kwargs)
+#             print("Do debug!")
+#             result = cls(*args, **kwargs)
+#         return result
+#
+#     return wrapper
+
+
+# @debug_opt
 class Optimizer(object):
     """This is a wrapper of ``optimizer`` class in pytorch.
 
@@ -131,8 +148,23 @@ class Optimizer(object):
         opt_config = dict(self.opt.param_groups[0])
         opt_config.pop("params")
         config_dic.update(opt_config)
-        config_dic["lr_decay"] = self.lr_decay
+        config_dic["lr_decay"] = str(self.lr_decay)
+        for key, value in config_dic.items():
+            if not isinstance(value, (int, float, bool)):
+                config_dic[key] = str(value)
         return config_dic
+
+
+# class  debug_opt(object):
+#     def __init__(self):
+#         if not __debug__:
+#             return
+
+
+if __name__ == '__main__':
+    # DEBUG = False
+    param = torch.nn.Linear(10, 1).parameters()
+    opt = Optimizer(param, lr=0.999, weight_decay=0.03, momentum=0.5, betas=(0.1, 0.4), opt_name="RMSprop")
 
 # def test_opt():
 #     import torch

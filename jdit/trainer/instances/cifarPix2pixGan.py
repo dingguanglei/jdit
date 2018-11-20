@@ -135,7 +135,7 @@ class CifarPix2pixGanTrainer(Pix2pixGanTrainer):
         var_dic["LOSS_G"] = loss_g = -d_fake.mean()
         return loss_g, var_dic
 
-    def valid(self):
+    def valid_epoch(self):
         self.netG.eval()
         for iteration, batch in enumerate(self.datasets.loader_valid, 1):
             if self.fixed_input is None:
@@ -147,7 +147,7 @@ class CifarPix2pixGanTrainer(Pix2pixGanTrainer):
         with torch.no_grad():
             fake = self.netG(self.fixed_input).detach()
         self.watcher.image(fake, self.current_epoch, tag="Valid/Fixed_fake", grid_size=(4, 4), shuffle=False)
-        super(CifarPix2pixGanTrainer, self).valid()
+        super(CifarPix2pixGanTrainer, self).valid_epoch()
 
     def compute_valid(self):
         with torch.no_grad():

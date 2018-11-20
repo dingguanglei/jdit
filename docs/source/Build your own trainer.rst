@@ -45,7 +45,7 @@ Following these setps:
 
 * Rewrite your own transforms to ``self.train_transform_list`` and ``self.valid_transform_list``. (Not necessary)
 * Register your training dataset to ``self.dataset_train`` by using ``self.train_transform_list``
-* Register your valid dataset to ``self.dataset_valid`` by using ``self.valid_transform_list``
+* Register your valid_epoch dataset to ``self.dataset_valid`` by using ``self.valid_transform_list``
 
 Example::
 
@@ -167,11 +167,11 @@ Something like this::
 
      def train():
         for epoch in range(nepochs):
-            self.update_config_info() # record info
+            self._record_configs() # record info
             self.train_epoch(subbar_disable)
-            self.valid()
-            self.change_lr()
-            self.check_point()
+            self.valid_epoch()
+            self._change_lr()
+            self._check_point()
         self.test()
 
 Every method will be rewrite by the second level templates. It only defines a rough framework.
@@ -215,7 +215,7 @@ You must using ``self.step`` to record the training step.
             self.output = self.net(self.input)
             # this is defined in SupTrainer.
             # using `self.compute_loss` and `self.opt` to do a backward.
-            self.train_iteration(self.opt, self.compute_loss, tag="Train")
+            self._train_iteration(self.opt, self.compute_loss, tag="Train")
 
     @abstractmethod
     def compute_loss(self):
@@ -240,12 +240,12 @@ You must using ``self.step`` to record the training step.
 
     @abstractmethod
     def compute_valid(self):
-        """Compute the valid variables for visualization.
+        """Compute the valid_epoch variables for visualization.
         Rewrite by the next templates.
         Example::
 
           var_dic = {}
-          # visualize the valid curve of CrossEntropyLoss
+          # visualize the valid_epoch curve of CrossEntropyLoss
           var_dic["CEP"] = loss = CrossEntropyLoss()(self.output, self.labels.squeeze().long())
 
           _, predict = torch.max(self.output.detach(), 1)  # 0100=>1  0010=>2
@@ -253,7 +253,7 @@ You must using ``self.step`` to record the training step.
           labels = self.labels.squeeze().long()
           correct = predict.eq(labels).cpu().sum().float()
           acc = correct / total
-          # visualize the valid curve of accuracy
+          # visualize the valid_epoch curve of accuracy
           var_dic["ACC"] = acc
           return var_dic
         """
@@ -262,15 +262,15 @@ For some other things. These are not necessary
 
 .. code-block:: python
 
-    def change_lr(self):
+    def _change_lr(self):
         # If you need lr decay strategy, write this.
         self.opt.do_lr_decay()
 
-    def check_point(self):
+    def _check_point(self):
         # If you need checkpoint, write this.
-        self.net.check_point("classmodel", self.current_epoch, self.logdir)
+        self.net._check_point("classmodel", self.current_epoch, self.logdir)
 
-    def update_config_info(self):
+    def _record_configs(self):
         # If you need to record the params changing such as lr changing.
         self.loger.regist_config(self.opt, self.current_epoch)
         # for self.performance.configure

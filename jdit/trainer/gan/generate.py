@@ -31,7 +31,7 @@ class GenerateGanTrainer(SupGanTrainer):
         input_cpu = Variable(torch.randn((len(ground_truth_cpu), *self.latent_shape)))
         return input_cpu.to(self.device), ground_truth_cpu.to(self.device)
 
-    def valid(self):
+    def valid_epoch(self):
         avg_dic = {}
         self.netG.eval()
         self.netD.eval()

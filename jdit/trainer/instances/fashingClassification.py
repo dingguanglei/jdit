@@ -87,7 +87,7 @@ def start_fashingClassTrainer(gpus=(), nepochs=100, lr=1e-3, depth=32):
     opt = Optimizer(net.parameters(), lr, lr_decay, weight_decay, momentum, betas, opt_name)
     print('===> Training')
     print("using `tensorboard --logdir=log` to see learning curves and net structure."
-          "training and valid data, configures info and checkpoint were save in `log` directory.")
+          "training and valid_epoch data, configures info and checkpoint were save in `log` directory.")
     Trainer = FashingClassTrainer("log", nepochs, gpus, net, opt, mnist)
     Trainer.train()
 

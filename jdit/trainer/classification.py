@@ -27,7 +27,7 @@ class ClassificationTrainer(SupTrainer):
             self.step += 1
             self.input, self.ground_truth, self.labels = self.get_data_from_batch(batch, self.device)
             self.output = self.net(self.input)
-            self.train_iteration(self.opt, self.compute_loss, tag="Train")
+            self._train_iteration(self.opt, self.compute_loss, tag="Train")
 
             if iteration == 1:
                 self._watch_images(show_imgs_num=3, tag="Train")
@@ -87,7 +87,7 @@ class ClassificationTrainer(SupTrainer):
 
     @abstractmethod
     def compute_valid(self):
-        """Compute the valid variables for visualization.
+        """Compute the valid_epoch variables for visualization.
 
         Compute the caring variables.
         For the caring variables will only be used in tensorboard scalars visualization.
@@ -102,7 +102,7 @@ class ClassificationTrainer(SupTrainer):
         Example::
 
           var_dic = {}
-          # visualize the valid curve of CrossEntropyLoss
+          # visualize the valid_epoch curve of CrossEntropyLoss
           var_dic["CEP"] = loss = CrossEntropyLoss()(self.output, self.labels.squeeze().long())
 
           _, predict = torch.max(self.output.detach(), 1)  # 0100=>1  0010=>2
@@ -110,7 +110,7 @@ class ClassificationTrainer(SupTrainer):
           labels = self.labels.squeeze().long()
           correct = predict.eq(labels).cpu().sum().float()
           acc = correct / total
-          # visualize the valid curve of accuracy
+          # visualize the valid_epoch curve of accuracy
           var_dic["ACC"] = acc
           return var_dic
 
@@ -129,7 +129,7 @@ class ClassificationTrainer(SupTrainer):
         var_dic["ACC"] = acc
         return var_dic
 
-    def valid(self):
+    def valid_epoch(self):
         avg_dic = {}
         self.net.eval()
         for iteration, batch in enumerate(self.datasets.loader_valid, 1):
@@ -169,13 +169,13 @@ class ClassificationTrainer(SupTrainer):
     def _watch_images(self, show_imgs_num=4, tag="Train"):
         pass
 
-    def change_lr(self):
+    def _change_lr(self):
         self.opt.do_lr_decay()
 
-    def check_point(self):
-        self.net.check_point("classmodel", self.current_epoch, self.logdir)
+    def _check_point(self):
+        self.net._check_point("classmodel", self.current_epoch, self.logdir)
 
-    def update_config_info(self):
+    def _record_configs(self):
         self.loger.regist_config(self.opt, self.current_epoch)
         self.loger.regist_config(self.performance, self.current_epoch)  # for self.performance.configure
 

@@ -1,20 +1,21 @@
 import os
 import random
+from abc import ABCMeta, abstractmethod
+from types import FunctionType
+from typing import Union
+
+import numpy as np
+import pandas as pd
 import torch
 import torchvision.transforms as transforms
 from tensorboardX import SummaryWriter
 from torch.autograd import Variable
 from torchvision.utils import make_grid
-from abc import ABCMeta, abstractmethod
 from tqdm import tqdm
-import pandas as pd
-import numpy as np
-from typing import Union
-from types import FunctionType
 
-from jdit.optimizer import Optimizer
-from jdit.model import Model
 from jdit.dataset import DataLoadersFactory
+from jdit.model import Model
+from jdit.optimizer import Optimizer
 
 
 class SupTrainer(object):
@@ -36,8 +37,8 @@ class SupTrainer(object):
 
         self.use_gpu = True if (len(self.gpu_ids) > 0) and torch.cuda.is_available() else False
         self.device = torch.device("cuda") if self.use_gpu else torch.device("cpu")
-        self.input = Variable().to(self.device)
-        self.ground_truth = Variable().to(self.device)
+        self.input: Variable()
+        self.ground_truth: Variable()
         self.nepochs = nepochs
         self.current_epoch = 1
         self.step = 0
@@ -47,19 +48,52 @@ class SupTrainer(object):
         for epoch in tqdm(range(START_EPOCH, self.nepochs + 1), total=self.nepochs,
                           unit="epoch", desc=process_bar_header, position=process_bar_position, **kwargs):
             self.current_epoch = epoch
-            self.update_config_info()
+            self._record_configs()
             self.train_epoch(subbar_disable)
-            self.valid()
-            # self.watcher.model_params(self.netG, epoch)
-            if isinstance(self.every_epoch_changelr, int):
-                is_change_lr = (self.current_epoch % self.every_epoch_changelr) == 0
-            else:
-                is_change_lr = self.current_epoch in self.every_epoch_changelr
-            if is_change_lr:
-                self.change_lr()
-            if self.current_epoch % self.every_epoch_checkpoint == 0:
-                self.check_point()
+            self.valid_epoch()
+            self._change_lr()
+            self._check_point()
         self.test()
+        self.watcher.close()
+
+    def debug(self):
+        from torch.utils.data import random_split
+        import traceback
+        import shutil
+        self.every_epoch_checkpoint = 1
+        self.every_epoch_changelr = 1
+        self.logdir = "log_debug"
+        # reset `log_debug`
+        if os.path.exists("log_debug"):
+            try:
+                shutil.rmtree("log_debug")  # 递归删除文件夹
+            except Exception as e:
+                print('Can not remove logdir `log_debug`\n', e)
+                traceback.print_exc()
+        # reset datasets and dataloaders
+        for item in vars(self).values():
+            if isinstance(item, DataLoadersFactory):
+                item.batch_size = 2
+                item.shuffle = False
+                item.num_workers = None
+                item.dataset_train, _ = random_split(item.dataset_train, [2, len(item.dataset_train) - 2])
+                item.dataset_valid, _ = random_split(item.dataset_valid, [2, len(item.dataset_valid) - 2])
+                item.dataset_test, _ = random_split(item.dataset_test, [2, len(item.dataset_test) - 2])
+                item.build_loaders()
+        # the tested functions
+        debug_fcs = [self._record_configs, self.train_epoch, self.valid_epoch,
+                     self._change_lr, self._check_point, self.test]
+        print("===> Debug")
+        for fc in debug_fcs:
+            print("{:=^30}".format(fc.__name__ + "()"))
+            try:
+                fc()
+            except Exception as e:
+                print('Error:', e)
+                traceback.print_exc()
+            else:
+                print("pass!")
+
         self.watcher.close()
 
     @abstractmethod
@@ -77,7 +111,7 @@ class SupTrainer(object):
            for iteration, batch in tqdm(enumerate(self.datasets.loader_train, 1)):
                self.step += 1
                self.input_cpu, self.ground_truth_cpu = self.get_data_from_batch(batch, self.device)
-               self.train_iteration(self.opt, self.compute_loss, tag="Train")
+               self._train_iteration(self.opt, self.compute_loss, tag="Train")
 
         :return:
         """
@@ -107,7 +141,7 @@ class SupTrainer(object):
         input, ground_truth = batch_data[0], batch_data[1]
         return input.to(device), ground_truth.to(device)
 
-    def train_iteration(self, opt: Optimizer, compute_loss_fc: FunctionType, tag: str = "Train"):
+    def _train_iteration(self, opt: Optimizer, compute_loss_fc: FunctionType, tag: str = "Train"):
         opt.zero_grad()
         loss, var_dic = compute_loss_fc()
         loss.backward()
@@ -115,11 +149,8 @@ class SupTrainer(object):
         self.watcher.scalars(var_dict=var_dic, global_step=self.step, tag="Train")
         self.loger.write(self.step, self.current_epoch, var_dic, tag, header=self.step <= 1)
 
-    # def mv_inplace(self, source_to, targert):
-    #     targert.data.resize_(source_to.size()).copy_(source_to)
-
-    def update_config_info(self):
-        """to register the ``model`` , ``optim`` , ``trainer`` and ``performance`` config info.
+    def _record_configs(self):
+        """to register the ``Model`` , ``Optimizer`` , ``Trainer`` and ``Performance`` config info.
 
           The default is record the info of ``trainer`` and ``performance`` config.
           If you want to record more configures info, you can add more module to ``self.loger.regist_config`` .
@@ -139,16 +170,32 @@ class SupTrainer(object):
         :return:
         """
         self.loger.regist_config(self, self.current_epoch)  # for trainer.configure
-        self.loger.regist_config(self.performance, self.current_epoch)  # for self.performance.configure
+        for key, object in vars(self).items():
+            if isinstance(object, (Model, Optimizer, SupTrainer, Performance)):
+                self.loger.regist_config(object, self.current_epoch, flag_name="epoch",
+                                         config_filename=key)  # for trainer.configure
 
-    @abstractmethod
-    def check_point(self):
-        pass
+    def _check_point(self):
+        if isinstance(self.every_epoch_changelr, int):
+            is_check_point = (self.current_epoch % self.every_epoch_checkpoint) == 0
+        else:
+            is_check_point = self.current_epoch in self.every_epoch_checkpoint
+        if is_check_point:
+            for key, model in vars(self).items():
+                if isinstance(model, Model):
+                    model.check_point(key, self.current_epoch, self.logdir)
 
-    def change_lr(self):
-        pass
+    def _change_lr(self):
+        if isinstance(self.every_epoch_changelr, int):
+            is_change_lr = (self.current_epoch % self.every_epoch_changelr) == 0
+        else:
+            is_change_lr = self.current_epoch in self.every_epoch_changelr
+        if is_change_lr:
+            for key, opt in vars(self).items():
+                if isinstance(opt, Optimizer):
+                    opt.do_lr_decay()
 
-    def valid(self):
+    def valid_epoch(self):
         pass
 
     def test(self):
@@ -163,6 +210,7 @@ class SupTrainer(object):
         config_dict["nepochs"] = int(self.nepochs)
 
         return config_dict
+
 
 class Performance(object):
     """this is a performance watcher.
@@ -222,6 +270,7 @@ class Performance(object):
         self.gpu_info()
         return self.config_dic
 
+
 class Loger(object):
     """this is a log recorder.
 
@@ -229,7 +278,7 @@ class Loger(object):
 
     def __init__(self, logdir: str = "log"):
         self.logdir = logdir
-        self.regist_list = []
+        self.regist_dict = dict({})
         self._build_dir()
 
     def _build_dir(self):
@@ -237,7 +286,8 @@ class Loger(object):
             print("%s directory is not found. Build now!" % dir)
             os.makedirs(self.logdir)
 
-    def regist_config(self, opt_model_data: Union[SupTrainer, Optimizer, Model, DataLoadersFactory,Performance], flag=None,
+    def regist_config(self, opt_model_data: Union[SupTrainer, Optimizer, Model, DataLoadersFactory, Performance],
+                      flag=None,
                       flag_name="epoch",
                       config_filename: str = None):
         """
@@ -253,33 +303,28 @@ class Loger(object):
 
         if config_filename is None:
             config_filename = opt_model_data.__class__.__name__
+        config_dic = opt_model_data.configure.copy()
+        path = os.path.join(self.logdir, config_filename + ".csv")
 
-        config_dic = dict({})
-        if flag is not None:
-            config_dic.update({flag_name: flag})
-        config_dic.update(opt_model_data.configure)
-
-        path = self.logdir + "/" + config_filename + ".csv"
-        is_registed = config_filename in self.__dict__.keys()
-        if is_registed:
-            # 已经注册过config
-            last_config_set = set(self.__dict__[config_filename][-1].items())
-            current_config_set = set(opt_model_data.configure.items())
-            if not current_config_set.issubset(last_config_set):
-                # 若已经注册过config，比对最后一次结果，如果不同，则写入，相同无操作。
-                self.__dict__[config_filename].append(config_dic)
-                pdg = pd.DataFrame.from_dict(config_dic, orient="index").transpose()
-                pdg.to_csv(path, mode="a", encoding="utf-8", index=False, header=False)
-
-        elif not is_registed:
+        is_registed = config_filename in self.regist_dict.keys()
+        if not is_registed:
             # 若没有注册过，注册该config
-            self.regist_list.append(config_filename)
-            self.__dict__[config_filename] = [config_dic]
+            self.regist_dict[config_filename] = config_dic.copy()
+            if flag is not None:
+                config_dic.update({flag_name: flag})
             pdg = pd.DataFrame.from_dict(config_dic, orient="index").transpose()
             pdg.to_csv(path, mode="w", encoding="utf-8", index=False, header=True)
         else:
-            # 没有改变
-            pass
+            # 已经注册过config
+            last_config = self.regist_dict[config_filename]
+            current_config = config_dic
+            if last_config != current_config:
+                # 若已经注册过config，比对最后一次结果，如果不同，则写入，相同无操作。
+                self.regist_dict[config_filename] = current_config.copy()
+                if flag is not None:
+                    config_dic.update({flag_name: flag})
+                pdg = pd.DataFrame.from_dict(config_dic, orient="index").transpose()
+                pdg.to_csv(path, mode="a", encoding="utf-8", index=False, header=False)
 
     def write(self, step: int, current_epoch: int, msg_dic: dict, filename: str, header=True):
         if msg_dic is None:
@@ -295,8 +340,7 @@ class Loger(object):
         pdg.to_csv(path, mode="a", encoding="utf-8", index=False, header=header)
 
     def clear_regist(self):
-        for var in self.regist_list:
-            self.__dict__.pop(var)
+        self.regist_list = dict({})
 
 
 class Watcher(object):
@@ -310,6 +354,7 @@ class Watcher(object):
         self.mode = mode
         self._build_dir(logdir)
         self.training_progress_images = []
+        self.gif_duration = 0.5
 
     def model_params(self, model: torch.nn.Module, global_step: int):
         for name, param in model.named_parameters():
@@ -383,7 +428,7 @@ class Watcher(object):
         filename = "%s/plots/training.gif" % (self.logdir)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            imageio.mimsave(filename, self.training_progress_images)
+            imageio.mimsave(filename, self.training_progress_images, duration=self.gif_duration)
         self.training_progress_images = None
 
     def graph(self, model: Union[torch.nn.Module, torch.nn.DataParallel, Model],
@@ -442,4 +487,15 @@ class Watcher(object):
             os.makedirs(dirs)
 
 
+if __name__ == '__main__':
+    import torch.nn as nn
 
+    log = Loger('log')
+    model = nn.Linear(10, 1)
+    opt = Optimizer(model.parameters())
+    log.regist_config(opt, flag=1)
+    opt.do_lr_decay()
+    log.regist_config(opt, flag=2)
+    log.regist_config(opt, flag=3)
+    log.regist_config(opt)
+    exit(1)

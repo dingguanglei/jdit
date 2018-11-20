@@ -228,7 +228,7 @@ def getDataLoader(image_dir_path,
 
     if valid_size is not None:
         if train_size is not None:
-            assert (train_size > valid_size), "Do not have enough train data(%d) to split a valid data(%d)" % (
+            assert (train_size > valid_size), "Do not have enough train data(%d) to split a valid_epoch data(%d)" % (
                 train_size, valid_size)
             train_size = train_size - valid_size
         x_train_Names, x_cv_Names, y_train_Names, y_cv_Names = train_test_split(
@@ -326,7 +326,7 @@ def BranchGetDataLoader(image_dir_path,
 
     if valid_size:
         if train_size:
-            assert (train_size > valid_size), "Do not have enough train data(%d) to split a valid data(%d)" % (
+            assert (train_size > valid_size), "Do not have enough train data(%d) to split a valid_epoch data(%d)" % (
                 train_size, valid_size)
             train_size = train_size - valid_size
         x_train_Names, x_cv_Names, y_train_Names, y_cv_Names = train_test_split(

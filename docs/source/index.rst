@@ -62,7 +62,7 @@ Then you will see something like this as following.
     ===> Building optimizer
     ===> Training
     using `tensorboard --logdir=log` to see learning curves and net structure.
-    training and valid data, configures info and checkpoint were save in `log` directory.
+    training and valid_epoch data, configures info and checkpoint were save in `log` directory.
       0%|            | 0/10 [00:00<?, ?epoch/s]
     0step [00:00, ?step/s]
 

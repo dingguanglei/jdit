@@ -59,7 +59,7 @@ class GenerateGenerateGanTrainer(SupGanTrainer):
     #     var_dic["WD"] = w_distance = (d_real.mean() - d_fake.mean()).detach()
     #     return var_dic
 
-    def valid(self):
+    def valid_epoch(self):
         if self.fixed_input is None:
             self.fixed_input = Variable()
             if self.use_gpu:

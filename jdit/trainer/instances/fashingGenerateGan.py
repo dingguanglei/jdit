@@ -68,7 +68,7 @@ class FashingGenerateGenerateGanTrainer(GenerateGanTrainer):
         var_dic["LOSS_G"] = loss_g = -d_fake.mean()
         return loss_g, var_dic
 
-    def valid(self):
+    def valid_epoch(self):
         # register a fixed input
         if self.fixed_input is None:
             self.fixed_input = Variable(torch.randn((32, *self.latent_shape))).to(self.device)

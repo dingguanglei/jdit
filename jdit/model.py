@@ -5,6 +5,8 @@ from torch import save, load
 from typing import Union
 from collections import OrderedDict
 from types import FunctionType
+
+
 class _cached_property(object):
     """
     Decorator that converts a method with a single self argument into a
@@ -30,7 +32,7 @@ class Model(object):
     r"""A warapper of pytorch ``module`` .
 
     In the simplest case, we use a raw pytorch ``module`` to assemble a ``Model`` of this class.
-    It can be more convenient to use some feather method, such ``check_point`` , ``load_model`` and so on.
+    It can be more convenient to use some feather method, such ``_check_point`` , ``load_model`` and so on.
 
     * :attr:`proto_model` is the core model in this class.
       It is no necessary to passing a ``module`` when you init a ``Model`` .
@@ -89,16 +91,19 @@ class Model(object):
 
     """
 
-    def __init__(self, proto_model: Module =None, gpu_ids_abs: Union[list,tuple]=(), init_method: [str, FunctionType] = "kaiming",
+    def __init__(self, proto_model: Module = None, gpu_ids_abs: Union[list, tuple] = (),
+                 init_method: Union[str, FunctionType, None] = "kaiming",
                  show_structure=False, verbose=True):
         if not gpu_ids_abs:
             gpu_ids_abs = []
         os.environ["CUDA_VISIBLE_DEVICES"] = ",".join([str(i) for i in gpu_ids_abs])
         self.gpu_ids = [i for i in range(len(gpu_ids_abs))]
-        self.model = None
+        self.model: Union[DataParallel, Module] = None
+        # self.model_name :str= None
         self.weights_init = None
         self.init_fc = None
-        self.num_params = 0
+        self.init_name: str = None
+        self.num_params: int = 0
         self.verbose = verbose
         if proto_model is not None:
             self.define(proto_model, self.gpu_ids, init_method, show_structure)
@@ -109,7 +114,7 @@ class Model(object):
     def __getattr__(self, item):
         return getattr(self.model, item)
 
-    def define(self, proto_model: Module, gpu_ids: Union[list, tuple], init_method: Union[str, FunctionType],
+    def define(self, proto_model: Module, gpu_ids: Union[list, tuple], init_method: Union[str, FunctionType, None] ,
                show_structure: bool):
         """Define and wrap a pytorch module, according to CPU, GPU and multi-GPUs.
 
@@ -125,8 +130,8 @@ class Model(object):
         """
         self.num_params = self.print_network(proto_model, show_structure)
         self.model = self._set_device(proto_model, gpu_ids)
-        init_name = self._apply_weight_init(init_method, proto_model)
-        self._print("apply %s weight init!" % init_name)
+        self.init_name = self._apply_weight_init(init_method, proto_model)
+        self._print("apply %s weight init!" % self.init_name)
 
     def print_network(self, proto_model: Module, show_structure=False):
         """Print total number of parameters and structure of network
@@ -290,13 +295,18 @@ class Model(object):
             num_params += param.numel()
         return num_params
 
-    #
-    # @_cached_property
-    # def paramNum(self):
-    #     if isinstance(self.model, DataParallel):
-    #         return self.count_params(self.model.module)
-    #     else:
-    #         return self.count_params(self.model)
+    def reset_device(self, gpu_ids_abs: list = None):
+        assert self.model is not None, "You must have a `model` before you reset device!"
+
+        if gpu_ids_abs is None:
+            gpu_ids_abs = []
+        os.environ["CUDA_VISIBLE_DEVICES"] = ",".join([str(i) for i in gpu_ids_abs])
+        self.gpu_ids = [i for i in range(len(gpu_ids_abs))]
+        if isinstance(self.model, DataParallel):
+            proto_model = self.model.module
+        else:
+            proto_model = self.model
+        self.define(proto_model, self.gpu_ids, None, False)
 
     def _apply_weight_init(self, init_method: Union[str, FunctionType], proto_model: Module):
         init_name = "No"
@@ -358,10 +368,12 @@ class Model(object):
     def _set_device(self, proto_model: Module, gpu_ids: list):
         gpu_available = torch.cuda.is_available()
         model_name = proto_model.__class__.__name__
-        if (len(gpu_ids) == 1) & gpu_available:
+        if (len(gpu_ids) == 1):
+            assert gpu_available, "No gpu available! torch.cuda.is_available() is False"
             proto_model = proto_model.cuda(gpu_ids[0])
             self._print("%s model use GPU(%d)!" % (model_name, gpu_ids[0]))
-        elif (len(gpu_ids) > 1) & gpu_available:
+        elif (len(gpu_ids) > 1):
+            assert gpu_available, "No gpu available! torch.cuda.is_available() is False"
             proto_model = DataParallel(proto_model.cuda(), gpu_ids)
             self._print("%s dataParallel use GPUs%s!" % (model_name, gpu_ids))
         else:
@@ -375,14 +387,14 @@ class Model(object):
     @property
     def configure(self):
         config_dic = dict()
-        config_dic["model_name"] = str(self.model.__class__.__name__)
-        if hasattr(self.init_fc, __name__):
-            config_dic["init_method"] = str(self.init_fc.__name__)
+        if isinstance(self.model, DataParallel):
+            config_dic["model_name"] = str(self.model.module.__class__.__name__)
+        elif isinstance(self.model, Module):
+            config_dic["model_name"] = str(self.model.__class__.__name__)
         else:
-            config_dic["init_method"] = str(self.init_fc)
+            config_dic["model_name"] = 'None'
+        config_dic["init_method"] = str(self.init_name)
         config_dic["gpus"] = len(self.gpu_ids)
         config_dic["total_params"] = self.num_params
-        config_dic["structure"] = []
-        for item in self.model._modules.items():
-            config_dic["structure"].append(str(item))
+        config_dic["structure"] = str(self.model)
         return config_dic
