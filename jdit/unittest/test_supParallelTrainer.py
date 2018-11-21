@@ -1,10 +1,8 @@
 from unittest import TestCase
 from ..parallel import SupParallelTrainer
 
-
-class TestSuperTrainerParallel(TestCase):
+class TestSupParallelTrainer(TestCase):
     def setUp(self):
-        pass
         self.default_params = {'data_root': r"datasets/fashion_data",
                                'gpu_ids_abs': [],
                                'depth': 4,
@@ -59,11 +57,14 @@ class TestSuperTrainerParallel(TestCase):
         self.trainers_list = ["Trainer_A", "Trainer_B", "Trainer_C", "Trainer_D"]
         self.pt = SupParallelTrainer(self.default_params, self.unfixed_params)
 
-    def test_train(self):
-        pass
+    def test_build_task_trainer(self):
+        self.fail()
 
-    def test__startTrain(self):
-        pass
+    def test_train(self):
+        self.fail()
+
+    def test__start_train(self):
+        self.fail()
 
     def test__distribute_task_on_devices(self):
         pass
@@ -105,33 +106,7 @@ class TestSuperTrainerParallel(TestCase):
         gpu_used_plan = self.pt._distribute_task_on_devices(candidate_params_list)
         self.assertEqual(real_gpu_used_plan, gpu_used_plan)
 
-    def test__get_gpu_ids_abs(self):
-        pass
-        candidate_params = [
-            {'gpu_ids_abs': [],
-             'logdir': r"log/tresnet_24d_16m_1"
-             },
-            {'gpu_ids_abs': [1, 2],
-             'logdir': r"log/tresnet_24d_16m_1"
-             },
-            {'gpu_ids_abs': [1],
-             'logdir': r"log/tresnet_24d_16m_1"
-             }
-            ]
-        gpu_ids_abs = self.pt._get_gpu_ids_abs(candidate_params)
-        self.assertEqual(gpu_ids_abs, [[], [1, 2], [1]])
-
-    def test__check_overlap(self):
-        pass
-        gpuids_tuple = self.pt._check_overlap(self.candidate_gpu_ids_abs_list)
-        self.assertEqual(((), (1, 2), (1, 2), (3, 4)), gpuids_tuple)
-        gpuids_tuple = self.pt._check_overlap(([], [], [1, 2], [3, 4], [5], [6]))
-        self.assertEqual(((), (), (1, 2), (3, 4), (5,), (6,)), gpuids_tuple)
-        gpuids_tuple = self.pt._check_overlap(([1, 2], [6, 3]))
-        self.assertEqual(((1, 2), (6, 3)), gpuids_tuple)
-
     def test__build_candidate_params(self):
-        pass
         default_params = {'gpu_ids_abs': [],
                           'depth': 4,
                           'logdir': r"log/tresnet_24d_16m_1"}
@@ -148,7 +123,6 @@ class TestSuperTrainerParallel(TestCase):
         self.assertEqual(candidate_params, total_params, "not equal!")
 
     def test__add_logdirs_to_unfixed_params(self):
-        pass
         unfixed_params = [
             {'depth': 1, 'gpu_ids_abs': []},
             {'depth': 2, 'gpu_ids_abs': [1, 2]}
@@ -161,7 +135,13 @@ class TestSuperTrainerParallel(TestCase):
         self.assertEqual(final_unfixed_params, test_final_unfixed_params_list)
 
     def test__convert_to_dirname(self):
-        pass
         self.assertEqual(self.pt._convert_to_dirname("abc"), "abc")
         self.assertEqual(self.pt._convert_to_dirname("123_abc_abc****"), "123_abc_abc")
         self.assertEqual(self.pt._convert_to_dirname("*<>,/\\:?|abc"), "smallergreater___%$-abc")
+
+    def test_finish(self):
+        self.fail()
+
+    def test_error(self):
+        self.fail()
+

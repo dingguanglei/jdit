@@ -71,12 +71,14 @@ training and valid_epoch data, configures info and checkpoint were save in `log`
     processing data and configures.
 
 Although it is just an example, you still can build your own project
-easily by using jdit framework. Jdit framework can deal with \* Data
-visualization. (learning curves, images in pilot process) \* CPU, GPU or
-GPUs. (Training your model on specify devices) \* Intermediate data
-storage. (Saving training data into a csv file) \* Model checkpoint
-automatically. \* Flexible templates can be used to integrate and custom
-overrides. So, let's see what is **jdit**.
+easily by using jdit framework. Jdit framework can deal with 
+* Data visualization. (learning curves, images in pilot process) 
+* CPU, GPU or GPUs. (Training your model on specify devices) 
+* Intermediate data storage. (Saving training data into a csv file) 
+* Model checkpoint automatically. 
+* Flexible templates can be used to integrate and custom overrides. 
+
+So, let's see what is **jdit** and build your own project.
 
 ## Build your own trainer
 
