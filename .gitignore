@@ -1,7 +1,6 @@
 #jdit/metric/Cifar10_M.csv
 #jdit/metric/Cifar10_S.csv
-#mypackage/metric/Cifar10_M.csv
-#mypackage/metric/Cifar10_S.csv
+mypackage
 
 log
 jdit/data
