@@ -87,7 +87,7 @@ First, you need to build a pytorch ``module`` like this:
     ...        out = self.layer1(input)
     ...        out = self.layer2(out)
     ...        return out
-    ... network = LinearModel()
+    >>> network = LinearModel()
 
 .. note::
 
@@ -126,7 +126,7 @@ However, ``do_lr_decay()`` will be called every epoch or on certain epoch
 at the end automatically.
 Actually, you don' need to do anything to apply learning rate decay.
 If you don't want to decay. Just set ``lr_decay = 1.`` or set a decay epoch larger than training epoch.
-I will show you how it works. If you want to implement something special strategies.
+I will show you how it works and you can implement something special strategies.
 
 .. code-block:: python
 
@@ -150,12 +150,12 @@ I will show you how it works. If you want to implement something special strateg
     >>> opt.lr
     1
 
-It contains two main optimizer RMSprop and Adam. You can pass a certain name to use it with its own parameters.
+It contains two main optimizer ``RMSprop`` and ``Adam``. You can pass a certain name to use it with its own parameters.
 
 .. note::
 
     As for spectrum normalization, the optimizer will filter out the differentiable weights.
-    So, you don't need write something like this.
+    So, you don't need write something like this
     ``filter(lambda p: p.requires_grad, params)``
     Merely pass the ``model.parameters()``
     is enough.

@@ -160,7 +160,7 @@ class Model(object):
         :param weights_or_path: Pytorch weights or weights file path.
         :param gpu_ids: If using gpus. default:``()``
         :param strict: The same function in pytorch ``model.load_state_dict(weights,strict = strict)`` .
-        default:``True``
+         default:``True``
         :return: ``module``
 
         Example::

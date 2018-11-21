@@ -11,21 +11,18 @@ class Pix2pixGanTrainer(SupGanTrainer):
     def __init__(self, logdir, nepochs, gpu_ids_abs, netG, netD, optG, optD, datasets):
         """ A pixel to pixel gan trainer
 
-        :param logdir:
-        :param nepochs:
-        :param gpu_ids_abs:
-        :param netG:
-        :param netD:
-        :param optG:
-        :param optD:
-        :param datasets:
-        :param latent_shape:
+        :param logdir:Path of log
+        :param nepochs:Amount of epochs.
+        :param gpu_ids_abs: he id of gpus which t obe used. If use CPU, set ``[]``.
+        :param netG:Generator model.
+        :param netD:Discrimiator model
+        :param optG:Optimizer of Generator.
+        :param optD:Optimizer of Discrimiator.
+        :param datasets:Datasets.
         """
         super(Pix2pixGanTrainer, self).__init__(logdir, nepochs, gpu_ids_abs, netG, netD, optG, optD, datasets)
-        # self.loger.regist_config(self)
 
     def get_data_from_loader(self, batch_data):
-
         input_cpu, ground_truth_cpu = batch_data[0], batch_data[1]
         return input_cpu.to(self.device), ground_truth_cpu.to(self.device)
 
@@ -61,11 +58,8 @@ class Pix2pixGanTrainer(SupGanTrainer):
             d_fake = self.netD(self.fake.detach())
             d_real = self.netD(self.ground_truth)
             var_dic = {}
-            var_dic["GP"] = gp = gradPenalty(self.netD, self.ground_truth, self.fake, input=self.input,
-                                             use_gpu=self.use_gpu)
-            var_dic["WD"] = w_distance = (d_real.mean() - d_fake.mean()).detach()
-            var_dic["LOSS_D"] = loss_d = d_fake.mean() - d_real.mean() + gp
-            return: loss_d, var_dic
+            var_dic["LS_LOSSD"] = loss_d = 0.5 * (torch.mean((d_real - 1) ** 2) + torch.mean(d_fake ** 2))
+            return loss_d, var_dic
 
         """
         loss_d = None
@@ -82,10 +76,9 @@ class Pix2pixGanTrainer(SupGanTrainer):
 
         Example::
 
-            d_fake = self.netD(self.fake)
+            d_fake = self.netD(self.fake, self.input)
             var_dic = {}
-            var_dic["JC"] = jc = jcbClamp(self.netG, self.input, use_gpu=self.use_gpu)
-            var_dic["LOSS_D"] = loss_g = -d_fake.mean() + jc
+            var_dic["LS_LOSSG"] = loss_g = 0.5 * torch.mean((d_fake - 1) ** 2)
             return loss_g, var_dic
 
         """
@@ -113,8 +106,9 @@ class Pix2pixGanTrainer(SupGanTrainer):
             return var_dic
 
         """
-
-        var_dic = {}
+        _, d_var_dic = self.compute_g_loss()
+        _, g_var_dic = self.compute_d_loss()
+        var_dic = dict(d_var_dic, **g_var_dic)
         return var_dic
 
     def valid_epoch(self):
@@ -169,9 +163,3 @@ class Pix2pixGanTrainer(SupGanTrainer):
                 fake = self.netG(self.input).detach()
             self.watcher.image(fake, self.current_epoch, tag="Test/fake", grid_size=(7, 7), shuffle=False)
         self.netG.train()
-
-    # @property
-    # def configure(self):
-    #     dict = super(Pix2pixGanTrainer, self).configure
-    #     dict["d_turn"] = self.d_turn
-    #     return dict

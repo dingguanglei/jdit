@@ -19,15 +19,32 @@ ClassificationTrainer
 .. autoclass:: ClassificationTrainer
     :members:
 
-GanTrainer
-----------
+Generative Adversarial Networks Trainer
+---------------------------------------
 
-.. autoclass:: GanTrainer
+.. automodule:: jdit.trainer
+.. currentmodule:: jdit.trainer
+
+SupGanTrainer
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+.. autoclass:: SupGanTrainer
     :members:
 
+Pix2pixGanTrainer
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+.. autoclass:: Pix2pixGanTrainer
+    :members:
+
+GenerateGanTrainer
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+.. autoclass:: GenerateGanTrainer
+    :members:
 
 instances
-----------------------
+---------
 
 .. automodule:: jdit.trainer.instances
 .. currentmodule:: jdit.trainer.instances

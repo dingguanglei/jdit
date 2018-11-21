@@ -48,23 +48,23 @@ Then you will see something like this as following.
 .. code-block:: python
 
     ===> Build dataset
-    use 8 thread!
+    use 8 thread
     Downloading http://fashion-mnist.s3-website.eu-central-1.amazonaws.com/train-images-idx3-ubyte.gz
     Downloading http://fashion-mnist.s3-website.eu-central-1.amazonaws.com/train-labels-idx1-ubyte.gz
     Downloading http://fashion-mnist.s3-website.eu-central-1.amazonaws.com/t10k-images-idx3-ubyte.gz
     Downloading http://fashion-mnist.s3-website.eu-central-1.amazonaws.com/t10k-labels-idx1-ubyte.gz
     Processing...
-    Done!
+    Done
     ===> Building model
     ResNet Total number of parameters: 2776522
-    ResNet model use CPU!
-    apply kaiming weight init!
+    ResNet model use CPU
+    apply kaiming weight init
     ===> Building optimizer
     ===> Training
     using `tensorboard --logdir=log` to see learning curves and net structure.
     training and valid_epoch data, configures info and checkpoint were save in `log` directory.
-      0%|            | 0/10 [00:00<?, ?epoch/s]
-    0step [00:00, ?step/s]
+      0%|            | 0/10 [00:00<.., ..epoch/s]
+    0step [00:00, step/s]
 
 * It will search a fashing mnist dataset.
 * Then build a resnet18 for classification.

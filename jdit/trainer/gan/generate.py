@@ -2,8 +2,9 @@ from .sup_gan import SupGanTrainer
 from abc import abstractmethod
 from torch.autograd import Variable
 import torch
-
-
+from jdit.optimizer import Optimizer
+from jdit.model import Model
+from jdit.dataset import DataLoadersFactory
 
 class GenerateGanTrainer(SupGanTrainer):
     d_turn = 1
@@ -11,19 +12,18 @@ class GenerateGanTrainer(SupGanTrainer):
     def __init__(self, logdir, nepochs, gpu_ids_abs, netG, netD, optG, optD, datasets, latent_shape):
         """ a gan super class
 
-        :param logdir:
-        :param nepochs:
-        :param gpu_ids_abs:
-        :param netG:
-        :param netD:
-        :param optG:
-        :param optD:
-        :param datasets:
-        :param latent_shape:
+        :param logdir:Path of log
+        :param nepochs:Amount of epochs.
+        :param gpu_ids_abs: he id of gpus which t obe used. If use CPU, set ``[]``.
+        :param netG:Generator model.
+        :param netD:Discrimiator model
+        :param optG:Optimizer of Generator.
+        :param optD:Optimizer of Discrimiator.
+        :param datasets:Datasets.
+        :param latent_shape:The shape of input noise.
         """
         super(GenerateGanTrainer, self).__init__(logdir, nepochs, gpu_ids_abs, netG, netD, optG, optD, datasets)
         self.latent_shape = latent_shape
-        self.loger.regist_config(self)
         # self.metric = FID(self.gpu_ids)
 
     def get_data_from_loader(self, batch_data):
@@ -36,9 +36,7 @@ class GenerateGanTrainer(SupGanTrainer):
         self.netG.eval()
         self.netD.eval()
         for iteration, batch in enumerate(self.datasets.loader_valid, 1):
-            input_cpu, ground_truth_cpu = self.get_data_from_loader(batch)
-            self.mv_inplace(input_cpu, self.input)  # input data
-            self.mv_inplace(ground_truth_cpu, self.ground_truth)  # real data
+            self.input_cpu, self.ground_truth_cpu = self.get_data_from_loader(batch)
             self.fake = self.netG(self.input)
             dic = self.compute_valid()
             if avg_dic == {}:
@@ -68,11 +66,8 @@ class GenerateGanTrainer(SupGanTrainer):
             d_fake = self.netD(self.fake.detach())
             d_real = self.netD(self.ground_truth)
             var_dic = {}
-            var_dic["GP"] = gp = gradPenalty(self.netD, self.ground_truth, self.fake, input=self.input,
-                                             use_gpu=self.use_gpu)
-            var_dic["WD"] = w_distance = (d_real.mean() - d_fake.mean()).detach()
-            var_dic["LOSS_D"] = loss_d = d_fake.mean() - d_real.mean() + gp + sgp
-            return: loss_d, var_dic
+            var_dic["LS_LOSSD"] = loss_d = 0.5 * (torch.mean((d_real - 1) ** 2) + torch.mean(d_fake ** 2))
+            return loss_d, var_dic
 
         """
         loss_d = None
@@ -89,11 +84,10 @@ class GenerateGanTrainer(SupGanTrainer):
 
         Example::
 
-            d_fake = self.netD(self.fake)
+            d_fake = self.netD(self.fake, self.input)
             var_dic = {}
-            var_dic["JC"] = jc = jcbClamp(self.netG, self.input, use_gpu=self.use_gpu)
-            var_dic["LOSS_D"] = loss_g = -d_fake.mean() + jc
-            return: loss_g, var_dic
+            var_dic["LS_LOSSG"] = loss_g = 0.5 * torch.mean((d_fake - 1) ** 2)
+            return loss_g, var_dic
 
         """
         loss_g = None
@@ -102,23 +96,13 @@ class GenerateGanTrainer(SupGanTrainer):
 
     @abstractmethod
     def compute_valid(self):
-        g_loss, _ = self.compute_g_loss()
-        d_loss, _ = self.compute_d_loss()
-        var_dic = {"LOSS_D": d_loss, "LOSS_G": g_loss}
-        # var_dic = {}
-        # fake = self.netG(self.input).detach()
-        # d_fake = self.netD(self.fake, self.input).detach()
-        # d_real = self.netD(self.ground_truth, self.input).detach()
-        #
-        # var_dic["G"] = loss_g = (-d_fake.mean()).detach()
-        # var_dic["GP"] = gp = (
-        #     gradPenalty(self.netD, self.ground_truth, self.fake, input=self.input, use_gpu=self.use_gpu)).detach()
-        # var_dic["D"] = loss_d = (d_fake.mean() - d_real.mean() + gp).detach()
-        # var_dic["WD"] = w_distance = (d_real.mean() - d_fake.mean()).detach()
+        _, d_var_dic = self.compute_g_loss()
+        _, g_var_dic = self.compute_d_loss()
+        var_dic = dict(d_var_dic, **g_var_dic)
         return var_dic
 
     def test(self):
-        self.mv_inplace(Variable(torch.randn((16, *self.latent_shape))), self.input)
+        self.input = Variable(torch.randn((16, *self.latent_shape))).to(self.device)
         self.netG.eval()
         with torch.no_grad():
             fake = self.netG(self.input).detach()

@@ -10,7 +10,7 @@ jdit.dataset
 Dataloaders_factory
 -------------------
 
-.. autoclass:: Dataloaders_factory
+.. autoclass:: DataLoadersFactory
     :members:
 
 HandMNIST
