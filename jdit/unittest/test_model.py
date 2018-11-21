@@ -7,25 +7,30 @@ import shutil
 
 class TestModel(TestCase):
     def setUp(self):
+        pass
         self.mode = Sequential(Conv2d(10, 1, 3, 1, 0))
         self.epoch = 32
 
     def test_define(self):
+        pass
         net = Model()
         assert net.model is None
         net.define(self.mode, [], "kaiming", show_structure=False)
         assert net.model is not None
 
     def test_print_network(self):
+        pass
         net = Model(self.mode, show_structure=False)
         assert net.model is not None
 
     def test_weightsInit(self):
+        pass
         net = Model()
         net.init_fc = init.kaiming_normal_
         self.mode.apply(net._weight_init)
 
     def test_loadModel(self):
+        pass
         print(self.mode)
         net = Model(self.mode, show_structure=False)
         net.check_point("tm", self.epoch, "test_model")
@@ -36,6 +41,7 @@ class TestModel(TestCase):
 
 
     def test_loadPoint(self):
+        pass
         net = Model(self.mode, show_structure=False)
         net.check_point("tm", self.epoch, "test_model")
         net.load_point("tm", self.epoch, "test_model")
@@ -44,6 +50,7 @@ class TestModel(TestCase):
 
 
     def test_checkPoint(self):
+        pass
         net = Model(self.mode, show_structure=False)
         net.check_point("tm", self.epoch, "test_model")
         dir = "test_model/"
@@ -51,6 +58,7 @@ class TestModel(TestCase):
 
 
     def test_configure(self):
+        pass
         net = Model(self.mode)
         for k, v in net.configure.items():
             assert k is not None

@@ -7,6 +7,7 @@ from jdit.model import Model
 
 class TestLoger(TestCase):
     def test_regist_config(self):
+        pass
         log = Loger()
         param = torch.nn.Linear(10, 1)
         opt = Optimizer(param.parameters(), lr=0.999, weight_decay=0.03, momentum=0.5, betas=(0.1, 0.4),
