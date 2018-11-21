@@ -372,7 +372,7 @@ class Loger(object):
         pdg.to_csv(path, mode="a", encoding="utf-8", index=False, header=header)
 
     def clear_regist(self):
-        self.regist_list = dict({})
+        self.regist_dict = dict({})
 
 
 class Watcher(object):
