@@ -114,7 +114,7 @@ class Model(object):
     def __getattr__(self, item):
         return getattr(self.model, item)
 
-    def define(self, proto_model: Module, gpu_ids: Union[list, tuple], init_method: Union[str, FunctionType, None] ,
+    def define(self, proto_model: Module, gpu_ids: Union[list, tuple], init_method: Union[str, FunctionType, None],
                show_structure: bool):
         """Define and wrap a pytorch module, according to CPU, GPU and multi-GPUs.
 
@@ -356,7 +356,7 @@ class Model(object):
             weights = self._fix_weights(weights)
         return model, weights
 
-    def _fix_weights(self, weights: OrderedDict):
+    def _fix_weights(self, weights: Union[dict, OrderedDict]):
         # fix params' key
         from collections import OrderedDict
         new_state_dict = OrderedDict()

@@ -40,8 +40,8 @@ setup(
         'Intended Audience :: Developers',
         "Programming Language :: Python :: 3 :: Only",
         'Programming Language :: Python :: Implementation',
-        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
     ],
     # 此项需要，否则卸载时报windows error
     zip_safe=False
