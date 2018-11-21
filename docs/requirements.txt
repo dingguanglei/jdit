@@ -9,5 +9,6 @@ setuptools
 six
 typing
 psutil
+python>=3.6.0
 
 
