@@ -34,7 +34,7 @@ For these common datasets, you only need to reset the batch size.
 Custom dataset
 >>>>>>>>>>>>>>
 
-If you want your own data to build a dataset, you need to inherit the class
+If you want to build a dataset by your own data, you need to inherit the class
 
 ``jdit.dataset.Dataloaders_factory``
 
@@ -49,18 +49,22 @@ Following these setps:
 
 Example::
 
-    def build_transforms(self, resize=32):
-        # This is a default set, you can rewrite it.
-        self.train_transform_list = self.valid_transform_list = [
-            transforms.Resize(resize),
-            transforms.ToTensor(),
-            transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])]
+    class FashionMNIST(DataLoadersFactory):
+        def __init__(self, root=r'.\datasets\fashion_data', batch_shape=(128, 1, 32, 32), num_workers=-1):
+            super(FashionMNIST, self).__init__(root, batch_shape, num_workers)
 
-    def build_datasets(self):
-        self.dataset_train = datasets.CIFAR10(root, train=True, download=True,
-            transform=transforms.Compose(self.train_transform_list))
-        self.dataset_valid = datasets.CIFAR10(root, train=False, download=True,
-            transform=transforms.Compose(self.valid_transform_list))
+        def build_transforms(self, resize=32):
+            # This is a default set, you can rewrite it.
+            self.train_transform_list = self.valid_transform_list = [
+                transforms.Resize(resize),
+                transforms.ToTensor(),
+                transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])]
+
+        def build_datasets(self):
+            self.dataset_train = datasets.CIFAR10(root, train=True, download=True,
+                transform=transforms.Compose(self.train_transform_list))
+            self.dataset_valid = datasets.CIFAR10(root, train=False, download=True,
+                transform=transforms.Compose(self.valid_transform_list))
 
 For now, you get your own dataset.
 
@@ -83,6 +87,7 @@ First, you need to build a pytorch ``module`` like this:
     ...        out = self.layer1(input)
     ...        out = self.layer2(out)
     ...        return out
+    ... network = LinearModel()
 
 .. note::
 
@@ -96,16 +101,16 @@ Set which gpus you want to use and the weights init method.
 
     For some reasons, the gpu id in pytorch still start from 0.
     For this model, it will handel this problem.
-    If you have gpu ``0,1,2,3`` , and you only want to use 2,3.
+    If you have gpu ``[0,1,2,3]`` , and you only want to use 2,3.
     Just set ``gpu_ids_abs=[2, 3]`` .
 
 .. code-block:: python
 
     >>> from jdit import Model
-    >>> pt_model = LinearModel()
-    >>> jdit_model = Model(pt_model, gpu_ids_abs=[], init_method="kaiming")
+    >>> network = LinearModel()
+    >>> jdit_model = Model(network, gpu_ids_abs=[], init_method="kaiming")
     LinearModel Total number of parameters: 2177
-    LinearModel model use CPU!
+    LinearModel dataParallel use GPUs[2, 3]!
     apply kaiming weight init!
 
 For now, you get your own dataset.
@@ -117,16 +122,25 @@ In this section, you should build your an optimizer.
 Compare with the optimizer in pytorch. This extend a easy function
 that can do a learning rate decay and reset.
 
+However, ``do_lr_decay()`` will be called every epoch or on certain epoch
+at the end automatically.
+Actually, you don' need to do anything to apply learning rate decay.
+If you don't want to decay. Just set ``lr_decay = 1.`` or set a decay epoch larger than training epoch.
+I will show you how it works. If you want to implement something special strategies.
+
 .. code-block:: python
 
     >>> from jdit import Optimizer
+    >>> from torch.nn import Linear
+    >>> network = Linear(10, 1)
+    >>> #set params
     >>> opt_name = "RMSprop"
     >>> lr = 0.001
     >>> lr_decay = 0.5  # 0.94
     >>> weight_decay = 2e-5  # 2e-5
     >>> momentum = 0
-    >>> betas = (0.9, 0.999)
-    >>> opt = Optimizer(jdit_model.parameters(), lr, lr_decay, weight_decay, momentum, betas, opt_name)
+    >>> #define optimizer
+    >>> opt = Optimizer(network.parameters(), lr, lr_decay, weight_decay, momentum, opt_name=opt_name)
     >>> opt.lr
     0.001
     >>> opt.do_lr_decay()
@@ -136,7 +150,16 @@ that can do a learning rate decay and reset.
     >>> opt.lr
     1
 
-It contains two main optimizer RMSprop and Adam. You can pass a certain name to use it.
+It contains two main optimizer RMSprop and Adam. You can pass a certain name to use it with its own parameters.
+
+.. note::
+
+    As for spectrum normalization, the optimizer will filter out the differentiable weights.
+    So, you don't need write something like this.
+    ``filter(lambda p: p.requires_grad, params)``
+    Merely pass the ``model.parameters()``
+    is enough.
+
 
 For now, you get an Optimizer.
 
@@ -148,11 +171,21 @@ It supplies some templates such as ``SupTrainer`` ``GanTrainer`` ``Classificatio
 
 The inherit relation shape is following:
 
-    ``SupTrainer``
-        * ``ClassificationTrainer``
-            * ``instances.FashingClassTrainer``
-        * ``GanTrainer``
-            * ``instances.FashingGenerateGanTrainer``
+| ``SupTrainer``
+
+    | ``ClassificationTrainer``
+
+        | ``instances.FashingClassTrainer``
+
+    | ``SupGanTrainer``
+
+        | ``Pix2pixGanTrainer``
+
+            | ``instances.CifarPix2pixGanTrainer``
+
+        | ``GenerateGanTrainer``
+
+            | ``instances.FashingGenerateGenerateGanTrainer``
 
 Top level ``SupTrainer``
 >>>>>>>>>>>>>>>>>>>>>>>>
@@ -168,9 +201,11 @@ Something like this::
      def train():
         for epoch in range(nepochs):
             self._record_configs() # record info
-            self.train_epoch(subbar_disable)
+            self.train_epoch()
             self.valid_epoch()
+            # do learning rate decay
             self._change_lr()
+            # save model check point
             self._check_point()
         self.test()
 
@@ -191,14 +226,6 @@ So, to init a ClassificationTrainer.
             self.net = net
             self.opt = opt
             self.datasets = datasets
-            # init a label placeholder
-            self.labels = Variable().to(self.device)
-            # record the params set of net (not necessary)
-            self.loger.regist_config(net)
-            # record the params set of datasets (not necessary)
-            self.loger.regist_config(datasets)
-            # record the params set of trainer (not necessary)
-            self.loger.regist_config(self)
 
 For the next, build a training loop for one epoch.
 You must using ``self.step`` to record the training step.
@@ -221,61 +248,15 @@ You must using ``self.step`` to record the training step.
     def compute_loss(self):
         """Compute the main loss and observed variables.
         Rewrite by the next templates.
-        Example::
-
-          var_dic = {}
-          # visualize the value of CrossEntropyLoss.
-          var_dic["CEP"] = loss = CrossEntropyLoss()(self.output, self.labels.squeeze().long())
-
-          _, predict = torch.max(self.output.detach(), 1)  # 0100=>1  0010=>2
-          total = predict.size(0) * 1.0
-          labels = self.labels.squeeze().long()
-          correct = predict.eq(labels).cpu().sum().float()
-          acc = correct / total
-          # visualize the value of accuracy.
-          var_dic["ACC"] = acc
-          # using CrossEntropyLoss as the main loss for backward, and return by visualized ``dict``
-          return loss, var_dic
         """
 
     @abstractmethod
     def compute_valid(self):
         """Compute the valid_epoch variables for visualization.
         Rewrite by the next templates.
-        Example::
-
-          var_dic = {}
-          # visualize the valid_epoch curve of CrossEntropyLoss
-          var_dic["CEP"] = loss = CrossEntropyLoss()(self.output, self.labels.squeeze().long())
-
-          _, predict = torch.max(self.output.detach(), 1)  # 0100=>1  0010=>2
-          total = predict.size(0) * 1.0
-          labels = self.labels.squeeze().long()
-          correct = predict.eq(labels).cpu().sum().float()
-          acc = correct / total
-          # visualize the valid_epoch curve of accuracy
-          var_dic["ACC"] = acc
-          return var_dic
         """
 
-For some other things. These are not necessary
-
-.. code-block:: python
-
-    def _change_lr(self):
-        # If you need lr decay strategy, write this.
-        self.opt.do_lr_decay()
-
-    def _check_point(self):
-        # If you need checkpoint, write this.
-        self.net._check_point("classmodel", self.current_epoch, self.logdir)
-
-    def _record_configs(self):
-        # If you need to record the params changing such as lr changing.
-        self.loger.regist_config(self.opt, self.current_epoch)
-        # for self.performance.configure
-        self.loger.regist_config(self.performance, self.current_epoch)
-
+The ``compute_loss()`` and ``compute_valid`` should be rewrite in the next template.
 
 Third level ``FashingClassTrainer``
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -293,19 +274,12 @@ and fill the specify methods.
 
         def __init__(self, logdir, nepochs, gpu_ids, net, opt, dataset):
             super(FashingClassTrainer, self).__init__(logdir, nepochs, gpu_ids, net, opt, dataset)
-
+            # to print the network on tensorboard
             self.watcher.graph(net, (4, 1, 32, 32), self.use_gpu)
 
         def compute_loss(self):
             var_dic = {}
             var_dic["CEP"] = loss = nn.CrossEntropyLoss()(self.output, self.labels.squeeze().long())
-
-            _, predict = torch.max(self.output.detach(), 1)  # 0100=>1  0010=>2
-            total = predict.size(0) * 1.0
-            labels = self.labels.squeeze().long()
-            correct = predict.eq(labels).cpu().sum().float()
-            acc = correct / total
-            var_dic["ACC"] = acc
             return loss, var_dic
 
         def compute_valid(self):
@@ -320,7 +294,28 @@ and fill the specify methods.
             var_dic["ACC"] = acc
             return var_dic
 
-Finally, build this task.
+``compute_loss()`` will be called every training step of backward. It returns two values.
+
+* The first one, ``loss`` , is **main loss** which will be implemented ``loss.backward()`` to update model weights.
+
+* The second one, ``var_dic`` , is a **value dictionary** which will be visualized on tensorboard and depicted as a curve.
+
+In this example, for ``compute_loss()`` it will use ``loss = nn.CrossEntropyLoss()``
+to do a backward propagation and visualize it on tensorboard named ``"CEP"``.
+
+``compute_loss()`` will be called every validation step. It returns one value.
+
+* The ``var_dic`` , is the same thing like ``var_dic`` in ``compute_loss()`` .
+
+.. note::
+
+    ``compute_loss()`` will be called under ``torch.no_grad()`` .
+    So, grads will not be computed in this method. But if you need to get grads,
+    please use ``torch.enable_grad()`` to make grads computation available.
+
+Finally, you get a trainer.
+
+You have got everything. Put them together and train it!
 
 .. code-block:: python
 
@@ -330,4 +325,4 @@ Finally, build this task.
     >>> Trainer = FashingClassTrainer("log", nepochs, gpus, net, opt, mnist)
     >>> Trainer.train()
 
-Up to now, you get a trainer.
+

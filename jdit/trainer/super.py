@@ -21,6 +21,10 @@ from jdit.optimizer import Optimizer
 class SupTrainer(object):
     """this is a super class of all trainers
 
+    It defines:
+    * The basic tools, ``Performance()``, ``Watcher()``, ``Loger()``.
+    * The basic loop of epochs.
+    * Learning rate decay and model check point.
     """
     every_epoch_checkpoint = 10
     every_epoch_changelr = 0
@@ -44,6 +48,15 @@ class SupTrainer(object):
         self.step = 0
 
     def train(self, process_bar_header: str = None, process_bar_position: int = None, subbar_disable=False, **kwargs):
+        """The main training loop of epochs.
+
+        :param process_bar_header: The tag name of process bar header,
+         which is used in ``tqdm(desc=process_bar_header)``
+        :param process_bar_position: The process bar's position. It is useful in multitask,
+         which is used in ``tqdm(position=process_bar_position)``
+        :param subbar_disable: If show the info of every training set,
+        :param kwargs: Any other parameters that passing to ``tqdm()`` to control the behavior of process bar.
+        """
         START_EPOCH = 1
         for epoch in tqdm(range(START_EPOCH, self.nepochs + 1), total=self.nepochs,
                           unit="epoch", desc=process_bar_header, position=process_bar_position, **kwargs):
@@ -57,12 +70,29 @@ class SupTrainer(object):
         self.watcher.close()
 
     def debug(self):
+        """Debug the trainer.
+
+        It will check the function
+
+        * ``self._record_configs()`` save all module's configures.
+        * ``self.train_epoch()`` train one epoch with several samples. So, it is vary fast.
+        * ``self.valid_epoch()`` valid one epoch using dataset_valid.
+        * ``self._change_lr()`` do learning rate change.
+        * ``self._check_point()`` do model check point.
+        * ``self.test()`` do test by using dataset_test.
+
+        Before debug, it will reset the ``datasets`` and only pick up several samples to do fast test.
+        For test, it build a ``log_debug`` directory to save the log.
+
+        :return: bool. It will return ``True``, if passes all the tests.
+        """
         from torch.utils.data import random_split
         import traceback
         import shutil
         self.every_epoch_checkpoint = 1
         self.every_epoch_changelr = 1
         self.logdir = "log_debug"
+
         # reset `log_debug`
         if os.path.exists("log_debug"):
             try:
@@ -84,6 +114,7 @@ class SupTrainer(object):
         debug_fcs = [self._record_configs, self.train_epoch, self.valid_epoch,
                      self._change_lr, self._check_point, self.test]
         print("===> Debug")
+        success = True
         for fc in debug_fcs:
             print("{:=^30}".format(fc.__name__ + "()"))
             try:
@@ -91,10 +122,11 @@ class SupTrainer(object):
             except Exception as e:
                 print('Error:', e)
                 traceback.print_exc()
+                success = False
             else:
                 print("pass!")
-
         self.watcher.close()
+        return success
 
     @abstractmethod
     def train_epoch(self, subbar_disable=False):

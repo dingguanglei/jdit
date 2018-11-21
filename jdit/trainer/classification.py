@@ -16,11 +16,6 @@ class ClassificationTrainer(SupTrainer):
         self.opt = opt
         self.datasets = datasets
 
-        self.labels = Variable().to(self.device)
-        self.loger.regist_config(net)
-        self.loger.regist_config(datasets)
-        self.loger.regist_config(self)
-
     def train_epoch(self, subbar_disable=False):
         # self._watch_images(show_imgs_num=3, tag="Train")
         for iteration, batch in tqdm(enumerate(self.datasets.loader_train, 1), unit="step", disable=subbar_disable):
