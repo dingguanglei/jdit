@@ -9,3 +9,8 @@ install:
 # command to run tests
 script:
   - pytest
+
+#cache: bundler
+cache:
+  directories:
+  - $HOME/.m2
