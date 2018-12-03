@@ -31,18 +31,15 @@ class SupGanTrainer(SupTrainer):
         self.datasets = datasets
         self.fake = None
         self.fixed_input = None
-        # self.loger.regist_config(self.netG, config_filename="Generator")
-        # self.loger.regist_config(self.netD, config_filename="Discriminator")
-        # self.loger.regist_config(datasets)
 
     def train_epoch(self, subbar_disable=False):
         for iteration, batch in tqdm(enumerate(self.datasets.loader_train, 1), unit="step", disable=subbar_disable):
             self.step += 1
             self.input, self.ground_truth = self.get_data_from_loader(batch)
             self.fake = self.netG(self.input)
-            self._train_iteration(self.optD, self.compute_d_loss, tag="LOSS_D")
+            self._train_iteration(self.optD, self.compute_d_loss, csv_filename="Train_D")
             if (self.step % self.d_turn) == 0:
-                self._train_iteration(self.optG, self.compute_g_loss, tag="LOSS_G")
+                self._train_iteration(self.optG, self.compute_g_loss, csv_filename="Train_G")
             if iteration == 1:
                 self._watch_images("Train")
 
@@ -231,20 +228,13 @@ class SupGanTrainer(SupTrainer):
             avg_dic[key] = avg_dic[key] / self.datasets.nsteps_valid
 
         self.watcher.scalars(avg_dic, self.step, tag="Valid")
+        self.loger.write(self.step, self.current_epoch, avg_dic, "Valid", header=self.step <= 1)
         self._watch_images(tag="Valid")
         self.netG.train()
         self.netD.train()
 
     def test(self):
         pass
-
-    # def _change_lr(self):
-    #     self.optD.do_lr_decay()
-    #     self.optG.do_lr_decay()
-    #
-    # def _check_point(self):
-    #     self.netG.check_point("G", self.current_epoch, self.logdir)
-    #     self.netD.check_point("D", self.current_epoch, self.logdir)
 
     @property
     def configure(self):

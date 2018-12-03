@@ -92,7 +92,10 @@ class SupTrainer(object):
         self.every_epoch_checkpoint = 1
         self.every_epoch_changelr = 1
         self.logdir = "log_debug"
-
+        self.watcher.close()
+        self.watcher = Watcher("log_debug")
+        self.loger = Loger("log_debug")
+        self.performance= Performance()
         # reset `log_debug`
         if os.path.exists("log_debug"):
             try:
@@ -100,6 +103,7 @@ class SupTrainer(object):
             except Exception as e:
                 print('Can not remove logdir `log_debug`\n', e)
                 traceback.print_exc()
+        os.mkdir("log_debug")
         # reset datasets and dataloaders
         for item in vars(self).values():
             if isinstance(item, DataLoadersFactory):
@@ -113,10 +117,10 @@ class SupTrainer(object):
         # the tested functions
         debug_fcs = [self._record_configs, self.train_epoch, self.valid_epoch,
                      self._change_lr, self._check_point, self.test]
-        print("===> Debug")
+        print("{:=^30}".format(">Debug<"))
         success = True
         for fc in debug_fcs:
-            print("{:=^30}".format(fc.__name__ + "()"))
+            print("{:_^30}".format(fc.__name__ + "()"))
             try:
                 fc()
             except Exception as e:
@@ -126,6 +130,10 @@ class SupTrainer(object):
             else:
                 print("pass!")
         self.watcher.close()
+        if success:
+            print("{:=^30}".format(">Debug Successful!<"))
+        else:
+            print("{:=^30}".format(">Debug Failed!<"))
         return success
 
     @abstractmethod
@@ -173,13 +181,14 @@ class SupTrainer(object):
         input, ground_truth = batch_data[0], batch_data[1]
         return input.to(device), ground_truth.to(device)
 
-    def _train_iteration(self, opt: Optimizer, compute_loss_fc: FunctionType, tag: str = "Train"):
+    def _train_iteration(self, opt: Optimizer, compute_loss_fc: FunctionType, csv_filename: str = "Train"):
         opt.zero_grad()
         loss, var_dic = compute_loss_fc()
         loss.backward()
         opt.step()
         self.watcher.scalars(var_dict=var_dic, global_step=self.step, tag="Train")
-        self.loger.write(self.step, self.current_epoch, var_dic, tag, header=self.step <= 1)
+        self.loger.write(self.step, self.current_epoch, var_dic, csv_filename, header=self.step <= 1)
+
 
     def _record_configs(self):
         """to register the ``Model`` , ``Optimizer`` , ``Trainer`` and ``Performance`` config info.
@@ -208,7 +217,7 @@ class SupTrainer(object):
                                          config_filename=key)  # for trainer.configure
 
     def _check_point(self):
-        if isinstance(self.every_epoch_changelr, int):
+        if isinstance(self.every_epoch_checkpoint, int):
             is_check_point = (self.current_epoch % self.every_epoch_checkpoint) == 0
         else:
             is_check_point = self.current_epoch in self.every_epoch_checkpoint
@@ -365,7 +374,7 @@ class Loger(object):
             for key, value in msg_dic.items():
                 if hasattr(value, "item"):
                     msg_dic[key] = value.detach().cpu().item()
-        path = self.logdir + "/" + filename + ".csv"
+        path = os.path.join(self.logdir , filename + ".csv")
         dic = dict({"step": step, "current_epoch": current_epoch})
         dic.update(msg_dic)
         pdg = pd.DataFrame.from_dict(dic, orient="index").transpose()

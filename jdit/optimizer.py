@@ -138,16 +138,16 @@ class Optimizer(object):
         return config_dic
 
 
-if __name__ == '__main__':
-    import torch
-
-    param = torch.nn.Linear(10, 1).parameters()
-    opt = Optimizer(param, lr=0.999, weight_decay=0.03, momentum=0.5, betas=(0.1, 0.4), opt_name="RMSprop")
-
-    print(opt.configure['lr'])
-    opt.do_lr_decay()
-    print(opt.configure['lr'])
-    opt.do_lr_decay(reset_lr=0.232, reset_lr_decay=0.3)
-    print(opt.configure['lr_decay'])
-    opt.do_lr_decay(reset_lr=0.2)
-    print(opt.configure)
+# if __name__ == '__main__':
+#     import torch
+#
+#     param = torch.nn.Linear(10, 1).parameters()
+#     opt = Optimizer(param, lr=0.999, weight_decay=0.03, momentum=0.5, betas=(0.1, 0.4), opt_name="RMSprop")
+#
+#     print(opt.configure['lr'])
+#     opt.do_lr_decay()
+#     print(opt.configure['lr'])
+#     opt.do_lr_decay(reset_lr=0.232, reset_lr_decay=0.3)
+#     print(opt.configure['lr_decay'])
+#     opt.do_lr_decay(reset_lr=0.2)
+#     print(opt.configure)

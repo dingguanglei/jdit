@@ -22,7 +22,7 @@ class ClassificationTrainer(SupTrainer):
             self.step += 1
             self.input, self.ground_truth, self.labels = self.get_data_from_batch(batch, self.device)
             self.output = self.net(self.input)
-            self._train_iteration(self.opt, self.compute_loss, tag="Train")
+            self._train_iteration(self.opt, self.compute_loss, csv_filename="Train")
 
             if iteration == 1:
                 self._watch_images(show_imgs_num=3, tag="Train")

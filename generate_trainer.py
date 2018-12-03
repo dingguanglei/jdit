@@ -115,7 +115,7 @@ if __name__ == '__main__':
                     norm_type="batch",
                     active_type="LeakyReLU")
     G = Model(G_net, gpu_ids_abs=gpus, init_method="kaiming")
-    G.load_model()
+    G.load_weights()
     print('===> Building optimizer')
     opt_D = Optimizer(D.parameters(), lr, lr_decay, weight_decay, momentum, betas, opt_D_name)
     opt_G = Optimizer(G.parameters(), lr, lr_decay, weight_decay, momentum, betas, opt_G_name)
