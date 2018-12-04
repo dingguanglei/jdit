@@ -4,11 +4,21 @@ from multiprocessing import Pool
 from types import FunctionType
 
 class SupParallelTrainer(object):
-    """ Training parallel.
+    """ Training parallel
 
     .. attr::`default_params` is the default params.
 
     .. attr::`unfixed_params_list` is the different params.
+
+
+    :param default_params: a ``dict()`` like ``{param_1:d1, param_2:d2 ...}``
+    :param unfixed_params_list:  a ``list`` like ``[{param_1:a1, param_2:a2}, {param_1:b1, param_2:b2}, ...]``.
+
+    .. note ::
+
+        You must set the value of ``task_id`` and ``gpu_ids_abs``, regardless in ``default_params`` or ``unfixed_params_list``.
+
+         ``{'task_id': 1`}`` , ``{'gpu_ids_abs': [0,1]}``
 
 
     """
@@ -91,7 +101,9 @@ class SupParallelTrainer(object):
         """start parallel task
 
         To start the parallel task that were saved in  ``self.parallel_plans`` dictionary.
+
         :param max_processes: A max amount of processes for setting ``Pool(processes = ?)`` method.
+
         """
         # print("Main process ID: %d" % os.getpid())
         print('Waiting for all subprocesses done...\n%s' % ('=' * 36))
