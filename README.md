@@ -36,8 +36,7 @@ for a quick test. Assuming that you get a new directory example. run
 this code in ipython cmd.(Create a main.py file is also acceptable.)
 
 ``` {.sourceCode .python}
-from jdit.trainer.instances.fashingClassification
-import start_fashingClassTrainer
+from jdit.trainer.instances.fashingClassification import start_fashingClassTrainer
 start_fashingClassTrainer()
 ```
 
