@@ -163,16 +163,16 @@ class ClassificationTrainer(SupTrainer):
 
     def _watch_images(self, show_imgs_num=4, tag="Train"):
         pass
+    #
+    # def _change_lr(self):
+    #     self.opt.do_lr_decay()
+    #
+    # def _check_point(self):
+    #     self.net._check_point("classmodel", self.current_epoch, self.logdir)
 
-    def _change_lr(self):
-        self.opt.do_lr_decay()
-
-    def _check_point(self):
-        self.net._check_point("classmodel", self.current_epoch, self.logdir)
-
-    def _record_configs(self):
-        self.loger.regist_config(self.opt, self.current_epoch)
-        self.loger.regist_config(self.performance, self.current_epoch)  # for self.performance.configure
+    # def _record_configs(self):
+    #     self.loger.regist_config(self.opt, self.current_epoch)
+    #     self.loger.regist_config(self.performance, self.current_epoch)  # for self.performance.configure
 
     @property
     def configure(self):
