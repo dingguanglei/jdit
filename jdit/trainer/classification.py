@@ -15,6 +15,8 @@ class ClassificationTrainer(SupTrainer):
         self.net = net
         self.opt = opt
         self.datasets = datasets
+        self.labels = None
+        self.output = None
 
     def train_epoch(self, subbar_disable=False):
         # self._watch_images(show_imgs_num=3, tag="Train")
@@ -110,11 +112,11 @@ class ClassificationTrainer(SupTrainer):
           return var_dic
 
         """
-        var_dic = {}
+        var_dic = dict()
         # Input: (N,C) where C = number of classes
         # Target: (N) where each value is 0≤targets[i]≤C−1
         # ground_truth = self.ground_truth.long().squeeze()
-        var_dic["CEP"] = loss = CrossEntropyLoss()(self.output, self.labels.squeeze().long())
+        var_dic["CEP"] = CrossEntropyLoss()(self.output, self.labels.squeeze().long())
 
         _, predict = torch.max(self.output.detach(), 1)  # 0100=>1  0010=>2
         total = predict.size(0) * 1.0
@@ -125,7 +127,7 @@ class ClassificationTrainer(SupTrainer):
         return var_dic
 
     def valid_epoch(self):
-        avg_dic = {}
+        avg_dic = dict()
         self.net.eval()
         for iteration, batch in enumerate(self.datasets.loader_valid, 1):
             self.input, self.ground_truth, self.labels = self.get_data_from_batch(batch, self.device)
@@ -163,19 +165,9 @@ class ClassificationTrainer(SupTrainer):
 
     def _watch_images(self, show_imgs_num=4, tag="Train"):
         pass
-    #
-    # def _change_lr(self):
-    #     self.opt.do_lr_decay()
-    #
-    # def _check_point(self):
-    #     self.net._check_point("classmodel", self.current_epoch, self.logdir)
-
-    # def _record_configs(self):
-    #     self.loger.regist_config(self.opt, self.current_epoch)
-    #     self.loger.regist_config(self.performance, self.current_epoch)  # for self.performance.configure
 
     @property
     def configure(self):
-        dict = super(ClassificationTrainer, self).configure
-        dict["num_class"] = self.num_class
-        return dict
+        config_dic = super(ClassificationTrainer, self).configure
+        config_dic["num_class"] = self.num_class
+        return config_dic

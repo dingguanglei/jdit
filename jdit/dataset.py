@@ -4,6 +4,7 @@ import psutil
 from typing import Union
 from abc import ABCMeta, abstractmethod
 
+
 class DataLoadersFactory(metaclass=ABCMeta):
     """This is a super class of dataloader.
 
@@ -161,13 +162,14 @@ class DataLoadersFactory(metaclass=ABCMeta):
     def samples_test(self):
         return self._get_samples(self.dataset_train, self.sample_dataset_size)
 
-    def _get_samples(self, dataset, sample_dataset_size=0.1):
+    @staticmethod
+    def _get_samples(dataset, sample_dataset_size=0.1):
         import math
         assert len(dataset) > 10, "Dataset is (%d) to small" % len(dataset)
         size_is_prop = isinstance(sample_dataset_size, float)
         size_is_amount = isinstance(sample_dataset_size, int)
         if size_is_prop:
-            assert sample_dataset_size <= 1 and sample_dataset_size > 0, \
+            assert 0 < sample_dataset_size <= 1, \
                 "sample_dataset_size proportion should between 0. and 1."
             subdata_size = math.floor(sample_dataset_size * len(dataset))
         elif size_is_amount:

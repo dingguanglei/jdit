@@ -1,5 +1,6 @@
 # coding=utf-8
-import torch, os
+import torch
+import os
 from torch.nn import init, Conv2d, Linear, ConvTranspose2d, InstanceNorm2d, BatchNorm2d, DataParallel, Module
 from torch import save, load
 from typing import Union
@@ -74,7 +75,7 @@ class Model(object):
     Attributes:
         num_params (int): The totals amount of weights in this model.
 
-        gpu_ids (list or tuple): Which device is this model on.
+        gpu_ids_abs (list or tuple): Which device is this model on.
 
     Examples::
 
@@ -86,8 +87,8 @@ class Model(object):
         Sequential Total number of parameters: 15873
         Sequential model use CPU!
         apply kaiming weight init!
-        >>> input = torch.randn(20, 16, 10, 50, 100)
-        >>> output = net(input)
+        >>> input_tensor = torch.randn(20, 16, 10, 50, 100)
+        >>> output = net(input_tensor)
 
     """
 
@@ -122,6 +123,7 @@ class Model(object):
         :param proto_model: Network, type of ``module``.
         :param gpu_ids_abs: Be used GPUs' id, type of ``tuple`` or ``list``. If not use GPU, pass ``()``.
         :param init_method: init weights method("kaiming") or ``False`` don't use any init.
+        :param show_structure: If print structure of model.
         """
         assert isinstance(proto_model, Module)
         self.num_params, self.model_name = self.print_network(proto_model, show_structure)
@@ -149,9 +151,7 @@ class Model(object):
 
         You can load a model from a file, passing parameters or both.
 
-        :param model_or_path: Pytorch model or model file path.
-        :param weights_or_path: Pytorch weights or weights file path.
-        :param gpu_ids: If using gpus. default:``()``
+        :param weights: Pytorch weights or weights file path.
         :param strict: The same function in pytorch ``model.load_state_dict(weights,strict = strict)`` .
          default:``True``
         :return: ``module``
@@ -159,23 +159,14 @@ class Model(object):
         Example::
 
             >>> from torchvision.models.resnet import resnet18
-
-            >>> resnet = Model(resnet18())
+            >>> model = Model(resnet18())
             ResNet Total number of parameters: 11689512
             ResNet model use CPU!
             apply kaiming weight init!
-            >>> resnet.save_weights("model.pth", "weights.pth", True)
-            move to cpu...
-            >>> resnet_load = Model()
-            >>> # only load module structure
-            >>> resnet_load.load_weights("model.pth", None)
-            ResNet model use CPU!
-            >>> # only load weights
-            >>> resnet_load.load_weights(None, "weights.pth")
-            ResNet model use CPU!
-            >>> # load both
-            >>> resnet_load.load_weights("model.pth", "weights.pth")
-            ResNet model use CPU!
+            >>> model.save_weights("model.pth",)
+            try to remove 'module.' in keys of weights dict...
+            >>> model.load_weights("model.pth", True)
+            Try to remove `moudle.` to keys of weights dict
 
         """
         if isinstance(weights, str):
@@ -200,25 +191,22 @@ class Model(object):
             This method deal well with different devices on model saving.
             You don' need to care about which devices your model have saved.
 
-        :param model_or_path: Pytorch model or model file path.
-        :param weights_or_path: Pytorch weights or weights file path.
-        :param to_cpu: If this is true, it will keep the location of module.
+        :param weights_path: Pytorch weights or weights file path.
+        :param fix_weights: If this is true, it will remove the '.module' in keys, when you save a ``DataParallel``.
          without any moving operation. Otherwise, it will move to cpu, especially in ``DataParallel``.
          default:``False``
 
         Example::
 
-           >>> from torchvision.models.resnet import resnet18
-           >>> model = Model(resnet18())
-           ResNet Total number of parameters: 11689512
-           ResNet model use CPU!
+           >>> from torch.nn import Linear
+           >>> model = Model(Linear(10,1))
+           Linear Total number of parameters: 11
+           Linear model use CPU!
            apply kaiming weight init!
-           >>> model.save_weights("model.pth", "weights.pth")
-           >>> #you have had the model. Only get weights from path.
-           >>> model.load_weights(None, "weights.pth")
-           ResNet model use CPU!
-           >>> model.load_weights("model.pth", None)
-           ResNet model use CPU!
+           >>> model.save_weights("weights.pth")
+           try to remove 'module.' in keys of weights dict...
+           >>> model.load_weights("weights.pth")
+           Try to remove `moudle.` to keys of weights dict
 
         """
         if fix_weights:
@@ -236,29 +224,26 @@ class Model(object):
 
         this method is cooperate with method `self.chechPoint()`
         """
-        if logdir.endswith("checkpoint"):
-            dir = logdir
-        else:
-            dir = os.path.join(logdir, "checkpoint")
+        if not logdir.endswith("checkpoint"):
+            logdir = os.path.join(logdir, "checkpoint")
 
-        model_weights_path = os.path.join(dir, "Weights_%s_%d.pth" % (model_name, epoch))
+        model_weights_path = os.path.join(logdir, "Weights_%s_%d.pth" % (model_name, epoch))
 
         self.load_weights(model_weights_path, True)
 
     def check_point(self, model_name: str, epoch: int, logdir="log"):
-        if logdir.endswith("checkpoint"):
-            dir = logdir
-        else:
-            dir = os.path.join(logdir, "checkpoint")
+        if not logdir.endswith("checkpoint"):
+            logdir = os.path.join(logdir, "checkpoint")
 
-        if not os.path.exists(dir):
-            os.makedirs(dir)
+        if not os.path.exists(logdir):
+            os.makedirs(logdir)
 
-        model_weights_path = os.path.join(dir, "Weights_%s_%d.pth" % (model_name, epoch))
+        model_weights_path = os.path.join(logdir, "Weights_%s_%d.pth" % (model_name, epoch))
         weights = self._fix_weights(self.model.state_dict(), "remove", False)  # try to remove '.module' in keys.
         save(weights, model_weights_path)
 
-    def count_params(self, proto_model: Module):
+    @staticmethod
+    def count_params(proto_model: Module):
         """count the total parameters of model.
 
         :param proto_model: pytorch module
@@ -309,20 +294,12 @@ class Model(object):
         else:
             pass
 
-    # def _extract_module(self, data_parallel_model: DataParallel, extract_weights=True):
-    #     self._print("from `DataParallel` extract `module`...")
-    #     model: Module = data_parallel_model.module
-    #     weights = self.model.state_dict()
-    #     if extract_weights:
-    #         weights = self._fix_weights(weights)
-    #     return model, weights
-
-    def _fix_weights(self, weights: Union[dict, OrderedDict], fix_type: str = "remove", is_strict=True):
+    @staticmethod
+    def _fix_weights(weights: Union[dict, OrderedDict], fix_type: str = "remove", is_strict=True):
         # fix params' key
         from collections import OrderedDict
         new_state_dict = OrderedDict()
         for k, v in weights.items():
-            k: str
             if fix_type == "remove":
                 if is_strict:
                     assert k.startswith(
@@ -333,6 +310,8 @@ class Model(object):
                     assert not k.startswith("module."), "The key of weights dict is %s. Can not add 'module.'" % k
                 if not k.startswith("module."):
                     name = "module.".join(k)  # add `module.`
+                else:
+                    name = k
             else:
                 raise TypeError("`fix_type` should be 'remove' or 'add'.")
             new_state_dict[name] = v
@@ -345,23 +324,23 @@ class Model(object):
         gpu_ids = [i for i in range(len(gpu_ids_abs))]
         gpu_available = torch.cuda.is_available()
         model_name = proto_model.__class__.__name__
-        if (len(gpu_ids) == 1):
+        if len(gpu_ids) == 1:
             assert gpu_available, "No gpu available! torch.cuda.is_available() is False. CUDA_VISIBLE_DEVICES=%s" % \
                                   os.environ["CUDA_VISIBLE_DEVICES"]
             proto_model = proto_model.cuda(gpu_ids[0])
             self._print("%s model use GPU(%d)!" % (model_name, gpu_ids[0]))
-        elif (len(gpu_ids) > 1):
+        elif len(gpu_ids) > 1:
             assert gpu_available, "No gpu available! torch.cuda.is_available() is False. CUDA_VISIBLE_DEVICES=%s" % \
                                   os.environ["CUDA_VISIBLE_DEVICES"]
             proto_model = DataParallel(proto_model.cuda(), gpu_ids)
             self._print("%s dataParallel use GPUs%s!" % (model_name, gpu_ids))
         else:
-            self._print("%s model use CPU!" % (model_name))
+            self._print("%s model use CPU!" % model_name)
         return proto_model
 
-    def _print(self, str: str):
+    def _print(self, str_msg: str):
         if self.verbose:
-            print(str)
+            print(str_msg)
 
     @property
     def configure(self):
@@ -380,6 +359,7 @@ class Model(object):
 
 if __name__ == '__main__':
     from torch.nn import Sequential
+
     mode = Sequential(Conv2d(10, 1, 3, 1, 0))
     net = Model(mode, [], "kaiming", show_structure=False)
     if torch.cuda.is_available():

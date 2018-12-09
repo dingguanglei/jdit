@@ -1,21 +1,22 @@
-import os
-import random
 from abc import ABCMeta, abstractmethod
 from types import FunctionType
-from typing import Union
-
-import numpy as np
-import pandas as pd
-import torch
-import torchvision.transforms as transforms
-from tensorboardX import SummaryWriter
-from torch.autograd import Variable
-from torchvision.utils import make_grid
 from tqdm import tqdm
-
+from torch.utils.data import random_split
+import traceback
+import shutil
+from typing import Union
 from jdit.dataset import DataLoadersFactory
 from jdit.model import Model
 from jdit.optimizer import Optimizer
+
+import torch
+import torchvision.transforms as transforms
+from torchvision.utils import make_grid
+import os
+import random
+import pandas as pd
+import numpy as np
+from tensorboardX import SummaryWriter
 
 
 class SupTrainer(object):
@@ -33,7 +34,7 @@ class SupTrainer(object):
 
     def __init__(self, nepochs: int, logdir: str, gpu_ids_abs: Union[list, tuple] = ()):
         os.environ["CUDA_VISIBLE_DEVICES"] = ",".join([str(i) for i in gpu_ids_abs])
-        self.gpu_ids: list = [i for i in range(len(gpu_ids_abs))]
+        self.gpu_ids = [i for i in range(len(gpu_ids_abs))]
         self.logdir = logdir
         self.performance = Performance(gpu_ids_abs)
         self.watcher = Watcher(logdir, self.mode)
@@ -41,10 +42,11 @@ class SupTrainer(object):
 
         self.use_gpu = True if (len(self.gpu_ids) > 0) and torch.cuda.is_available() else False
         self.device = torch.device("cuda") if self.use_gpu else torch.device("cpu")
-        self.input: Variable()
-        self.ground_truth: Variable()
+        self.input = torch.Tensor()
+        self.ground_truth = torch.Tensor()
         self.nepochs = nepochs
         self.current_epoch = 1
+        self.start_epoch = 1
         self.step = 0
 
     def train(self, process_bar_header: str = None, process_bar_position: int = None, subbar_disable=False, **kwargs):
@@ -57,8 +59,7 @@ class SupTrainer(object):
         :param subbar_disable: If show the info of every training set,
         :param kwargs: Any other parameters that passing to ``tqdm()`` to control the behavior of process bar.
         """
-        START_EPOCH = 1
-        for epoch in tqdm(range(START_EPOCH, self.nepochs + 1), total=self.nepochs,
+        for epoch in tqdm(range(self.start_epoch, self.nepochs + 1), total=self.nepochs,
                           unit="epoch", desc=process_bar_header, position=process_bar_position, **kwargs):
             self.current_epoch = epoch
             self._record_configs()
@@ -86,16 +87,14 @@ class SupTrainer(object):
 
         :return: bool. It will return ``True``, if passes all the tests.
         """
-        from torch.utils.data import random_split
-        import traceback
-        import shutil
+
         self.every_epoch_checkpoint = 1
         self.every_epoch_changelr = 1
         self.logdir = "log_debug"
         self.watcher.close()
         self.watcher = Watcher("log_debug")
         self.loger = Loger("log_debug")
-        self.performance= Performance()
+        self.performance = Performance()
         # reset `log_debug`
         if os.path.exists("log_debug"):
             try:
@@ -178,8 +177,8 @@ class SupTrainer(object):
 
 
         """
-        input, ground_truth = batch_data[0], batch_data[1]
-        return input.to(device), ground_truth.to(device)
+        input_img, ground_truth = batch_data[0], batch_data[1]
+        return input_img.to(device), ground_truth.to(device)
 
     def _train_iteration(self, opt: Optimizer, compute_loss_fc: FunctionType, csv_filename: str = "Train"):
         opt.zero_grad()
@@ -188,7 +187,6 @@ class SupTrainer(object):
         opt.step()
         self.watcher.scalars(var_dict=var_dic, global_step=self.step, tag="Train")
         self.loger.write(self.step, self.current_epoch, var_dic, csv_filename, header=self.step <= 1)
-
 
     def _record_configs(self):
         """to register the ``Model`` , ``Optimizer`` , ``Trainer`` and ``Performance`` config info.
@@ -211,9 +209,9 @@ class SupTrainer(object):
         :return:
         """
         self.loger.regist_config(self, self.current_epoch)  # for trainer.configure
-        for key, object in vars(self).items():
-            if isinstance(object, (Model, Optimizer, SupTrainer, Performance)):
-                self.loger.regist_config(object, self.current_epoch, flag_name="epoch",
+        for key, obj in vars(self).items():
+            if isinstance(obj, (Model, Optimizer, SupTrainer, Performance)):
+                self.loger.regist_config(obj, self.current_epoch, flag_name="epoch",
                                          config_filename=key)  # for trainer.configure
 
     def _check_point(self):
@@ -374,7 +372,7 @@ class Loger(object):
             for key, value in msg_dic.items():
                 if hasattr(value, "item"):
                     msg_dic[key] = value.detach().cpu().item()
-        path = os.path.join(self.logdir , filename + ".csv")
+        path = os.path.join(self.logdir, filename + ".csv")
         dic = dict({"step": step, "current_epoch": current_epoch})
         dic.update(msg_dic)
         pdg = pd.DataFrame.from_dict(dic, orient="index").transpose()
@@ -407,7 +405,8 @@ class Watcher(object):
         for key, scalar in var_dict.items():
             self.writer.add_scalars(key, {tag: scalar}, global_step)
 
-    def _sample(self, tensor: torch.Tensor, num_samples: int, shuffle=True):
+    @staticmethod
+    def _sample(tensor: torch.Tensor, num_samples: int, shuffle=True):
         total = len(tensor)
         assert num_samples <= total
         if shuffle:
@@ -465,8 +464,9 @@ class Watcher(object):
         self.training_progress_images.append(img_grid)
 
     def save_in_gif(self):
-        import imageio, warnings
-        filename = "%s/plots/training.gif" % (self.logdir)
+        import imageio
+        import warnings
+        filename = "%s/plots/training.gif" % self.logdir
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             imageio.mimsave(filename, self.training_progress_images, duration=self.gif_duration)
@@ -474,7 +474,7 @@ class Watcher(object):
 
     def graph(self, model: Union[torch.nn.Module, torch.nn.DataParallel, Model],
               input_shape: Union[list, tuple] = None, use_gpu=False,
-              *input):
+              *input_tensor):
         if isinstance(model, torch.nn.Module):
             proto_model: torch.nn.Module = model
             num_params: int = self._count_params(proto_model)
@@ -500,12 +500,19 @@ class Watcher(object):
             self.writer.add_graph(model, input_tensor)
         else:
             self.scalars({'ParamsNum': num_params}, 0, tag="ParamsNum")
-            res = proto_model(*input)
+            res = proto_model(*input_tensor)
             self.scalars({'ParamsNum': num_params}, 1, tag="ParamsNum")
             del res
-            self.writer.add_graph(proto_model, input)
+            self.writer.add_graph(proto_model, input_tensor)
 
-    def _count_params(self, proto_model: torch.nn.Module):
+    def close(self):
+        # self.writer.export_scalars_to_json("%s/scalers.json" % self.logdir)
+        if self.training_progress_images:
+            self.save_in_gif()
+        self.writer.close()
+
+    @staticmethod
+    def _count_params(proto_model: torch.nn.Module):
         """count the total parameters of model.
 
         :param proto_model: pytorch module
@@ -516,27 +523,21 @@ class Watcher(object):
             num_params += param.numel()
         return num_params
 
-    def close(self):
-        # self.writer.export_scalars_to_json("%s/scalers.json" % self.logdir)
-        if self.training_progress_images:
-            self.save_in_gif()
-        self.writer.close()
-
-    def _build_dir(self, dirs: str):
+    @staticmethod
+    def _build_dir(dirs: str):
         if not os.path.exists(dirs):
-            # print("%s directory is not found. Build now!" % dir)
             os.makedirs(dirs)
 
 
 if __name__ == '__main__':
     import torch.nn as nn
 
-    log = Loger('log')
-    model = nn.Linear(10, 1)
-    opt = Optimizer(model.parameters())
-    log.regist_config(opt, flag=1)
-    opt.do_lr_decay()
-    log.regist_config(opt, flag=2)
-    log.regist_config(opt, flag=3)
-    log.regist_config(opt)
+    test_log = Loger('log')
+    test_model = nn.Linear(10, 1)
+    test_opt = Optimizer(test_model.parameters())
+    test_log.regist_config(test_opt, flag=1)
+    test_opt.do_lr_decay()
+    test_log.regist_config(test_opt, flag=2)
+    test_log.regist_config(test_opt, flag=3)
+    test_log.regist_config(test_opt)
     exit(1)

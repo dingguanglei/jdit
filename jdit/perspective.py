@@ -1,206 +1,175 @@
-import torch
 import os
-from typing import Union
-import numpy as np
-from tensorboardX import SummaryWriter
-from torchvision.utils import make_grid
-import torchvision.transforms as transforms
+from typing import Union, Dict, Tuple
 from jdit.model import Model
-import random
+from jdit.trainer.super import Watcher
+from torch.nn import Module
+import torch
+from torch import Tensor
 
 
-class Watcher(object):
-    """this is a params and images watcher
+class FeatureVisualization(object):
+    """ Visualize the activations of model
 
+    This class can visualize the activations of each layer in model.
+    :param model:model network. It can be ``jdit.Model`` or ``torch.nn.Module``
+    :param log:The log directory and ``--logdir=`` of tensorboard will be run in this dir.
     """
 
-    def __init__(self, logdir: str, mode: str = "L"):
-        self.logdir = logdir
-        self.writer = SummaryWriter(log_dir=logdir)
-        self.mode = mode
-        self._build_dir(logdir)
-        self.training_progress_images = []
-        self.gif_duration = 0.5
-
-    def model_params(self, model: torch.nn.Module, global_step: int):
-        for name, param in model.named_parameters():
-            if "bias" in name:
-                continue
-            self.writer.add_histogram(name, param.clone().cpu().data.numpy(), global_step)
-
-    def scalars(self, var_dict: dict, global_step: int, tag="Train"):
-        for key, scalar in var_dict.items():
-            self.writer.add_scalars(key, {tag: scalar}, global_step)
-
-    def _sample(self, tensor: torch.Tensor, num_samples: int, shuffle=True):
-        total = len(tensor)
-        assert num_samples <= total
-        if shuffle:
-            rand_index = random.sample(list(range(total)), num_samples)
-            sampled_tensor: torch.Tensor = tensor[rand_index]
-        else:
-            sampled_tensor: torch.Tensor = tensor[:num_samples]
-        return sampled_tensor
-
-    def image(self, img_tensors: torch.Tensor, global_step: int, tag: str = "Train/input",
-              grid_size: Union[list, tuple] = (3, 1), shuffle=True, save_file=False):
-        # if input is (-1, 1).this should be -1. to convert to (0,1)   mean=(-1, -1, -1), std=(2, 2, 2)
-        assert len(img_tensors.size()) == 4, "img_tensors rank should be 4, got %d instead" % len(img_tensors.size())
-        self._build_dir(os.path.join(self.logdir, "plots", tag))
-        rows, columns = grid_size[0], grid_size[1]
-        batch_size = len(img_tensors)  # img_tensors =>(batchsize, 3, 256, 256)
-        num_samples: int = min(batch_size, rows * columns)
-        assert len(img_tensors) >= num_samples, "you want to show grid %s, but only have %d tensors to show." % (
-            grid_size, len(img_tensors))
-
-        sampled_tensor = self._sample(img_tensors, num_samples,
-                                      shuffle).detach().cpu()  # (sample_num, 3, 32,32)  tensors
-        # sampled_images = map(transforms.Normalize(mean, std), sampled_tensor)  # (sample_num, 3, 32,32) images
-        sampled_images: torch.Tensor = make_grid(sampled_tensor, nrow=rows, normalize=True, scale_each=True)
-        self.writer.add_image(tag, sampled_images, global_step)
-
-        if save_file:
-            img = transforms.ToPILImage()(sampled_images).convert(self.mode)
-            filename = "%s/plots/%s/E%03d.png" % (self.logdir, tag, global_step)
-            img.save(filename)
-
-    def embedding(self, data: torch.Tensor, label_img: torch.Tensor = None, label=None, global_step: int = None,
-                  tag: str = "embedding"):
-        """ Show PCA, t-SNE of `mat` on tensorboard
-
-        :param data: An img tensor with shape  of (N, C, H, W)
-        :param label_img: Label img on each data point.
-        :param label: Label of each img. It will convert to str.
-        :param global_step: Img step label.
-        :param tag: Tag of this plot.
-        """
-        features = data.view(len(data), -1)
-        self.writer.add_embedding(features, metadata=label, label_img=label_img, global_step=global_step, tag=tag)
-
-    def set_training_progress_images(self, img_tensors: torch.Tensor, grid_size: Union[list, tuple] = (3, 1)):
-        assert len(img_tensors.size()) == 4, "img_tensors rank should be 4, got %d instead" % len(img_tensors.size())
-        rows, columns = grid_size[0], grid_size[1]
-        batch_size = len(img_tensors)  # img_tensors =>(batchsize, 3, 256, 256)
-        num_samples = min(batch_size, rows * columns)
-        assert len(img_tensors) >= num_samples, "you want to show grid %s, but only have %d tensors to show." % (
-            grid_size, len(img_tensors))
-        sampled_tensor = self._sample(img_tensors, num_samples, False).detach().cpu()  # (sample_num, 3, 32,32)  tensors
-        sampled_images = make_grid(sampled_tensor, nrow=rows, normalize=True, scale_each=True)
-        img_grid = np.transpose(sampled_images.numpy(), (1, 2, 0))
-        self.training_progress_images.append(img_grid)
-
-    def save_in_gif(self):
-        import imageio, warnings
-        filename = "%s/plots/training.gif" % (self.logdir)
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            imageio.mimsave(filename, self.training_progress_images, duration=self.gif_duration)
-        self.training_progress_images = None
-
-    def graph(self, model: Union[torch.nn.Module, torch.nn.DataParallel, Model],
-              input_shape: Union[list, tuple] = None, use_gpu=False,
-              *input):
-        if isinstance(model, torch.nn.Module):
-            proto_model: torch.nn.Module = model
-            num_params: int = self._count_params(proto_model)
-        elif isinstance(model, torch.nn.DataParallel):
-            proto_model: torch.nn.Module = model.module
-            num_params: int = self._count_params(proto_model)
-        elif isinstance(model, Model):
-            proto_model: torch.nn.Module = model.model
-            num_params: int = model.num_params
-        else:
-            raise TypeError("Only `nn.Module`, `nn.DataParallel` and `Model` can be passed!")
-
-        if input_shape is not None:
-            assert (isinstance(input_shape, tuple) or isinstance(input_shape, list)), \
-                "param 'input_shape' should be list or tuple."
-            input_tensor = torch.ones(input_shape).cuda() if use_gpu else torch.ones(input_shape)
-            input_tensor = torch.autograd.Variable(input_tensor, requires_grad=True)
-
-            self.scalars({'ParamsNum': num_params}, 0, tag="ParamsNum")
-            res = proto_model(input_tensor)
-            self.scalars({'ParamsNum': num_params}, 1, tag="ParamsNum")
-            del res
-            self.writer.add_graph(model, input_tensor)
-        else:
-            self.scalars({'ParamsNum': num_params}, 0, tag="ParamsNum")
-            res = proto_model(*input)
-            self.scalars({'ParamsNum': num_params}, 1, tag="ParamsNum")
-            del res
-            self.writer.add_graph(proto_model, input)
-
-    def _count_params(self, proto_model: torch.nn.Module):
-        """count the total parameters of model.
-
-        :param proto_model: pytorch module
-        :return: number of parameters
-        """
-        num_params = 0
-        for param in proto_model.parameters():
-            num_params += param.numel()
-        return num_params
-
-    def close(self):
-        # self.writer.export_scalars_to_json("%s/scalers.json" % self.logdir)
-        if self.training_progress_images:
-            self.save_in_gif()
-        self.writer.close()
-
-    def _build_dir(self, dirs: str):
-        if not os.path.exists(dirs):
-            # print("%s directory is not found. Build now!" % dir)
-            os.makedirs(dirs)
-
-# activation = {}
-class FeatureVisualization():
-    def __init__(self, model):
+    def __init__(self, model: Union[Model, Module], log: str):
         model.eval()
         self.model = model
-        self.activation = {}
+        self.activations: Dict[str, Tensor] = {}
+        self.watcher = Watcher(logdir=log)
 
-    def _hook(self, name):
+    def _hook(self, name: str):
         def hook(model, input, output):
-            self.activation[name] = output.detach()
+            self.activations[name] = output.detach()
 
         return hook
 
-    def _register_forward_hook(self):
-        self.model.unet_block_1.register_forward_hook(self._hook('block1'))
-        self.model.unet_block_2.register_forward_hook(self._hook('block2'))
-        self.model.unet_block_3.register_forward_hook(self._hook('block3'))
+    @property
+    def layers_names(self):
+        """Get model's layers names.
 
-    def trace_activation(self, input):
-        self._register_forward_hook()
-        output = self.model(input)
-        return output
+        :return:
+        """
+        layer_names = []
+        for layer in self.model.named_modules():
+            layer_names.append(layer[0])
+        return layer_names
 
-class CL(torch.nn.Module):
-    def __init__(self):
-        super(CL, self).__init__()
-        self.unet_block_1 = torch.nn.Conv2d(1, 2, 3, 1, 1)
-        self.unet_block_2 = torch.nn.Conv2d(2, 4, 3, 1, 1)
-        self.unet_block_3 = torch.nn.Conv2d(4, 8, 3, 1, 1)
-        self.unet_block_4 = torch.nn.Conv2d(8, 16, 3, 1, 1)
+    def _register_forward_hook(self, block_name: str):
+        """Set a forward hook in model.
 
-    def forward(self, input):
-        out = self.unet_block_1(input)
-        out = self.unet_block_2(out)
-        out = self.unet_block_3(out)
-        out = self.unet_block_4(out)
-        return out
+        :param block_name: block name of model
+        :return:
+        """
+        if not hasattr(self.model, block_name):
+            raise AttributeError(
+                    "model doesn't have `%s` layer. These layers available: %s" % (
+                        block_name, str.join("\n", self.layers_names)))
+
+        getattr(self.model, block_name).register_forward_hook(self._hook(block_name))
+
+    def trace_activation(self, input_tensor: Union[Tensor, Tuple[Tensor]], block_names: list,
+                         use_gpu=False) -> \
+            Dict[str, Tensor]:
+        """Trace the activations of model during a forward propagation.
+
+        :param input_tensor:Input of model. Tensor or tuple of Tensors
+        :param block_names:A list of layer's key names which you want to visualize.
+        :param use_gpu:If use GPU. Default: False
+        :return:The activations dic with block_names as the keys.
+        """
+        if len(input_tensor.shape) == 4:
+            assert input_tensor.shape[0] == 1, (
+                    "You can only pass one sample to do feature visualization, but %d was given" %
+                    input_tensor.shape[0])
+        for name in block_names:
+            self._register_forward_hook(name)
+        with torch.no_grad():
+            if use_gpu:
+                self.model = self.model.cuda()
+                if isinstance(input_tensor, Tensor):
+                    input_tensor = input_tensor.cuda()
+                    self.model(input_tensor)
+                elif isinstance(input_tensor, tuple) or isinstance(input_tensor, list):
+                    input_tensor = [item.cuda() for item in input_tensor]
+                    self.model(*input_tensor)
+                else:
+                    raise TypeError(
+                            "`input_tensor` should be Tensor or tuple of Tensors, but %s was given" % type(
+                                    input_tensor))
+            else:
+                if isinstance(input_tensor, Tensor):
+                    self.model(input_tensor)
+                elif isinstance(input_tensor, tuple) or isinstance(input_tensor, list):
+                    self.model(*input_tensor)
+                else:
+                    raise TypeError(
+                            "`input_tensor` should be Tensor or tuple of Tensors, but %s was given" % type(
+                                    input_tensor))
+
+        return self.activations
+
+    def show_feature_trace(self, input_tensor: Union[Tensor, Tuple[Tensor]], block_names: list, global_step,
+                           grid_size=(4, 4), show_struct=True, use_gpu=False, shuffle=False):
+        """Trace the activations of model during a forward propagation.
+
+        :param input_tensor: Input of model. Tensor or tuple of Tensors
+        :param block_names: A list of layer's key names which you want to visualize.
+        :param global_step:step flag.
+        :param grid_size:Amount and size of actives images which you want to show in tensorboard.
+        :param show_struct:If show structure of model. Default: True
+        :param use_gpu:If use GPU. Default: False
+        :param shuffle:If shuffle the activations channels. Default: False
+        :return:
+
+        Example:
+
+            .. code-block:: python
+
+                from torch.nn import Conv2d
+                class CL(Module):
+                    def __init__(self):
+                        super(CL, self).__init__()
+                        self.layer_1 = Conv2d(1, 2, 3, 1, 1)
+                        self.layer_2 = Conv2d(2, 4, 3, 1, 1)
+                        self.layer_3 = Conv2d(4, 8, 3, 1, 1)
+                        self.layer_4 = Conv2d(8, 16, 3, 1, 1)
+                    def forward(self, input):
+                        out = self.layer_1(input)
+                        out = self.layer_2(out)
+                        out = self.layer_3(out)
+                        out = self.layer_4(out)
+                        return out
+
+                model = CL()
+                fv = FeatureVisualization(model, "incep_test")
+                input = torch.randn(1, 1, 10, 10)
+                fv.show_feature_trace(input, ["layer_1", "layer_2", "layer_3"], 1)
+                fv.watcher.close()
+
+        """
+        self.trace_activation(input_tensor, block_names)
+        if show_struct:
+            self.watcher.graph(self.model, None, use_gpu, input_tensor)
+
+        for layer_name, tensor in self.activations.items():
+            if len(tensor.shape) == 4:
+                tensor = tensor[0]  # 1,channel,H,W =>channel,H,W
+            tensor = tensor.unsqueeze(1)  # channel,1,H,W
+
+            self.watcher.image(tensor, grid_size=grid_size, tag=layer_name, global_step=global_step, shuffle=shuffle)
+
+    @staticmethod
+    def _build_dir(dirs: str):
+        if not os.path.exists(dirs):
+            os.makedirs(dirs)
+
 
 if __name__ == '__main__':
+    from torch.nn import Conv2d
 
 
-    fv = FeatureVisualization(CL())
-    print(fv.model.named_parameters())
-    # def _register_forward_hook(self):
-    #     self.model.unet_block_1.register_forward_hook(self._hook('block1'))
-    #     self.model.unet_block_2.register_forward_hook(self._hook('block2'))
-    #     self.model.unet_block_3.register_forward_hook(self._hook('block3'))
-    # fv._register_forward_hook = _register_forward_hook
+    class CL(Module):
+        def __init__(self):
+            super(CL, self).__init__()
+            self.unet_block_1 = Conv2d(1, 2, 3, 1, 1)
+            self.unet_block_2 = Conv2d(2, 4, 3, 1, 1)
+            self.unet_block_3 = Conv2d(4, 8, 3, 1, 1)
+            self.unet_block_4 = Conv2d(8, 16, 3, 1, 1)
 
-    fv.trace_activation()
-    print(fv.activation.keys())
+        def forward(self, input):
+            out = self.unet_block_1(input)
+            out = self.unet_block_2(out)
+            out = self.unet_block_3(out)
+            out = self.unet_block_4(out)
+            return out
 
+
+    _model = CL()
+    fv = FeatureVisualization(_model, "incep_test")
+    _input = torch.randn(1, 1, 10, 10)
+    fv.show_feature_trace(_input, ["unet_block_1", "unet_block_2", "unet_block_3"], 1)
+    fv.watcher.close()

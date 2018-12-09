@@ -1,5 +1,5 @@
 # coding=utf-8
-import torch
+
 from torch.optim import Adam, RMSprop, SGD
 
 
@@ -26,7 +26,7 @@ class Optimizer(object):
     * :attr:`learning rate reset` . Reset learning rate, it can change learning rate and decay directly.
 
     * :attr:`minimum learning rate` . When you do a learning rate decay, it will stop,
-      when the learning rate is smaller than the minmimum
+      when the learning rate is smaller than the minimum
 
     Args:
         params (dict): parameters of model, which need to be updated.
@@ -37,7 +37,7 @@ class Optimizer(object):
 
         weight_decay (float, optional): weight_decay in pytorch ``optimizer`` . Default: 2e-5
 
-        moemntum (float, optional): moemntum in pytorch ``moemntum`` . Default: 0
+        momentum (float, optional): momentum in pytorch ``momentum`` . Default: 0
 
         betas (tuple, list, optional): betas in pytorch ``betas`` . Default: (0.9, 0.999)
 

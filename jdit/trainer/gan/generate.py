@@ -6,6 +6,7 @@ from jdit.optimizer import Optimizer
 from jdit.model import Model
 from jdit.dataset import DataLoadersFactory
 
+
 class GenerateGanTrainer(SupGanTrainer):
     d_turn = 1
 
@@ -32,11 +33,11 @@ class GenerateGanTrainer(SupGanTrainer):
         return input_cpu.to(self.device), ground_truth_cpu.to(self.device)
 
     def valid_epoch(self):
-        avg_dic = {}
+        avg_dic = dict()
         self.netG.eval()
         self.netD.eval()
         for iteration, batch in enumerate(self.datasets.loader_valid, 1):
-            self.input_cpu, self.ground_truth_cpu = self.get_data_from_loader(batch)
+            self.input, self.ground_truth = self.get_data_from_loader(batch)
             self.fake = self.netG(self.input)
             dic = self.compute_valid()
             if avg_dic == {}:
@@ -111,6 +112,6 @@ class GenerateGanTrainer(SupGanTrainer):
 
     @property
     def configure(self):
-        dict = super(GenerateGanTrainer, self).configure
-        dict["latent_shape"] = str(self.latent_shape)
-        return dict
+        config_dic = super(GenerateGanTrainer, self).configure
+        config_dic["latent_shape"] = str(self.latent_shape)
+        return config_dic

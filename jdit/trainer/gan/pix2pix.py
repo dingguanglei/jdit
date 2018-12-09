@@ -5,6 +5,7 @@ from jdit.optimizer import Optimizer
 from jdit.model import Model
 from jdit.dataset import DataLoadersFactory
 
+
 class Pix2pixGanTrainer(SupGanTrainer):
     d_turn = 1
 
@@ -117,7 +118,7 @@ class Pix2pixGanTrainer(SupGanTrainer):
         self.netD.eval()
         if self.fixed_input is None:
             for iteration, batch in enumerate(self.datasets.loader_test, 1):
-                if isinstance(batch,list):
+                if isinstance(batch, list):
                     self.fixed_input, fixed_ground_truth = self.get_data_from_loader(batch)
                     self.watcher.image(self.fixed_input, self.current_epoch, tag="Fixed/groundtruth",
                                        grid_size=(6, 6),

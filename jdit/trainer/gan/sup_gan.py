@@ -11,18 +11,7 @@ class SupGanTrainer(SupTrainer):
 
     def __init__(self, logdir, nepochs, gpu_ids_abs, netG: Model, netD: Model, optG: Optimizer, optD: Optimizer,
                  datasets: DataLoadersFactory):
-        """ a gan super class
 
-        :param logdir:
-        :param nepochs:
-        :param gpu_ids_abs:
-        :param netG:
-        :param netD:
-        :param optG:
-        :param optD:
-        :param datasets:
-        :param latent_shape:
-        """
         super(SupGanTrainer, self).__init__(nepochs, logdir, gpu_ids_abs=gpu_ids_abs)
         self.netG = netG
         self.netD = netD
@@ -132,7 +121,7 @@ class SupGanTrainer(SupTrainer):
             return: loss_d, var_dic
 
         """
-        loss_d :torch.Tensor
+        loss_d: torch.Tensor
         var_dic = {}
 
         return loss_d, var_dic
@@ -152,7 +141,7 @@ class SupGanTrainer(SupTrainer):
             return: loss_g, var_dic
 
         """
-        loss_g :torch.Tensor
+        loss_g: torch.Tensor
         var_dic = {}
         return loss_g, var_dic
 
@@ -238,6 +227,6 @@ class SupGanTrainer(SupTrainer):
 
     @property
     def configure(self):
-        dict = super(SupGanTrainer, self).configure
-        dict["d_turn"] = str(self.d_turn)
-        return dict
+        config_dic = super(SupGanTrainer, self).configure
+        config_dic["d_turn"] = str(self.d_turn)
+        return config_dic
