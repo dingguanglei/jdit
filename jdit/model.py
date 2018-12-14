@@ -6,6 +6,7 @@ from torch import save, load
 from typing import Union
 from collections import OrderedDict
 from types import FunctionType
+from typing import List
 
 
 class _cached_property(object):
@@ -92,7 +93,8 @@ class Model(object):
 
     """
 
-    def __init__(self, proto_model: Module, gpu_ids_abs: Union[list, tuple] = (),
+    def __init__(self, proto_model: Module,
+                 gpu_ids_abs: Union[list, tuple] = (),
                  init_method: Union[str, FunctionType, None] = "kaiming",
                  show_structure=False, verbose=True):
         self.model: Union[DataParallel, Module] = None

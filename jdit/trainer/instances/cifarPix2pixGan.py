@@ -1,42 +1,15 @@
 # coding=utf-8
 import torch
 import torch.nn as nn
-from torch.autograd import Variable
 from jdit.trainer import Pix2pixGanTrainer
 from jdit.model import Model
 from jdit.optimizer import Optimizer
 from jdit.dataset import Cifar10
 
 
-def gradPenalty(D_net, real, fake, LAMBDA=10, use_gpu=False):
-    batch_size = real.size()[0]
-    # Calculate interpolation
-    alpha = torch.rand(batch_size, 1, 1, 1)
-    alpha = alpha.expand_as(real)
-
-    alpha = alpha.cuda() if use_gpu else alpha
-
-    interpolates = alpha * real + ((1 - alpha) * fake)
-
-    if use_gpu:
-        interpolates = interpolates.cuda()
-    interpolates = Variable(interpolates, requires_grad=True)
-    disc_interpolates = D_net(interpolates)
-    gradients = torch.autograd.grad(
-            outputs=disc_interpolates,
-            inputs=interpolates,
-            grad_outputs=torch.ones(disc_interpolates.size()).cuda()
-            if use_gpu else torch.ones(disc_interpolates.size()),
-            create_graph=True,
-            retain_graph=True,
-            only_inputs=True)[0]
-
-    gradient_penalty = ((gradients.norm(2, dim=1) - 1) ** 2).mean() * LAMBDA
-    return gradient_penalty
-
-class discriminator(nn.Module):
+class Discriminator(nn.Module):
     def __init__(self, input_nc=3, output_nc=1, depth=64):
-        super(discriminator, self).__init__()
+        super(Discriminator, self).__init__()
         # 32 x 32
         self.layer1 = nn.Sequential(
                 nn.utils.spectral_norm(nn.Conv2d(input_nc, depth * 1, kernel_size=3, stride=1, padding=1)),
@@ -62,9 +35,10 @@ class discriminator(nn.Module):
         out = self.layer4(out)
         return out
 
-class generator(nn.Module):
+
+class Generator(nn.Module):
     def __init__(self, input_nc=1, output_nc=3, depth=32):
-        super(generator, self).__init__()
+        super(Generator, self).__init__()
 
         self.latent_to_features = nn.Sequential(
                 nn.Conv2d(input_nc, 1 * depth, 3, 1, 1),  # 1,32,32 => d,32,32
@@ -100,7 +74,6 @@ class generator(nn.Module):
 
 
 class CifarPix2pixGanTrainer(Pix2pixGanTrainer):
-    mode = "RGB"
     every_epoch_checkpoint = 50  # 2
     every_epoch_changelr = 2  # 1
     d_turn = 5
@@ -109,56 +82,34 @@ class CifarPix2pixGanTrainer(Pix2pixGanTrainer):
         super(CifarPix2pixGanTrainer, self).__init__(logdir, nepochs, gpu_ids_abs, netG, netD, optG, optD,
                                                      datasets)
 
-        self.watcher.graph(netG, (4, 1, 32, 32), self.use_gpu)
-
     def get_data_from_loader(self, batch_data):
         ground_truth_cpu, label = batch_data[0], batch_data[1]
-        input_cpu = ground_truth_cpu[:,0,:,:].unsqueeze(1) # only use one channel [?,3,32,32] =>[?,1,32,32]
-
+        input_cpu = ground_truth_cpu[:, 0, :, :].unsqueeze(1)  # only use one channel [?,3,32,32] =>[?,1,32,32]
         return input_cpu.to(self.device), ground_truth_cpu.to(self.device)
 
     def compute_d_loss(self):
         d_fake = self.netD(self.fake.detach())
         d_real = self.netD(self.ground_truth)
-
         var_dic = {}
-        var_dic["GP"] = gp = gradPenalty(self.netD, self.ground_truth, self.fake,
-                                         use_gpu=self.use_gpu)
-        var_dic["WD"] = w_distance = (d_real.mean() - d_fake.mean()).detach()
-        var_dic["LOSS_D"] = loss_d = d_fake.mean() - d_real.mean() + gp
-
+        var_dic["LS_LOSSD"] = loss_d = 0.5 * (torch.mean((d_real - 1) ** 2) + torch.mean(d_fake ** 2))
         return loss_d, var_dic
 
     def compute_g_loss(self):
         d_fake = self.netD(self.fake)
         var_dic = {}
-        var_dic["LOSS_G"] = loss_g = -d_fake.mean()
+        var_dic["LS_LOSSG"] = loss_g = 0.5 * torch.mean((d_fake - 1) ** 2)
+
         return loss_g, var_dic
 
-    def valid_epoch(self):
-        self.netG.eval()
-        for iteration, batch in enumerate(self.datasets.loader_valid, 1):
-            if self.fixed_input is None:
-                import copy
-                self.input_cpu, self.ground_truth = self.get_data_from_loader(batch)
-                self.fixed_input = copy.deepcopy(self.input_cpu)
-            break
-
-        with torch.no_grad():
-            fake = self.netG(self.fixed_input).detach()
-        self.watcher.image(fake, self.current_epoch, tag="Valid/Fixed_fake", grid_size=(4, 4), shuffle=False)
-        super(CifarPix2pixGanTrainer, self).valid_epoch()
-
     def compute_valid(self):
-        with torch.no_grad():
-            d_fake = self.netD(self.fake.detach())
-            d_real = self.netD(self.ground_truth)
-        var_dic = {}
-        var_dic["WD"] = (d_real.mean() - d_fake.mean()).detach()
-        var_dic["MSE"] = ((self.fake.detach() - self.ground_truth) **2).mean()
+        g_loss, _ = self.compute_g_loss()
+        d_loss, _ = self.compute_d_loss()
+        mse = ((self.fake.detach() - self.ground_truth) ** 2).mean()
+        var_dic = {"LOSS_D": d_loss, "LOSS_G": g_loss, "MSE": mse}
         return var_dic
 
-def start_cifarPix2pixGanTrainer(gpus=(), nepochs=200, lr=1e-3, depth_G=32, depth_D=32):
+
+def start_cifarPix2pixGanTrainer(gpus=(), nepochs=200, lr=1e-3, depth_G=32, depth_D=32, run_type="debug"):
     gpus = gpus  # set `gpus = []` to use cpu
     batch_shape = (32, 3, 32, 32)
     image_channel = batch_shape[1]
@@ -176,20 +127,23 @@ def start_cifarPix2pixGanTrainer(gpus=(), nepochs=200, lr=1e-3, depth_G=32, dept
     momentum = 0
 
     print('===> Build dataset')
-    cifar10 = Cifar10(root="../../../datasets/cifar10",batch_shape=batch_shape)
+    cifar10 = Cifar10(root="datasets/cifar10", batch_shape=batch_shape)
     torch.backends.cudnn.benchmark = True
     print('===> Building model')
-    D_net = discriminator(input_nc=image_channel, depth=depth_D)
+    D_net = Discriminator(input_nc=image_channel, depth=depth_D)
     D = Model(D_net, gpu_ids_abs=gpus, init_method="kaiming")
     # -----------------------------------
-    G_net = generator(input_nc= 1, output_nc=image_channel, depth=depth_G)
+    G_net = Generator(input_nc=1, output_nc=image_channel, depth=depth_G)
     G = Model(G_net, gpu_ids_abs=gpus, init_method="kaiming")
     print('===> Building optimizer')
     opt_D = Optimizer(D.parameters(), lr, lr_decay, weight_decay, momentum, betas, opt_D_name)
     opt_G = Optimizer(G.parameters(), lr, lr_decay, weight_decay, momentum, betas, opt_G_name)
     print('===> Training')
     Trainer = CifarPix2pixGanTrainer("log", nepochs, gpus, G, D, opt_G, opt_D, cifar10)
-    Trainer.train()
+    if run_type=="train":
+        Trainer.train()
+    elif run_type=="debug":
+        Trainer.debug()
 
 
 if __name__ == '__main__':

@@ -157,7 +157,7 @@ if __name__ == '__main__':
     depth_D = 64
     momentum = 0
 
-    # the input shape of generator
+    # the input shape of Generator
     latent_shape = (256, 1, 1)
     print('===> Build dataset')
     cifar10 = FashionMNIST(batch_shape=batch_shape)

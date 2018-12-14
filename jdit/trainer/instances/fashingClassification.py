@@ -1,41 +1,40 @@
 # coding=utf-8
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from jdit.trainer.classification import ClassificationTrainer
 from jdit import Model
 from jdit.optimizer import Optimizer
 from jdit.dataset import FashionMNIST
 
 
-class LinearModel(nn.Module):
+class SimpleModel(nn.Module):
     def __init__(self, depth=64, num_class=10):
-        super(LinearModel, self).__init__()
-        self.layer1 = nn.Linear(32 * 32, depth * 8)
-        self.layer2 = nn.Linear(depth * 8, depth * 4)
-        self.layer3 = nn.Linear(depth * 4, depth * 2)
-        self.layer4 = nn.Linear(depth * 2, depth * 1)
-        self.layer5 = nn.Linear(depth * 1, num_class)
-        self.drop = nn.Dropout(0.2)
+        super(SimpleModel, self).__init__()
+        self.num_class = num_class
+        self.layer1 = nn.Conv2d(1, depth, 3, 1, 1)
+        self.layer2 = nn.Conv2d(depth, depth * 2, 4, 2, 1)
+        self.layer3 = nn.Conv2d(depth * 2, depth * 4, 4, 2, 1)
+        self.layer4 = nn.Conv2d(depth * 4, depth * 8, 4, 2, 1)
+        self.layer5 = nn.Conv2d(depth * 8, num_class, 4, 1, 0)
 
     def forward(self, input):
-        out = input.view(input.size()[0], -1)
-        out = self.layer1(out)
-        out = self.drop(self.layer2(out))
-        out = self.drop(self.layer3(out))
-        out = self.drop(self.layer4(out))
+        out = F.relu(self.layer1(input))
+        out = F.relu(self.layer2(out))
+        out = F.relu(self.layer3(out))
+        out = F.relu(self.layer4(out))
         out = self.layer5(out)
+        out = out.view(-1,self.num_class)
         return out
 
 
 class FashingClassTrainer(ClassificationTrainer):
-    mode = "L"
     num_class = 10
     every_epoch_checkpoint = 20  # 2
     every_epoch_changelr = 10  # 1
 
     def __init__(self, logdir, nepochs, gpu_ids, net, opt, datasets):
         super(FashingClassTrainer, self).__init__(logdir, nepochs, gpu_ids, net, opt, datasets)
-        self.watcher.graph(net, self.datasets.batch_shape, self.use_gpu)
         data, label = self.datasets.samples_train
         self.watcher.embedding(data, data, label)
 
@@ -64,7 +63,7 @@ class FashingClassTrainer(ClassificationTrainer):
         return var_dic
 
 
-def start_fashingClassTrainer(gpus=(), nepochs=100, lr=1e-3, depth=32):
+def start_fashingClassTrainer(gpus=(), nepochs=100, lr=1e-3, depth=32, run_type = "train"):
     """" An example of fashing-mnist classification
 
     """
@@ -82,15 +81,17 @@ def start_fashingClassTrainer(gpus=(), nepochs=100, lr=1e-3, depth=32):
     mnist = FashionMNIST(batch_shape=batch_shape)
     torch.backends.cudnn.benchmark = True
     print('===> Building model')
-    net = Model(LinearModel(depth=depth), gpu_ids_abs=gpus, init_method="kaiming")
+    net = Model(SimpleModel(depth=depth), gpu_ids_abs=gpus, init_method="kaiming")
     print('===> Building optimizer')
     opt = Optimizer(net.parameters(), lr, lr_decay, weight_decay, momentum, betas, opt_name)
     print('===> Training')
     print("using `tensorboard --logdir=log` to see learning curves and net structure."
           "training and valid_epoch data, configures info and checkpoint were save in `log` directory.")
     Trainer = FashingClassTrainer("log", nepochs, gpus, net, opt, mnist)
-    Trainer.train()
-
+    if run_type == "train":
+        Trainer.train()
+    elif run_type =="debug":
+        Trainer.debug()
 
 if __name__ == '__main__':
     start_fashingClassTrainer()

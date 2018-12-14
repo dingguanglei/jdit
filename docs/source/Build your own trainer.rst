@@ -77,9 +77,9 @@ First, you need to build a pytorch ``module`` like this:
 
 .. code-block:: python
 
-    >>> class LinearModel(nn.Module):
+    >>> class SimpleModel(nn.Module):
     ...     def __init__(self):
-    ...         super(LinearModel, self).__init__()
+    ...         super(SimpleModel, self).__init__()
     ...         self.layer1 = nn.Linear(32, 64)
     ...         self.layer2 = nn.Linear(64, 1)
     ...
@@ -87,7 +87,7 @@ First, you need to build a pytorch ``module`` like this:
     ...        out = self.layer1(input)
     ...        out = self.layer2(out)
     ...        return out
-    >>> network = LinearModel()
+    >>> network = SimpleModel()
 
 .. note::
 
@@ -107,10 +107,10 @@ Set which gpus you want to use and the weights init method.
 .. code-block:: python
 
     >>> from jdit import Model
-    >>> network = LinearModel()
+    >>> network = SimpleModel()
     >>> jdit_model = Model(network, gpu_ids_abs=[], init_method="kaiming")
-    LinearModel Total number of parameters: 2177
-    LinearModel dataParallel use GPUs[2, 3]!
+    SimpleModel Total number of parameters: 2177
+    SimpleModel dataParallel use GPUs[2, 3]!
     apply kaiming weight init!
 
 For now, you get your own dataset.
@@ -320,7 +320,7 @@ You have got everything. Put them together and train it!
 .. code-block:: python
 
     >>> mnist = FashionMNIST(batch_shape=batch_shape)
-    >>> net = Model(LinearModel(depth=depth), gpu_ids_abs=gpus, init_method="kaiming")
+    >>> net = Model(SimpleModel(depth=depth), gpu_ids_abs=gpus, init_method="kaiming")
     >>> opt = Optimizer(net.parameters(), lr, lr_decay, weight_decay, momentum, betas, opt_name)
     >>> Trainer = FashingClassTrainer("log", nepochs, gpus, net, opt, mnist)
     >>> Trainer.train()

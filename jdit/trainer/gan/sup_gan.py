@@ -8,6 +8,8 @@ from jdit.dataset import DataLoadersFactory
 
 class SupGanTrainer(SupTrainer):
     d_turn = 1
+    """The training times of Discriminator every ones Generator training.
+    """
 
     def __init__(self, logdir, nepochs, gpu_ids_abs, netG: Model, netD: Model, optG: Optimizer, optD: Optimizer,
                  datasets: DataLoadersFactory):
@@ -104,7 +106,7 @@ class SupGanTrainer(SupTrainer):
                            save_file=save_file)
 
     def compute_d_loss(self) -> (torch.Tensor, dict):
-        """ Rewrite this method to compute your own loss discriminator.
+        """ Rewrite this method to compute your own loss Discriminator.
 
         You should return a **loss** for the first position.
         You can return a ``dict`` of loss that you want to visualize on the second position.like
@@ -127,7 +129,7 @@ class SupGanTrainer(SupTrainer):
         return loss_d, var_dic
 
     def compute_g_loss(self) -> (torch.Tensor, dict):
-        """Rewrite this method to compute your own loss of generator.
+        """Rewrite this method to compute your own loss of Generator.
 
         You should return a **loss** for the first position.
         You can return a ``dict`` of loss that you want to visualize on the second position.like

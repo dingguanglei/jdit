@@ -1,9 +1,13 @@
 from .sup_gan import SupGanTrainer
 from abc import abstractmethod
 import torch
-from jdit.optimizer import Optimizer
-from jdit.model import Model
-from jdit.dataset import DataLoadersFactory
+import os
+from ..super import Watcher
+
+
+# from jdit.optimizer import Optimizer
+# from jdit.model import Model
+# from jdit.dataset import DataLoadersFactory
 
 
 class Pix2pixGanTrainer(SupGanTrainer):
@@ -22,6 +26,12 @@ class Pix2pixGanTrainer(SupGanTrainer):
         :param datasets:Datasets.
         """
         super(Pix2pixGanTrainer, self).__init__(logdir, nepochs, gpu_ids_abs, netG, netD, optG, optD, datasets)
+        self.plot_graphs_lazy()
+
+    # def _plot_graph(self):
+    #     self.watcher.graph(self.netG, "Generator", self.use_gpu, self.datasets.batch_shape)
+    #     self.watcher.graph(self.netD, "Discriminator", self.use_gpu, self.datasets.batch_shape)
+
 
     def get_data_from_loader(self, batch_data):
         input_cpu, ground_truth_cpu = batch_data[0], batch_data[1]
@@ -49,7 +59,7 @@ class Pix2pixGanTrainer(SupGanTrainer):
 
     @abstractmethod
     def compute_d_loss(self):
-        """ Rewrite this method to compute your own loss discriminator.
+        """ Rewrite this method to compute your own loss Discriminator.
 
         You should return a **loss** for the first position.
         You can return a ``dict`` of loss that you want to visualize on the second position.like
@@ -70,7 +80,7 @@ class Pix2pixGanTrainer(SupGanTrainer):
 
     @abstractmethod
     def compute_g_loss(self):
-        """Rewrite this method to compute your own loss of generator.
+        """Rewrite this method to compute your own loss of Generator.
 
         You should return a **loss** for the first position.
         You can return a ``dict`` of loss that you want to visualize on the second position.like

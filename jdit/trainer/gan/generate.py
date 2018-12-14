@@ -1,14 +1,15 @@
 from .sup_gan import SupGanTrainer
+from ..super import Watcher
 from abc import abstractmethod
 from torch.autograd import Variable
 import torch
-from jdit.optimizer import Optimizer
-from jdit.model import Model
-from jdit.dataset import DataLoadersFactory
+import os
 
 
 class GenerateGanTrainer(SupGanTrainer):
     d_turn = 1
+    """The training times of Discriminator every ones Generator training.
+    """
 
     def __init__(self, logdir, nepochs, gpu_ids_abs, netG, netD, optG, optD, datasets, latent_shape):
         """ a gan super class
@@ -25,7 +26,13 @@ class GenerateGanTrainer(SupGanTrainer):
         """
         super(GenerateGanTrainer, self).__init__(logdir, nepochs, gpu_ids_abs, netG, netD, optG, optD, datasets)
         self.latent_shape = latent_shape
+        self.fixed_input = torch.randn((self.datasets.batch_size, *self.latent_shape)).to(self.device)
         # self.metric = FID(self.gpu_ids)
+        self.plot_graphs_lazy()
+
+    # def _plot_graph(self):
+    #     self.watcher.graph(self.netG, "Generator", self.use_gpu, (self.datasets.batch_size, *self.latent_shape))
+    #     self.watcher.graph(self.netD, "Discriminator", self.use_gpu, self.datasets.batch_shape)
 
     def get_data_from_loader(self, batch_data):
         ground_truth_cpu = batch_data[0]
@@ -33,31 +40,19 @@ class GenerateGanTrainer(SupGanTrainer):
         return input_cpu.to(self.device), ground_truth_cpu.to(self.device)
 
     def valid_epoch(self):
-        avg_dic = dict()
+        super(GenerateGanTrainer, self).valid_epoch()
         self.netG.eval()
-        self.netD.eval()
-        for iteration, batch in enumerate(self.datasets.loader_valid, 1):
-            self.input, self.ground_truth = self.get_data_from_loader(batch)
-            self.fake = self.netG(self.input)
-            dic = self.compute_valid()
-            if avg_dic == {}:
-                avg_dic = dic
-            else:
-                # 求和
-                for key in dic.keys():
-                    avg_dic[key] += dic[key]
-
-        for key in avg_dic.keys():
-            avg_dic[key] = avg_dic[key] / self.datasets.nsteps_valid
-
-        self.watcher.scalars(avg_dic, self.step, tag="Valid")
-        self._watch_images(tag="Valid")
+        # watching the variation during training by a fixed input
+        with torch.no_grad():
+            fake = self.netG(self.fixed_input).detach()
+        self.watcher.image(fake, self.current_epoch, tag="Valid/Fixed_fake", grid_size=(4, 4), shuffle=False)
+        # saving training processes to build a .gif.
+        self.watcher.set_training_progress_images(fake, grid_size=(4, 4))
         self.netG.train()
-        self.netD.train()
 
     @abstractmethod
     def compute_d_loss(self):
-        """ Rewrite this method to compute your own loss discriminator.
+        """ Rewrite this method to compute your own loss Discriminator.
 
         You should return a **loss** for the first position.
         You can return a ``dict`` of loss that you want to visualize on the second position.like
@@ -78,7 +73,7 @@ class GenerateGanTrainer(SupGanTrainer):
 
     @abstractmethod
     def compute_g_loss(self):
-        """Rewrite this method to compute your own loss of generator.
+        """Rewrite this method to compute your own loss of Generator.
 
         You should return a **loss** for the first position.
         You can return a ``dict`` of loss that you want to visualize on the second position.like

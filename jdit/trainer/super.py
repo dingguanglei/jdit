@@ -28,8 +28,12 @@ class SupTrainer(object):
     * Learning rate decay and model check point.
     """
     every_epoch_checkpoint = 10
+    """How much epoch do you chechkpoint.
+    """
     every_epoch_changelr = 0
-    mode = "L"
+    """How much epoch do you do learning rate decay.
+    """
+
     __metaclass__ = ABCMeta
 
     def __init__(self, nepochs: int, logdir: str, gpu_ids_abs: Union[list, tuple] = ()):
@@ -37,7 +41,7 @@ class SupTrainer(object):
         self.gpu_ids = [i for i in range(len(gpu_ids_abs))]
         self.logdir = logdir
         self.performance = Performance(gpu_ids_abs)
-        self.watcher = Watcher(logdir, self.mode)
+        self.watcher = Watcher(logdir)
         self.loger = Loger(logdir)
 
         self.use_gpu = True if (len(self.gpu_ids) > 0) and torch.cuda.is_available() else False
@@ -92,9 +96,6 @@ class SupTrainer(object):
         self.every_epoch_changelr = 1
         self.logdir = "log_debug"
         self.watcher.close()
-        self.watcher = Watcher("log_debug")
-        self.loger = Loger("log_debug")
-        self.performance = Performance()
         # reset `log_debug`
         if os.path.exists("log_debug"):
             try:
@@ -102,7 +103,11 @@ class SupTrainer(object):
             except Exception as e:
                 print('Can not remove logdir `log_debug`\n', e)
                 traceback.print_exc()
-        os.mkdir("log_debug")
+
+        self.watcher = Watcher("log_debug")
+        self.loger = Loger("log_debug")
+        self.performance = Performance()
+
         # reset datasets and dataloaders
         for item in vars(self).values():
             if isinstance(item, DataLoadersFactory):
@@ -156,12 +161,24 @@ class SupTrainer(object):
         """
         pass
 
+    def get_data_from_batch_todevice(self, batch_data: list, device: torch.device):
+        batch = self.get_data_from_batch(batch_data, device)
+        return (data.to(self.device) for data in batch)
+
     def get_data_from_batch(self, batch_data: list, device: torch.device):
         """ Split your data from one batch data to specify .
+        If your dataset return something like
+
+        ``return input_data, label``.
+
+        It means that two values need unpack.
+        So, you need to split the batch data into two parts, like this
+
+        ``input, ground_truth = batch_data[0], batch_data[1]``
 
         .. Caution::
 
-          Don't forget to move these data to device, by using ``input.to(device)`` .
+            Don't forget to move these data to device, by using ``input.to(device)`` .
 
         :param batch_data: One batch data from dataloader.
         :param device: the device that data will be located.
@@ -214,6 +231,16 @@ class SupTrainer(object):
                 self.loger.regist_config(obj, self.current_epoch, flag_name="epoch",
                                          config_filename=key)  # for trainer.configure
 
+    def plot_graphs_lazy(self):
+        """Plot model graph on tensorboard.
+        To plot all models graphs in trainer, by using variable name as model name.
+
+        :return:
+        """
+        for key, obj in vars(self).items():
+            if isinstance(obj, Model):
+                self.watcher.graph_lazy(obj, key)
+
     def _check_point(self):
         if isinstance(self.every_epoch_checkpoint, int):
             is_check_point = (self.current_epoch % self.every_epoch_checkpoint) == 0
@@ -245,7 +272,6 @@ class SupTrainer(object):
         config_dict = dict()
         config_dict["every_epoch_checkpoint"] = str(self.every_epoch_checkpoint)
         config_dict["every_epoch_changelr"] = str(self.every_epoch_changelr)
-        config_dict["image_mode"] = self.mode
         config_dict["nepochs"] = int(self.nepochs)
 
         return config_dict
@@ -387,13 +413,13 @@ class Watcher(object):
 
     """
 
-    def __init__(self, logdir: str, mode: str = "L"):
+    def __init__(self, logdir: str):
         self.logdir = logdir
         self.writer = SummaryWriter(log_dir=logdir)
-        self.mode = mode
         self._build_dir(logdir)
         self.training_progress_images = []
         self.gif_duration = 0.5
+        self.handel = None
 
     def model_params(self, model: torch.nn.Module, global_step: int):
         for name, param in model.named_parameters():
@@ -418,23 +444,20 @@ class Watcher(object):
 
     def image(self, img_tensors: torch.Tensor, global_step: int, tag: str = "Train/input",
               grid_size: Union[list, tuple] = (3, 1), shuffle=True, save_file=False):
-        # if input is (-1, 1).this should be -1. to convert to (0,1)   mean=(-1, -1, -1), std=(2, 2, 2)
+
         assert len(img_tensors.size()) == 4, "img_tensors rank should be 4, got %d instead" % len(img_tensors.size())
         self._build_dir(os.path.join(self.logdir, "plots", tag))
         rows, columns = grid_size[0], grid_size[1]
         batch_size = len(img_tensors)  # img_tensors =>(batchsize, 3, 256, 256)
         num_samples: int = min(batch_size, rows * columns)
-        assert len(img_tensors) >= num_samples, "you want to show grid %s, but only have %d tensors to show." % (
-            grid_size, len(img_tensors))
-
-        sampled_tensor = self._sample(img_tensors, num_samples,
-                                      shuffle).detach().cpu()  # (sample_num, 3, 32,32)  tensors
+        sampled_tensor = self._sample(img_tensors, num_samples, shuffle).detach().cpu()
+        # (sample_num, 3, 32,32)  tensors
         # sampled_images = map(transforms.Normalize(mean, std), sampled_tensor)  # (sample_num, 3, 32,32) images
         sampled_images: torch.Tensor = make_grid(sampled_tensor, nrow=rows, normalize=True, scale_each=True)
         self.writer.add_image(tag, sampled_images, global_step)
 
         if save_file:
-            img = transforms.ToPILImage()(sampled_images).convert(self.mode)
+            img = transforms.ToPILImage()(sampled_images)
             filename = "%s/plots/%s/E%03d.png" % (self.logdir, tag, global_step)
             img.save(filename)
 
@@ -472,9 +495,8 @@ class Watcher(object):
             imageio.mimsave(filename, self.training_progress_images, duration=self.gif_duration)
         self.training_progress_images = None
 
-    def graph(self, model: Union[torch.nn.Module, torch.nn.DataParallel, Model],
-              input_shape: Union[list, tuple] = None, use_gpu=False,
-              *input_tensor):
+    def graph(self, model: Union[torch.nn.Module, torch.nn.DataParallel, Model], name: str, use_gpu: bool,
+              *input_shape):
         if isinstance(model, torch.nn.Module):
             proto_model: torch.nn.Module = model
             num_params: int = self._count_params(proto_model)
@@ -486,24 +508,44 @@ class Watcher(object):
             num_params: int = model.num_params
         else:
             raise TypeError("Only `nn.Module`, `nn.DataParallel` and `Model` can be passed!")
+        model_logdir = os.path.join(self.logdir, name)
+        self._build_dir(model_logdir)
+        writer_for_model = SummaryWriter(log_dir=model_logdir)
 
-        if input_shape is not None:
-            assert (isinstance(input_shape, tuple) or isinstance(input_shape, list)), \
-                "param 'input_shape' should be list or tuple."
-            input_tensor = torch.ones(input_shape).cuda() if use_gpu else torch.ones(input_shape)
-            input_tensor = torch.autograd.Variable(input_tensor, requires_grad=True)
+        input_list = tuple(torch.ones(shape).cuda() if use_gpu else torch.ones(shape) for shape in input_shape)
+        self.scalars({'ParamsNum': num_params}, 0, tag="ParamsNum")
+        self.scalars({'ParamsNum': num_params}, 1, tag="ParamsNum")
+        proto_model(*input_list)
+        writer_for_model.add_graph(proto_model, input_list)
+        writer_for_model.close()
 
-            self.scalars({'ParamsNum': num_params}, 0, tag="ParamsNum")
-            res = proto_model(input_tensor)
-            self.scalars({'ParamsNum': num_params}, 1, tag="ParamsNum")
-            del res
-            self.writer.add_graph(model, input_tensor)
+    def graph_lazy(self, model: Union[torch.nn.Module, torch.nn.DataParallel, Model], name: str):
+        if isinstance(model, torch.nn.Module):
+            proto_model: torch.nn.Module = model
+            num_params: int = self._count_params(proto_model)
+        elif isinstance(model, torch.nn.DataParallel):
+            proto_model: torch.nn.Module = model.module
+            num_params: int = self._count_params(proto_model)
+        elif isinstance(model, Model):
+            proto_model: torch.nn.Module = model.model
+            num_params: int = model.num_params
         else:
-            self.scalars({'ParamsNum': num_params}, 0, tag="ParamsNum")
-            res = proto_model(*input_tensor)
-            self.scalars({'ParamsNum': num_params}, 1, tag="ParamsNum")
-            del res
-            self.writer.add_graph(proto_model, input_tensor)
+            raise TypeError("Only `nn.Module`, `nn.DataParallel` and `Model` can be passed!")
+        model_logdir = os.path.join(self.logdir, name)
+        self._build_dir(model_logdir)
+
+        self.scalars({'ParamsNum': num_params}, 0, tag="ParamsNum")
+        self.scalars({'ParamsNum': num_params}, 1, tag="ParamsNum")
+
+        def hook(model, input, output):
+            writer_for_model = SummaryWriter(log_dir=model_logdir)
+            input_for_test = tuple(i.detach().clone() for i in input)
+            handel.remove()
+            writer_for_model.add_graph(proto_model, input_for_test)
+            writer_for_model.close()
+            del writer_for_model
+
+        handel = model.register_forward_hook(hook=hook)
 
     def close(self):
         # self.writer.export_scalars_to_json("%s/scalers.json" % self.logdir)

@@ -1,5 +1,5 @@
 from unittest import TestCase
-from ..parallel import SupParallelTrainer
+from jdit.parallel import SupParallelTrainer
 
 class TestSupParallelTrainer(TestCase):
     def setUp(self):

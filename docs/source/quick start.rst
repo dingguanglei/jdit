@@ -28,7 +28,7 @@ Then you will see something like this as following.
     Processing...
     Done!
     ===> Building model
-    LinearModel Total number of parameters: 2776522
+    SimpleModel Total number of parameters: 2776522
     ResNet model use CPU!
     apply kaiming weight init!
     ===> Building optimizer
@@ -62,11 +62,11 @@ Then you will see something like this as following.
     ===> Build dataset
     use 2 thread!
     ===> Building model
-    discriminator Total number of parameters: 100865
-    discriminator model use GPU(0)!
+    Discriminator Total number of parameters: 100865
+    Discriminator model use GPU(0)!
     apply kaiming weight init!
-    generator Total number of parameters: 951361
-    generator model use GPU(0)!
+    Generator Total number of parameters: 951361
+    Generator model use GPU(0)!
     apply kaiming weight init!
     ===> Building optimizer
     ===> Training

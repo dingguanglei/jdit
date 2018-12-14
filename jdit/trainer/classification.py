@@ -17,6 +17,11 @@ class ClassificationTrainer(SupTrainer):
         self.datasets = datasets
         self.labels = None
         self.output = None
+        self.plot_graphs_lazy()
+
+    def _plot_graph(self):
+        # self.watcher.graph(self.net, "Classifier", self.use_gpu, self.datasets.batch_shape)
+        self.watcher.graph_lazy(self.net, "Classifier")
 
     def train_epoch(self, subbar_disable=False):
         # self._watch_images(show_imgs_num=3, tag="Train")
