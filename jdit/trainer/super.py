@@ -36,7 +36,7 @@ class SupTrainer(object):
     def __new__(cls, *args, **kwargs):
         instance = super(SupTrainer, cls).__new__(cls)
         instance.__opt__ = []
-        # instance.__model__ = []
+        instance.__model__ = dict()
         # instance.__dataset__ = []
         for arg in args:
             if isinstance(arg, Optimizer):
@@ -97,14 +97,14 @@ class SupTrainer(object):
 
     def __setattr__(self, key, value):
         super(SupTrainer, self).__setattr__(key, value)
-        if key == "step":
-            self._change_lr(key, value)
-        elif key == "current_epoch":
-            self._change_lr(key, value)
-            if value == 0:
-                return
+        if key == "step" and value != 0:
+            self._change_lr("step", value)
+        elif key == "current_epoch" and value != 0:
+            self._change_lr("epoch", value)
             self._check_point()
             self._record_configs()
+        elif isinstance(value, Model):
+            self.__model__.update({key: value})
 
     def debug(self):
         """Debug the trainer.
@@ -247,7 +247,7 @@ class SupTrainer(object):
 
         """
         input_img, ground_truth = batch_data[0], batch_data[1]
-        return input_img.to(device), ground_truth.to(device)
+        return input_img, ground_truth
 
     def _train_iteration(self, opt: Optimizer, compute_loss_fc: FunctionType, csv_filename: str = "Train"):
         opt.zero_grad()
@@ -279,9 +279,15 @@ class SupTrainer(object):
         """
         self.loger.regist_config(self, self.current_epoch)  # for trainer.configure
         for key, obj in vars(self).items():
-            if isinstance(obj, (Model, Optimizer, SupTrainer, Performance)):
+            if isinstance(obj, (Model, SupTrainer, Performance)):
                 self.loger.regist_config(obj, self.current_epoch, flag_name="epoch",
                                          config_filename=key)  # for trainer.configure
+            elif isinstance(obj, Optimizer):
+                self.loger.regist_config(obj,
+                                         self.step if obj.decay_type == "step" else self.current_epoch,
+                                         flag_name=obj.decay_type,
+                                         config_filename=key
+                                         )  # for trainer.configure
 
     def plot_graphs_lazy(self):
         """Plot model graph on tensorboard.
@@ -289,18 +295,22 @@ class SupTrainer(object):
 
         :return:
         """
-        for key, obj in vars(self).items():
-            if isinstance(obj, Model):
-                self.watcher.graph_lazy(obj, key)
+        # for key, obj in vars(self).items():
+        #     if isinstance(obj, Model):
+        #         self.watcher.graph_lazy(obj, key)
+        for name, model in self.__model__.items():
+            self.watcher.graph_lazy(model, name)
 
     def _check_point(self):
-        for name, model in vars(self).items():
-            if isinstance(model, Model):
-                model.check_point_epoch(name, self.current_epoch, self.logdir)
+        for name, model in self.__model__.items():
+            model.check_point_epoch(name, self.current_epoch, self.logdir)
+        # for name, model in vars(self).items():
+        #     if isinstance(model, Model):
+        #         model.check_point_epoch(name, self.current_epoch, self.logdir)
 
     def _change_lr(self, decay_type="step", position=2):
         for opt in self.__opt__:
-            if opt.decay_type.endswith(decay_type):
+            if opt.decay_type == decay_type:
                 opt.update_state(position)
 
     def valid_epoch(self):
@@ -424,6 +434,7 @@ class Loger(object):
             last_config = self.regist_dict[config_filename]
             current_config = config_dic
             if last_config != current_config:
+                # if 1:
                 # 若已经注册过config，比对最后一次结果，如果不同，则写入，相同无操作。
                 self.regist_dict[config_filename] = current_config.copy()
                 if flag is not None:
@@ -570,14 +581,14 @@ class Watcher(object):
             proto_model: torch.nn.Module = model.model
             num_params: int = model.num_params
         else:
-            raise TypeError("Only `nn.Module`, `nn.DataParallel` and `Model` can be passed!")
+            raise TypeError("Only `nn.Module`, `nn.DataParallel` and `Model` can be passed!, got %s instead" % model)
         model_logdir = os.path.join(self.logdir, name)
         self._build_dir(model_logdir)
+        self.scalars({'ParamsNum': num_params}, 0, tag=name)
+        self.scalars({'ParamsNum': num_params}, 1, tag=name)
 
         def hook(model, input, output):
             writer_for_model = SummaryWriter(log_dir=model_logdir)
-            writer_for_model.add_scalar('ParamsNum/%a' % name, num_params, 0)
-            writer_for_model.add_scalar('ParamsNum/%a' % name, num_params, 1)
             input_for_test = tuple(i.detach().clone()[0:2] for i in input)
             handel.remove()
             if isinstance(proto_model, torch.nn.DataParallel):
@@ -624,4 +635,3 @@ if __name__ == '__main__':
     test_log.regist_config(test_opt, flag=2)
     test_log.regist_config(test_opt, flag=3)
     test_log.regist_config(test_opt)
-    exit(1)

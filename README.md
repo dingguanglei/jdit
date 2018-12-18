@@ -116,7 +116,7 @@ only need to reset the batch size.
 
 ``` {.sourceCode .python}
 >>> from jdit.dataset import FashionMNIST
->>> HandMNIST = FashionMNIST(batch_shape=(64, 1, 32, 32))  # now you get a ``dataset``
+>>> HandMNIST = FashionMNIST(batch_size=64)  # now you get a ``dataset``
 ```
 
 ### Custom dataset
@@ -141,8 +141,8 @@ Following these setps:
 Example:
 
     class FashionMNIST(DataLoadersFactory):
-        def __init__(self, root=r'.\datasets\fashion_data', batch_shape=(128, 1, 32, 32), num_workers=-1):
-            super(FashionMNIST, self).__init__(root, batch_shape, num_workers)
+        def __init__(self, root=r'.\datasets\fashion_data', batch_size=128, num_workers=-1):
+            super(FashionMNIST, self).__init__(root, batch_size, num_workers)
 
         def build_transforms(self, resize=32):
             # This is a default set, you can rewrite it.

@@ -32,7 +32,7 @@ class FashingClassTrainer(ClassificationTrainer):
     def __init__(self, logdir, nepochs, gpu_ids, net, opt, datasets, num_class):
         super(FashingClassTrainer, self).__init__(logdir, nepochs, gpu_ids, net, opt, datasets, num_class)
         data, label = self.datasets.samples_train
-        self.watcher.embedding(data, data, label)
+        self.watcher.embedding(data, data, label, 1)
 
     def compute_loss(self):
         var_dic = {}
@@ -59,20 +59,22 @@ class FashingClassTrainer(ClassificationTrainer):
         return var_dic
 
 
-def start_fashingClassTrainer(gpus=(2,3), nepochs=100, lr=1e-3, depth=32, run_type="train"):
+def start_fashingClassTrainer(gpus=(), nepochs=100, run_type="train"):
     """" An example of fashing-mnist classification
 
     """
     num_class = 10
+    depth = 32,
     gpus = gpus
     batch_size = 64
     nepochs = nepochs
-
-    opt_name = "Adam"
-    lr_decay = 0.9  # 0.94
-    decay_position = 10
-    decay_type = "step"
-    opt_hpm = {"lr": lr, "weight_decay": 2e-5, "betas": (0.9, 0.99)}
+    opt_hpm = {"optimizer": "Adam",
+               "lr_decay": 0.94,
+               "decay_position": 10,
+               "decay_type": "epoch",
+               "lr": 1e-3,
+               "weight_decay": 2e-5,
+               "betas": (0.9, 0.99)}
 
     print('===> Build dataset')
     mnist = FashionMNIST(batch_size=batch_size)
@@ -80,8 +82,7 @@ def start_fashingClassTrainer(gpus=(2,3), nepochs=100, lr=1e-3, depth=32, run_ty
     print('===> Building model')
     net = Model(SimpleModel(depth=depth), gpu_ids_abs=gpus, init_method="kaiming", check_point_pos=1)
     print('===> Building optimizer')
-    opt = Optimizer(net.parameters(), opt_name, lr_decay, decay_position, decay_type,
-                    **opt_hpm)
+    opt = Optimizer(net.parameters(), **opt_hpm)
     print('===> Training')
     print("using `tensorboard --logdir=log` to see learning curves and net structure."
           "training and valid_epoch data, configures info and checkpoint were save in `log` directory.")

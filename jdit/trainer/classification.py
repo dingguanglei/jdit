@@ -10,7 +10,7 @@ class ClassificationTrainer(SupTrainer):
     """
 
     def __init__(self, logdir, nepochs, gpu_ids, net, opt, datasets, num_class):
-        super(ClassificationTrainer, self).__init__(nepochs, logdir, gpu_ids_abs=gpu_ids)
+        super(ClassificationTrainer, self).__init__(nepochs, logdir, gpu_ids)
         self.net = net
         self.opt = opt
         self.datasets = datasets

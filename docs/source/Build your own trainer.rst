@@ -23,13 +23,13 @@ such as :
 * Cifar10
 * Lsun
 
-Only one parameters you need to set is ``batch_shape`` which is like (batch size, channels , Height, weight).
+Only one parameters you need to set is ``batch_shize`` .
 For these common datasets, you only need to reset the batch size.
 
 .. code-block:: python
 
     >>> from jdit.dataset import FashionMNIST
-    >>> HandMNIST = FashionMNIST(batch_shape=(64, 1, 32, 32))  # now you get a ``dataset``
+    >>> fashion_data = FashionMNIST(batch_shize=64)  # now you get a ``dataset``
 
 Custom dataset
 >>>>>>>>>>>>>>
@@ -50,8 +50,8 @@ Following these setps:
 Example::
 
     class FashionMNIST(DataLoadersFactory):
-        def __init__(self, root=r'.\datasets\fashion_data', batch_shape=(128, 1, 32, 32), num_workers=-1):
-            super(FashionMNIST, self).__init__(root, batch_shape, num_workers)
+        def __init__(self, root=r'.\datasets\fashion_data', batch_size=128, num_workers=-1):
+            super(FashionMNIST, self).__init__(root, batch_size, num_workers)
 
         def build_transforms(self, resize=32):
             # This is a default set, you can rewrite it.
@@ -108,7 +108,7 @@ Set which gpus you want to use and the weights init method.
 
     >>> from jdit import Model
     >>> network = SimpleModel()
-    >>> jdit_model = Model(network, gpu_ids_abs=[], init_method="kaiming")
+    >>> jdit_model = Model(network, gpu_ids_abs=[2,3], init_method="kaiming")
     SimpleModel Total number of parameters: 2177
     SimpleModel dataParallel use GPUs[2, 3]!
     apply kaiming weight init!
@@ -134,13 +134,15 @@ I will show you how it works and you can implement something special strategies.
     >>> from torch.nn import Linear
     >>> network = Linear(10, 1)
     >>> #set params
-    >>> opt_name = "RMSprop"
-    >>> lr = 0.001
-    >>> lr_decay = 0.5  # 0.94
-    >>> weight_decay = 2e-5  # 2e-5
-    >>> momentum = 0
+    >>> #`optimizer` is equal to pytorch class name (torch.optim.RMSprop).
+    >>> hparams = {
+    ...     "optimizer" = "RMSprop" ,
+    ...     "lr" = 0.001,
+    ...     "lr_decay" = 0.5,
+    ...     "weight_decay" = 2e-5,
+    ...     "momentum" = 0}
     >>> #define optimizer
-    >>> opt = Optimizer(network.parameters(), lr, lr_decay, weight_decay, momentum, opt_name=opt_name)
+    >>> opt = Optimizer(network.parameters(),**hparams)
     >>> opt.lr
     0.001
     >>> opt.do_lr_decay()
@@ -150,7 +152,7 @@ I will show you how it works and you can implement something special strategies.
     >>> opt.lr
     1
 
-It contains two main optimizer ``RMSprop`` and ``Adam``. You can pass a certain name to use it with its own parameters.
+ You can pass a certain name to use it,such "Adam" ,"RMSprop", "SGD".
 
 .. note::
 
@@ -221,11 +223,14 @@ So, to init a ClassificationTrainer.
 .. code-block:: python
 
     class ClassificationTrainer(SupTrainer):
-        def __init__(self, logdir, nepochs, gpu_ids, net, opt, datasets):
-            super(ClassificationTrainer, self).__init__(nepochs, logdir, gpu_ids_abs=gpu_ids)
+        def __init__(self, logdir, nepochs, gpu_ids, net, opt, datasets, num_class):
+            super(ClassificationTrainer, self).__init__(nepochs, logdir, gpu_ids_abs)
             self.net = net
             self.opt = opt
             self.datasets = datasets
+            self.num_class = num_class
+            self.labels = None
+            self.output = None
 
 For the next, build a training loop for one epoch.
 You must using ``self.step`` to record the training step.
@@ -267,15 +272,11 @@ and fill the specify methods.
 .. code-block:: python
 
     class FashingClassTrainer(ClassificationTrainer):
-        mode = "L" # used by tensorboard display
-        num_class = 10
-        every_epoch_checkpoint = 20
-        every_epoch_changelr = 10
-
         def __init__(self, logdir, nepochs, gpu_ids, net, opt, dataset):
             super(FashingClassTrainer, self).__init__(logdir, nepochs, gpu_ids, net, opt, dataset)
-            # to print the network on tensorboard
-            self.watcher.graph(net, (4, 1, 32, 32), self.use_gpu)
+            data, label = self.datasets.samples_train
+            # show dataset in tensorboard
+            self.watcher.embedding(data, data, label, 1)
 
         def compute_loss(self):
             var_dic = {}
@@ -319,10 +320,10 @@ You have got everything. Put them together and train it!
 
 .. code-block:: python
 
-    >>> mnist = FashionMNIST(batch_shape=batch_shape)
+    >>> mnist = FashionMNIST(batch_size)
     >>> net = Model(SimpleModel(depth=depth), gpu_ids_abs=gpus, init_method="kaiming")
-    >>> opt = Optimizer(net.parameters(), lr, lr_decay, weight_decay, momentum, betas, opt_name)
-    >>> Trainer = FashingClassTrainer("log", nepochs, gpus, net, opt, mnist)
+    >>> opt = Optimizer(net.parameters(), **hparams)
+    >>> Trainer = FashingClassTrainer("log", nepochs, gpus, net, opt, mnist, 10)
     >>> Trainer.train()
 
 
