@@ -74,15 +74,13 @@ class Generator(nn.Module):
 
 
 class CifarPix2pixGanTrainer(Pix2pixGanTrainer):
-    every_epoch_checkpoint = 50  # 2
-    every_epoch_changelr = 2  # 1
     d_turn = 5
 
     def __init__(self, logdir, nepochs, gpu_ids_abs, netG, netD, optG, optD, datasets):
         super(CifarPix2pixGanTrainer, self).__init__(logdir, nepochs, gpu_ids_abs, netG, netD, optG, optD,
                                                      datasets)
 
-    def get_data_from_loader(self, batch_data):
+    def get_data_from_batch(self, batch_data):
         ground_truth_cpu, label = batch_data[0], batch_data[1]
         input_cpu = ground_truth_cpu[:, 0, :, :].unsqueeze(1)  # only use one channel [?,3,32,32] =>[?,1,32,32]
         return input_cpu.to(self.device), ground_truth_cpu.to(self.device)
@@ -109,37 +107,39 @@ class CifarPix2pixGanTrainer(Pix2pixGanTrainer):
         return var_dic
 
 
-def start_cifarPix2pixGanTrainer(gpus=(), nepochs=200, lr=1e-3, depth_G=32, depth_D=32, run_type="debug"):
+def start_cifarPix2pixGanTrainer(gpus=(), nepochs=200, lr=1e-3, depth_G=32, depth_D=32, run_type="train"):
     gpus = gpus  # set `gpus = []` to use cpu
-    batch_shape = (32, 3, 32, 32)
-    image_channel = batch_shape[1]
+    batch_size = 32
+    image_channel = 3
     nepochs = nepochs
-
-    opt_G_name = "Adam"
     depth_G = depth_G
-    lr = lr
-    lr_decay = 0.94  # 0.94
-    weight_decay = 0  # 2e-5
-    betas = (0.9, 0.999)
-
-    opt_D_name = "RMSprop"
     depth_D = depth_D
-    momentum = 0
+
+    G_hprams = {"optimizer": "Adam", "lr_decay": 0.9,
+                "decay_position": 10, "decay_type": "epoch",
+                "lr": lr, "weight_decay": 2e-5,
+                "betas": (0.9, 0.99)
+                }
+    D_hprams = {"optimizer": "RMSprop", "lr_decay": 0.9,
+                "decay_position": 10, "decay_type": "epoch",
+                "lr": lr, "weight_decay": 2e-5,
+                "momentum": 0
+                }
 
     print('===> Build dataset')
-    cifar10 = Cifar10(root="datasets/cifar10", batch_shape=batch_shape)
+    cifar10 = Cifar10(root="datasets/cifar10", batch_size=batch_size)
     torch.backends.cudnn.benchmark = True
     print('===> Building model')
     D_net = Discriminator(input_nc=image_channel, depth=depth_D)
-    D = Model(D_net, gpu_ids_abs=gpus, init_method="kaiming")
+    D = Model(D_net, gpu_ids_abs=gpus, init_method="kaiming", check_point_pos=50)
     # -----------------------------------
     G_net = Generator(input_nc=1, output_nc=image_channel, depth=depth_G)
-    G = Model(G_net, gpu_ids_abs=gpus, init_method="kaiming")
+    G = Model(G_net, gpu_ids_abs=gpus, init_method="kaiming", check_point_pos=50)
     print('===> Building optimizer')
-    opt_D = Optimizer(D.parameters(), lr, lr_decay, weight_decay, momentum, betas, opt_D_name)
-    opt_G = Optimizer(G.parameters(), lr, lr_decay, weight_decay, momentum, betas, opt_G_name)
+    opt_D = Optimizer(D.parameters(),**D_hprams)
+    opt_G = Optimizer(G.parameters(),**G_hprams)
     print('===> Training')
-    Trainer = CifarPix2pixGanTrainer("log", nepochs, gpus, G, D, opt_G, opt_D, cifar10)
+    Trainer = CifarPix2pixGanTrainer("log/cifar_p2p", nepochs, gpus, G, D, opt_G, opt_D, cifar10)
     if run_type=="train":
         Trainer.train()
     elif run_type=="debug":

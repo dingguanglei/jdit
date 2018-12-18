@@ -96,7 +96,7 @@ class Model(object):
     def __init__(self, proto_model: Module,
                  gpu_ids_abs: Union[list, tuple] = (),
                  init_method: Union[str, FunctionType, None] = "kaiming",
-                 show_structure=False, verbose=True):
+                 show_structure=False, check_point_pos=None, verbose=True):
         self.model: Union[DataParallel, Module] = None
         self.model_name: str = "Model"
         self.weights_init = None
@@ -104,6 +104,7 @@ class Model(object):
         self.init_name: str = None
         self.num_params: int = 0
         self.verbose = verbose
+        self.check_point_pos = check_point_pos
         self.define(proto_model, gpu_ids_abs, init_method, show_structure)
 
     def __call__(self, *args, **kwargs):
@@ -244,6 +245,14 @@ class Model(object):
         weights = self._fix_weights(self.model.state_dict(), "remove", False)  # try to remove '.module' in keys.
         save(weights, model_weights_path)
 
+    def check_point_epoch(self, model_name: str, epoch: int, logdir="log"):
+        if isinstance(epoch, int):
+            is_check_point = epoch > 0 and (epoch % self.check_point_pos) == 0
+        else:
+            is_check_point = epoch in self.check_point_pos
+        if is_check_point:
+            self.check_point(model_name, epoch, logdir)
+
     @staticmethod
     def count_params(proto_model: Module):
         """count the total parameters of model.
@@ -260,13 +269,13 @@ class Model(object):
         init_name = "No"
         if init_method:
             if init_method == 'kaiming':
-                self.init_fc = init.kaiming_normal_
+                self.init_fc = getattr(init, "kaiming_normal_")
                 init_name = init_method
             elif init_method == "xavier":
-                self.init_fc = init.xavier_normal_
+                self.init_fc = getattr(init, "xavier_normal_")
                 init_name = init_method
             else:
-                self.init_fc = init_method
+                self.init_fc = getattr(init, init_method)
                 init_name = init_method.__name__
             proto_model.apply(self._weight_init)
         return init_name
@@ -330,12 +339,12 @@ class Model(object):
             assert gpu_available, "No gpu available! torch.cuda.is_available() is False. CUDA_VISIBLE_DEVICES=%s" % \
                                   os.environ["CUDA_VISIBLE_DEVICES"]
             proto_model = proto_model.cuda(gpu_ids[0])
-            self._print("%s model use GPU(%d)!" % (model_name, gpu_ids[0]))
+            self._print("%s model use GPU %s!" % (model_name, gpu_ids_abs))
         elif len(gpu_ids) > 1:
             assert gpu_available, "No gpu available! torch.cuda.is_available() is False. CUDA_VISIBLE_DEVICES=%s" % \
                                   os.environ["CUDA_VISIBLE_DEVICES"]
             proto_model = DataParallel(proto_model.cuda(), gpu_ids)
-            self._print("%s dataParallel use GPUs%s!" % (model_name, gpu_ids))
+            self._print("%s dataParallel use GPUs%s!" % (model_name, gpu_ids_abs))
         else:
             self._print("%s model use CPU!" % model_name)
         return proto_model

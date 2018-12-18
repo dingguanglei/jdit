@@ -35,6 +35,7 @@ class Discriminator(nn.Module):
         out = self.layer4(out)
         return out
 
+
 class Generator(nn.Module):
     def __init__(self, input_nc=256, output_nc=1, depth=64):
         super(Generator, self).__init__()
@@ -59,11 +60,9 @@ class Generator(nn.Module):
         out = self.features_to_image(out)
         return out
 
-class FashingGenerateGenerateGanTrainer(GenerateGanTrainer):
-    every_epoch_checkpoint = 50  # 2
-    every_epoch_changelr = 2  # 1
-    d_turn = 5
 
+class FashingGenerateGenerateGanTrainer(GenerateGanTrainer):
+    d_turn = 5
     def __init__(self, logdir, nepochs, gpu_ids_abs, netG, netD, optG, optD, dataset, latent_shape):
         super(FashingGenerateGenerateGanTrainer, self).__init__(logdir, nepochs, gpu_ids_abs, netG, netD, optG, optD,
                                                                 dataset,
@@ -91,46 +90,52 @@ class FashingGenerateGenerateGanTrainer(GenerateGanTrainer):
         var_dic = dict(d_var_dic, **g_var_dic)
         return var_dic
 
+
 def start_fashingGenerateGanTrainer(gpus=(), nepochs=200, lr=1e-3, depth_G=32, depth_D=32, latent_shape=(256, 1, 1),
                                     run_type="train"):
     gpus = gpus  # set `gpus = []` to use cpu
-    batch_shape = (64, 1, 32, 32)
-    image_channel = batch_shape[1]
+    batch_size = 64
+    image_channel = 1
     nepochs = nepochs
 
-    opt_G_name = "Adam"
     depth_G = depth_G
-    lr = lr
-    lr_decay = 0.94  # 0.94
-    weight_decay = 0  # 2e-5
-    betas = (0.9, 0.999)
-
-    opt_D_name = "RMSprop"
     depth_D = depth_D
-    momentum = 0
+
+    G_hprams = {"optimizer": "Adam", "lr_decay": 0.9,
+                "decay_position": 10, "decay_type": "epoch",
+                "lr": lr, "weight_decay": 2e-5,
+                "betas": (0.9, 0.99)
+                }
+    D_hprams = {"optimizer": "RMSprop", "lr_decay": 0.9,
+                "decay_position": 10, "decay_type": "epoch",
+                "lr": lr, "weight_decay": 2e-5,
+                "momentum": 0
+                }
 
     # the input shape of Generator
     latent_shape = latent_shape
     print('===> Build dataset')
-    mnist = FashionMNIST(batch_shape=batch_shape)
+    mnist = FashionMNIST(batch_size=batch_size)
     torch.backends.cudnn.benchmark = True
     print('===> Building model')
     D_net = Discriminator(input_nc=image_channel, depth=depth_D)
-    D = Model(D_net, gpu_ids_abs=gpus, init_method="kaiming")
+    D = Model(D_net, gpu_ids_abs=gpus, init_method="kaiming", check_point_pos=50)
     # -----------------------------------
     G_net = Generator(input_nc=latent_shape[0], output_nc=image_channel, depth=depth_G)
-    G = Model(G_net, gpu_ids_abs=gpus, init_method="kaiming")
+    G = Model(G_net, gpu_ids_abs=gpus, init_method="kaiming", check_point_pos=50)
     print('===> Building optimizer')
-    opt_D = Optimizer(D.parameters(), lr, lr_decay, weight_decay, momentum, betas, opt_D_name)
-    opt_G = Optimizer(G.parameters(), lr, lr_decay, weight_decay, momentum, betas, opt_G_name)
+    opt_D = Optimizer(D.parameters(),**D_hprams)
+    opt_G = Optimizer(G.parameters(),**G_hprams)
     print('===> Training')
     print("using `tensorboard --logdir=log` to see learning curves and net structure."
           "training and valid_epoch data, configures info and checkpoint were save in `log` directory.")
-    Trainer = FashingGenerateGenerateGanTrainer("log", nepochs, gpus, G, D, opt_G, opt_D, mnist, latent_shape)
-    if run_type =="train":
+    Trainer = FashingGenerateGenerateGanTrainer("log/fashion_generate", nepochs, gpus, G, D, opt_G, opt_D, mnist,
+                                                latent_shape)
+    if run_type == "train":
         Trainer.train()
-    elif run_type =="debug":
+    elif run_type == "debug":
         Trainer.debug()
+
 
 if __name__ == '__main__':
     start_fashingGenerateGanTrainer()

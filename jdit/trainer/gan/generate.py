@@ -1,9 +1,7 @@
 from .sup_gan import SupGanTrainer
-from ..super import Watcher
 from abc import abstractmethod
 from torch.autograd import Variable
 import torch
-import os
 
 
 class GenerateGanTrainer(SupGanTrainer):
@@ -28,16 +26,11 @@ class GenerateGanTrainer(SupGanTrainer):
         self.latent_shape = latent_shape
         self.fixed_input = torch.randn((self.datasets.batch_size, *self.latent_shape)).to(self.device)
         # self.metric = FID(self.gpu_ids)
-        self.plot_graphs_lazy()
 
-    # def _plot_graph(self):
-    #     self.watcher.graph(self.netG, "Generator", self.use_gpu, (self.datasets.batch_size, *self.latent_shape))
-    #     self.watcher.graph(self.netD, "Discriminator", self.use_gpu, self.datasets.batch_shape)
-
-    def get_data_from_loader(self, batch_data):
-        ground_truth_cpu = batch_data[0]
-        input_cpu = Variable(torch.randn((len(ground_truth_cpu), *self.latent_shape)))
-        return input_cpu.to(self.device), ground_truth_cpu.to(self.device)
+    def get_data_from_batch(self, batch_data: list, device: torch.device):
+        ground_truth_tensor = batch_data[0]
+        input_tensor = Variable(torch.randn((len(ground_truth_tensor), *self.latent_shape)))
+        return input_tensor, ground_truth_tensor
 
     def valid_epoch(self):
         super(GenerateGanTrainer, self).valid_epoch()

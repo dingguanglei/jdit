@@ -24,17 +24,13 @@ class SimpleModel(nn.Module):
         out = F.relu(self.layer3(out))
         out = F.relu(self.layer4(out))
         out = self.layer5(out)
-        out = out.view(-1,self.num_class)
+        out = out.view(-1, self.num_class)
         return out
 
 
 class FashingClassTrainer(ClassificationTrainer):
-    num_class = 10
-    every_epoch_checkpoint = 20  # 2
-    every_epoch_changelr = 10  # 1
-
-    def __init__(self, logdir, nepochs, gpu_ids, net, opt, datasets):
-        super(FashingClassTrainer, self).__init__(logdir, nepochs, gpu_ids, net, opt, datasets)
+    def __init__(self, logdir, nepochs, gpu_ids, net, opt, datasets, num_class):
+        super(FashingClassTrainer, self).__init__(logdir, nepochs, gpu_ids, net, opt, datasets, num_class)
         data, label = self.datasets.samples_train
         self.watcher.embedding(data, data, label)
 
@@ -63,35 +59,38 @@ class FashingClassTrainer(ClassificationTrainer):
         return var_dic
 
 
-def start_fashingClassTrainer(gpus=(), nepochs=100, lr=1e-3, depth=32, run_type = "train"):
+def start_fashingClassTrainer(gpus=(2,3), nepochs=100, lr=1e-3, depth=32, run_type="train"):
     """" An example of fashing-mnist classification
 
     """
+    num_class = 10
     gpus = gpus
-    batch_shape = (64, 1, 32, 32)
+    batch_size = 64
     nepochs = nepochs
-    opt_name = "RMSprop"
-    lr = lr
+
+    opt_name = "Adam"
     lr_decay = 0.9  # 0.94
-    weight_decay = 2e-5  # 2e-5
-    momentum = 0
-    betas = (0.9, 0.999)
+    decay_position = 10
+    decay_type = "step"
+    opt_hpm = {"lr": lr, "weight_decay": 2e-5, "betas": (0.9, 0.99)}
 
     print('===> Build dataset')
-    mnist = FashionMNIST(batch_shape=batch_shape)
+    mnist = FashionMNIST(batch_size=batch_size)
     torch.backends.cudnn.benchmark = True
     print('===> Building model')
-    net = Model(SimpleModel(depth=depth), gpu_ids_abs=gpus, init_method="kaiming")
+    net = Model(SimpleModel(depth=depth), gpu_ids_abs=gpus, init_method="kaiming", check_point_pos=1)
     print('===> Building optimizer')
-    opt = Optimizer(net.parameters(), lr, lr_decay, weight_decay, momentum, betas, opt_name)
+    opt = Optimizer(net.parameters(), opt_name, lr_decay, decay_position, decay_type,
+                    **opt_hpm)
     print('===> Training')
     print("using `tensorboard --logdir=log` to see learning curves and net structure."
           "training and valid_epoch data, configures info and checkpoint were save in `log` directory.")
-    Trainer = FashingClassTrainer("log", nepochs, gpus, net, opt, mnist)
+    Trainer = FashingClassTrainer("log/fashion_classify", nepochs, gpus, net, opt, mnist, num_class)
     if run_type == "train":
         Trainer.train()
-    elif run_type =="debug":
+    elif run_type == "debug":
         Trainer.debug()
+
 
 if __name__ == '__main__':
     start_fashingClassTrainer()

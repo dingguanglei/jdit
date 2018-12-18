@@ -53,15 +53,15 @@ class DataLoadersFactory(metaclass=ABCMeta):
 
     """
 
-    def __init__(self, root: str, batch_shape: Union[tuple, list], num_workers=-1, shuffle=True, subdata_size=0.1):
+    def __init__(self, root: str, batch_size: int, num_workers=-1, shuffle=True, subdata_size=0.1):
         """ Build data loaders.
 
         :param root: root path of datasets.
-        :param batch_shape: shape of data. ``(Batchsize, Channel, Height, Width)``
+        :param batch_size: shape of data. ``(Batchsize, Channel, Height, Width)``
         :param num_workers: the number of threads. Default: -1
         :param shuffle: whether shuffle the data. Default: ``True``
         """
-        self.batch_size, self.batch_shape = batch_shape[0], batch_shape
+        self.batch_size = batch_size
         self.shuffle = shuffle
         self.root = root
         if num_workers == -1:
@@ -241,8 +241,8 @@ class HandMNIST(DataLoadersFactory):
 
     """
 
-    def __init__(self, root=r'.\datasets\mnist', batch_shape=(128, 1, 32, 32), num_workers=-1):
-        super(HandMNIST, self).__init__(root, batch_shape, num_workers)
+    def __init__(self, root="datasets/hand_data", batch_size = 64, num_workers=-1):
+        super(HandMNIST, self).__init__(root, batch_size, num_workers)
 
     def build_datasets(self):
         """Build datasets by using ``datasets.MNIST`` in pytorch
@@ -257,8 +257,8 @@ class HandMNIST(DataLoadersFactory):
 
 
 class FashionMNIST(DataLoadersFactory):
-    def __init__(self, root=r'.\datasets\fashion_data', batch_shape=(128, 1, 32, 32), num_workers=-1):
-        super(FashionMNIST, self).__init__(root, batch_shape, num_workers)
+    def __init__(self, root="datasets/fashion_data", batch_size = 64, num_workers=-1):
+        super(FashionMNIST, self).__init__(root, batch_size, num_workers)
 
     def build_datasets(self):
         self.dataset_train = datasets.FashionMNIST(self.root, train=True, download=True,
@@ -268,8 +268,8 @@ class FashionMNIST(DataLoadersFactory):
 
 
 class Cifar10(DataLoadersFactory):
-    def __init__(self, root='datasets/cifar10', batch_shape=(128, 3, 32, 32), num_workers=-1):
-        super(Cifar10, self).__init__(root, batch_shape, num_workers)
+    def __init__(self, root="datasets/cifar10", batch_size = 32, num_workers=-1):
+        super(Cifar10, self).__init__(root, batch_size, num_workers)
 
     def build_datasets(self):
         self.dataset_train = datasets.CIFAR10(self.root, train=True, download=True,
@@ -279,8 +279,8 @@ class Cifar10(DataLoadersFactory):
 
 
 class Lsun(DataLoadersFactory):
-    def __init__(self, root=r'.\datasets\LSUN', batch_shape=(64, 3, 128, 128), num_workers=-1):
-        super(Lsun, self).__init__(root, batch_shape, num_workers)
+    def __init__(self, root, batch_size = 32, num_workers=-1):
+        super(Lsun, self).__init__(root, batch_size, num_workers)
 
     def build_datasets(self):
         self.dataset_train = datasets.CIFAR10(self.root, train=True, download=True,

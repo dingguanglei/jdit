@@ -18,6 +18,9 @@ import pandas as pd
 import numpy as np
 from tensorboardX import SummaryWriter
 
+from functools import wraps
+from typing import Tuple
+
 
 class SupTrainer(object):
     """this is a super class of all trainers
@@ -27,14 +30,34 @@ class SupTrainer(object):
     * The basic loop of epochs.
     * Learning rate decay and model check point.
     """
-    every_epoch_checkpoint = 10
-    """How much epoch do you chechkpoint.
-    """
-    every_epoch_changelr = 0
-    """How much epoch do you do learning rate decay.
-    """
 
     __metaclass__ = ABCMeta
+
+    def __new__(cls, *args, **kwargs):
+        instance = super(SupTrainer, cls).__new__(cls)
+        instance.__opt__ = []
+        # instance.__model__ = []
+        # instance.__dataset__ = []
+        for arg in args:
+            if isinstance(arg, Optimizer):
+                instance.__opt__.append(arg)
+            # elif isinstance(arg, Model):
+            #     instance.__model__.append(arg)
+            # elif isinstance(arg, DataLoadersFactory):
+            #     instance.__dataset__.append(arg)
+            else:
+                pass
+        for key, arg in kwargs.items():
+            if isinstance(arg, Optimizer):
+                instance.__opt__.append(arg)
+            # elif isinstance(arg, Model):
+            #     instance.__model__.append(arg)
+            # elif isinstance(arg, DataLoadersFactory):
+            #     instance.__dataset__.append(arg)
+            else:
+                pass
+
+        return instance
 
     def __init__(self, nepochs: int, logdir: str, gpu_ids_abs: Union[list, tuple] = ()):
         os.environ["CUDA_VISIBLE_DEVICES"] = ",".join([str(i) for i in gpu_ids_abs])
@@ -49,9 +72,9 @@ class SupTrainer(object):
         self.input = torch.Tensor()
         self.ground_truth = torch.Tensor()
         self.nepochs = nepochs
-        self.current_epoch = 1
-        self.start_epoch = 1
+        self.current_epoch = 0
         self.step = 0
+        self.start_epoch = 1
 
     def train(self, process_bar_header: str = None, process_bar_position: int = None, subbar_disable=False, **kwargs):
         """The main training loop of epochs.
@@ -63,16 +86,25 @@ class SupTrainer(object):
         :param subbar_disable: If show the info of every training set,
         :param kwargs: Any other parameters that passing to ``tqdm()`` to control the behavior of process bar.
         """
+        self.plot_graphs_lazy()
         for epoch in tqdm(range(self.start_epoch, self.nepochs + 1), total=self.nepochs,
                           unit="epoch", desc=process_bar_header, position=process_bar_position, **kwargs):
             self.current_epoch = epoch
-            self._record_configs()
             self.train_epoch(subbar_disable)
             self.valid_epoch()
-            self._change_lr()
-            self._check_point()
         self.test()
         self.watcher.close()
+
+    def __setattr__(self, key, value):
+        super(SupTrainer, self).__setattr__(key, value)
+        if key == "step":
+            self._change_lr(key, value)
+        elif key == "current_epoch":
+            self._change_lr(key, value)
+            if value == 0:
+                return
+            self._check_point()
+            self._record_configs()
 
     def debug(self):
         """Debug the trainer.
@@ -91,21 +123,18 @@ class SupTrainer(object):
 
         :return: bool. It will return ``True``, if passes all the tests.
         """
-
-        self.every_epoch_checkpoint = 1
-        self.every_epoch_changelr = 1
-        self.logdir = "log_debug"
         self.watcher.close()
+        self.logdir = "log_debug"
         # reset `log_debug`
-        if os.path.exists("log_debug"):
+        if os.path.exists(self.logdir):
             try:
                 shutil.rmtree("log_debug")  # 递归删除文件夹
             except Exception as e:
                 print('Can not remove logdir `log_debug`\n', e)
                 traceback.print_exc()
 
-        self.watcher = Watcher("log_debug")
-        self.loger = Loger("log_debug")
+        self.watcher = Watcher(self.logdir)
+        self.loger = Loger(self.logdir)
         self.performance = Performance()
 
         # reset datasets and dataloaders
@@ -118,15 +147,26 @@ class SupTrainer(object):
                 item.dataset_valid, _ = random_split(item.dataset_valid, [2, len(item.dataset_valid) - 2])
                 item.dataset_test, _ = random_split(item.dataset_test, [2, len(item.dataset_test) - 2])
                 item.build_loaders()
+            if isinstance(item, Model):
+                item.check_point_pos = 2
+            if isinstance(item, Optimizer):
+                item.check_point_pos = 2
+                item.decay_type = "step"
         # the tested functions
         debug_fcs = [self._record_configs, self.train_epoch, self.valid_epoch,
                      self._change_lr, self._check_point, self.test]
         print("{:=^30}".format(">Debug<"))
         success = True
+
         for fc in debug_fcs:
             print("{:_^30}".format(fc.__name__ + "()"))
             try:
-                fc()
+                if fc.__name__ == "_change_lr()":
+                    self.step = 2
+                elif fc.__name__ == "_check_point()":
+                    self.current_epoch = 2
+                else:
+                    fc()
             except Exception as e:
                 print('Error:', e)
                 traceback.print_exc()
@@ -161,9 +201,21 @@ class SupTrainer(object):
         """
         pass
 
-    def get_data_from_batch_todevice(self, batch_data: list, device: torch.device):
-        batch = self.get_data_from_batch(batch_data, device)
-        return (data.to(self.device) for data in batch)
+    def __getattribute__(self, name):
+        v = super().__getattribute__(name)
+        if name == "get_data_from_batch":
+            new_fc = self._mv_device(v)
+            return new_fc
+        return v
+
+    def _mv_device(self, f):
+        @wraps(f)
+        def wrapper(*args, **kwargs):
+            variables = f(*args, **kwargs)
+            variables = tuple(v.to(self.device) if hasattr(v, "to") else v for v in variables)
+            return variables
+
+        return wrapper
 
     def get_data_from_batch(self, batch_data: list, device: torch.device):
         """ Split your data from one batch data to specify .
@@ -242,24 +294,14 @@ class SupTrainer(object):
                 self.watcher.graph_lazy(obj, key)
 
     def _check_point(self):
-        if isinstance(self.every_epoch_checkpoint, int):
-            is_check_point = (self.current_epoch % self.every_epoch_checkpoint) == 0
-        else:
-            is_check_point = self.current_epoch in self.every_epoch_checkpoint
-        if is_check_point:
-            for key, model in vars(self).items():
-                if isinstance(model, Model):
-                    model.check_point(key, self.current_epoch, self.logdir)
+        for name, model in vars(self).items():
+            if isinstance(model, Model):
+                model.check_point_epoch(name, self.current_epoch, self.logdir)
 
-    def _change_lr(self):
-        if isinstance(self.every_epoch_changelr, int):
-            is_change_lr = (self.current_epoch % self.every_epoch_changelr) == 0
-        else:
-            is_change_lr = self.current_epoch in self.every_epoch_changelr
-        if is_change_lr:
-            for key, opt in vars(self).items():
-                if isinstance(opt, Optimizer):
-                    opt.do_lr_decay()
+    def _change_lr(self, decay_type="step", position=2):
+        for opt in self.__opt__:
+            if opt.decay_type.endswith(decay_type):
+                opt.update_state(position)
 
     def valid_epoch(self):
         pass
@@ -270,8 +312,6 @@ class SupTrainer(object):
     @property
     def configure(self):
         config_dict = dict()
-        config_dict["every_epoch_checkpoint"] = str(self.every_epoch_checkpoint)
-        config_dict["every_epoch_changelr"] = str(self.every_epoch_changelr)
         config_dict["nepochs"] = int(self.nepochs)
 
         return config_dict
@@ -534,14 +574,16 @@ class Watcher(object):
         model_logdir = os.path.join(self.logdir, name)
         self._build_dir(model_logdir)
 
-        self.scalars({'ParamsNum': num_params}, 0, tag="ParamsNum")
-        self.scalars({'ParamsNum': num_params}, 1, tag="ParamsNum")
-
         def hook(model, input, output):
             writer_for_model = SummaryWriter(log_dir=model_logdir)
-            input_for_test = tuple(i.detach().clone() for i in input)
+            writer_for_model.add_scalar('ParamsNum/%a' % name, num_params, 0)
+            writer_for_model.add_scalar('ParamsNum/%a' % name, num_params, 1)
+            input_for_test = tuple(i.detach().clone()[0:2] for i in input)
             handel.remove()
-            writer_for_model.add_graph(proto_model, input_for_test)
+            if isinstance(proto_model, torch.nn.DataParallel):
+                writer_for_model.add_graph(proto_model.module, input_for_test)
+            else:
+                writer_for_model.add_graph(proto_model, input_for_test)
             writer_for_model.close()
             del writer_for_model
 
@@ -576,7 +618,7 @@ if __name__ == '__main__':
 
     test_log = Loger('log')
     test_model = nn.Linear(10, 1)
-    test_opt = Optimizer(test_model.parameters())
+    test_opt = Optimizer(test_model.parameters(), torch.optim.Adam, lr_decay=2, decay_position=[1, 3])
     test_log.regist_config(test_opt, flag=1)
     test_opt.do_lr_decay()
     test_log.regist_config(test_opt, flag=2)

@@ -26,7 +26,7 @@ class SupGanTrainer(SupTrainer):
     def train_epoch(self, subbar_disable=False):
         for iteration, batch in tqdm(enumerate(self.datasets.loader_train, 1), unit="step", disable=subbar_disable):
             self.step += 1
-            self.input, self.ground_truth = self.get_data_from_loader(batch)
+            self.input, self.ground_truth = self.get_data_from_batch(batch, self.device)
             self.fake = self.netG(self.input)
             self._train_iteration(self.optD, self.compute_d_loss, csv_filename="Train_D")
             if (self.step % self.d_turn) == 0:
@@ -34,7 +34,7 @@ class SupGanTrainer(SupTrainer):
             if iteration == 1:
                 self._watch_images("Train")
 
-    def get_data_from_loader(self, batch_data):
+    def get_data_from_batch(self, batch_data: list, device: torch.device):
         """ Load and wrap data from the data lodaer.
 
             Split your one batch data to specify variable.
@@ -49,8 +49,8 @@ class SupGanTrainer(SupTrainer):
         :param batch_data: one batch data load from ``DataLoader``
         :return: input Tensor, ground_truth Tensor
         """
-        input_cpu, ground_truth_cpu = batch_data[0], batch_data[1]
-        return input_cpu.to(self.device), ground_truth_cpu.to(self.device)
+        input_tensor, ground_truth_tensor = batch_data[0], batch_data[1]
+        return input_tensor, ground_truth_tensor
 
     def _watch_images(self, tag: str, grid_size: tuple = (3, 3), shuffle=False, save_file=True):
         """ Show images in tensorboard
@@ -179,7 +179,7 @@ class SupGanTrainer(SupTrainer):
             self.netD.eval()
             # Load data from loader_valid.
             for iteration, batch in enumerate(self.datasets.loader_valid, 1):
-                self.input, self.ground_truth = self.get_data_from_loader(batch)
+                self.input, self.ground_truth = self.get_data_from_batch(batch)
                 with torch.no_grad():
                     self.fake = self.netG(self.input)
                     # You can write this function to apply your computation.
@@ -204,7 +204,7 @@ class SupGanTrainer(SupTrainer):
         self.netG.eval()
         self.netD.eval()
         for iteration, batch in enumerate(self.datasets.loader_valid, 1):
-            self.input, self.ground_truth = self.get_data_from_loader(batch)
+            self.input, self.ground_truth = self.get_data_from_batch(batch,self.device)
             with torch.no_grad():
                 self.fake = self.netG(self.input)
                 dic: dict = self.compute_valid()

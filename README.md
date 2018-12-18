@@ -31,7 +31,7 @@ python setup.py bdist_wheel
 You will find packages in `jdit/dist/`. Use pip to install.
 
 ```
-pip install jdit-0.0.2-py3-none-any.whl
+pip install jdit-0.0.3-py3-none-any.whl
 ```
 
 
