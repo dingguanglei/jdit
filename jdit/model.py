@@ -6,7 +6,7 @@ from torch import save, load
 from typing import Union
 from collections import OrderedDict
 from types import FunctionType
-from typing import List
+from typing import List, Optional
 
 
 class _cached_property(object):
@@ -92,13 +92,14 @@ class Model(object):
         >>> output = net(input_tensor)
 
     """
-
     def __init__(self, proto_model: Module,
                  gpu_ids_abs: Union[list, tuple] = (),
                  init_method: Union[str, FunctionType, None] = "kaiming",
-                 show_structure=False, check_point_pos=None, verbose=True):
+                 show_structure=False,
+                 check_point_pos=None, verbose=True):
+        assert isinstance(proto_model, Module)
         self.model: Union[DataParallel, Module] = None
-        self.model_name: str = "Model"
+        self.model_name = proto_model.__class__.__name__
         self.weights_init = None
         self.init_fc = None
         self.init_name: str = None
@@ -128,8 +129,7 @@ class Model(object):
         :param init_method: init weights method("kaiming") or ``False`` don't use any init.
         :param show_structure: If print structure of model.
         """
-        assert isinstance(proto_model, Module)
-        self.num_params, self.model_name = self.print_network(proto_model, show_structure)
+        self.num_params = self.print_network(proto_model, show_structure)
         self.model = self._set_device(proto_model, gpu_ids_abs)
         self.init_name = self._apply_weight_init(init_method, self.model)
         self._print("apply %s weight init!" % self.init_name)
@@ -141,13 +141,12 @@ class Model(object):
         :param show_structure: If show network's structure. default: ``False``
         :return: Total number of parameters
         """
-        model_name = proto_model.__class__.__name__
         num_params = self.count_params(proto_model)
         if show_structure:
             self._print(str(proto_model))
-        num_params_log = '%s Total number of parameters: %d' % (model_name, num_params)
+        num_params_log = '%s Total number of parameters: %d' % (self.model_name, num_params)
         self._print(num_params_log)
-        return num_params, model_name
+        return num_params
 
     def load_weights(self, weights: Union[OrderedDict, dict, str], strict=True):
         """Assemble a model and weights from paths or passing parameters.
@@ -252,6 +251,7 @@ class Model(object):
             is_check_point = epoch in self.check_point_pos
         if is_check_point:
             self.check_point(model_name, epoch, logdir)
+        return  is_check_point
 
     @staticmethod
     def count_params(proto_model: Module):
@@ -368,6 +368,7 @@ class Model(object):
         return config_dic
 
 
+
 if __name__ == '__main__':
     from torch.nn import Sequential
 
@@ -379,3 +380,4 @@ if __name__ == '__main__':
         net = Model(mode, [0, 1], "kaiming", show_structure=False)
     if torch.cuda.device_count() > 2:
         net = Model(mode, [2, 3], "kaiming", show_structure=False)
+    net1 = Model(mode, [], "kaiming", show_structure=False)

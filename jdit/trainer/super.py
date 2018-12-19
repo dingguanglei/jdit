@@ -35,28 +35,9 @@ class SupTrainer(object):
 
     def __new__(cls, *args, **kwargs):
         instance = super(SupTrainer, cls).__new__(cls)
-        instance.__opt__ = []
-        instance.__model__ = dict()
-        # instance.__dataset__ = []
-        for arg in args:
-            if isinstance(arg, Optimizer):
-                instance.__opt__.append(arg)
-            # elif isinstance(arg, Model):
-            #     instance.__model__.append(arg)
-            # elif isinstance(arg, DataLoadersFactory):
-            #     instance.__dataset__.append(arg)
-            else:
-                pass
-        for key, arg in kwargs.items():
-            if isinstance(arg, Optimizer):
-                instance.__opt__.append(arg)
-            # elif isinstance(arg, Model):
-            #     instance.__model__.append(arg)
-            # elif isinstance(arg, DataLoadersFactory):
-            #     instance.__dataset__.append(arg)
-            else:
-                pass
-
+        instance._opts = dict()
+        instance._datasets = dict()
+        instance._models = dict()
         return instance
 
     def __init__(self, nepochs: int, logdir: str, gpu_ids_abs: Union[list, tuple] = ()):
@@ -86,6 +67,7 @@ class SupTrainer(object):
         :param subbar_disable: If show the info of every training set,
         :param kwargs: Any other parameters that passing to ``tqdm()`` to control the behavior of process bar.
         """
+        self._record_configs()
         self.plot_graphs_lazy()
         for epoch in tqdm(range(self.start_epoch, self.nepochs + 1), total=self.nepochs,
                           unit="epoch", desc=process_bar_header, position=process_bar_position, **kwargs):
@@ -97,14 +79,33 @@ class SupTrainer(object):
 
     def __setattr__(self, key, value):
         super(SupTrainer, self).__setattr__(key, value)
+
         if key == "step" and value != 0:
-            self._change_lr("step", value)
+            is_change = self._change_lr("step", value)
+            if is_change:
+                self._record_configs("optimizer")
         elif key == "current_epoch" and value != 0:
-            self._change_lr("epoch", value)
+            is_change = self._change_lr("epoch", value)
+            if is_change:
+                self._record_configs("optimizer")
             self._check_point()
-            self._record_configs()
+            self._record_configs("performance")
         elif isinstance(value, Model):
-            self.__model__.update({key: value})
+            self._models.update({key: value})
+        elif isinstance(value, Optimizer):
+            self._opts.update({key: value})
+        elif isinstance(value, DataLoadersFactory):
+            self._datasets.update({key: value})
+        else:
+            pass
+
+    def __delattr__(self, item):
+        if isinstance(item, Model):
+            self._models.pop(item)
+        elif isinstance(item, Optimizer):
+            self._opts.pop(item)
+        elif isinstance(item, DataLoadersFactory):
+            self._datasets.pop(item)
 
     def debug(self):
         """Debug the trainer.
@@ -142,15 +143,15 @@ class SupTrainer(object):
             if isinstance(item, DataLoadersFactory):
                 item.batch_size = 2
                 item.shuffle = False
-                item.num_workers = None
+                item.num_workers = 2
                 item.dataset_train, _ = random_split(item.dataset_train, [2, len(item.dataset_train) - 2])
                 item.dataset_valid, _ = random_split(item.dataset_valid, [2, len(item.dataset_valid) - 2])
                 item.dataset_test, _ = random_split(item.dataset_test, [2, len(item.dataset_test) - 2])
                 item.build_loaders()
             if isinstance(item, Model):
-                item.check_point_pos = 2
+                item.check_point_pos = 1
             if isinstance(item, Optimizer):
-                item.check_point_pos = 2
+                item.check_point_pos = 1
                 item.decay_type = "step"
         # the tested functions
         debug_fcs = [self._record_configs, self.train_epoch, self.valid_epoch,
@@ -175,9 +176,16 @@ class SupTrainer(object):
                 print("pass!")
         self.watcher.close()
         if success:
-            print("{:=^30}".format(">Debug Successful!<"))
+            print("\033[1;32;40m" + "{:=^30}".format(">Debug Successful!<"))
         else:
-            print("{:=^30}".format(">Debug Failed!<"))
+            print("\033[1;31;40m" + "{:=^30}".format(">Debug Failed!<"))
+
+        if os.path.exists(self.logdir):
+            try:
+                shutil.rmtree("log_debug")  # 递归删除文件夹
+            except Exception as e:
+                print('Can not remove logdir `log_debug`\n', e)
+                traceback.print_exc()
         return success
 
     @abstractmethod
@@ -257,7 +265,7 @@ class SupTrainer(object):
         self.watcher.scalars(var_dict=var_dic, global_step=self.step, tag="Train")
         self.loger.write(self.step, self.current_epoch, var_dic, csv_filename, header=self.step <= 1)
 
-    def _record_configs(self):
+    def _record_configs(self, configs_names=None):
         """to register the ``Model`` , ``Optimizer`` , ``Trainer`` and ``Performance`` config info.
 
           The default is record the info of ``trainer`` and ``performance`` config.
@@ -277,17 +285,19 @@ class SupTrainer(object):
 
         :return:
         """
-        self.loger.regist_config(self, self.current_epoch)  # for trainer.configure
-        for key, obj in vars(self).items():
-            if isinstance(obj, (Model, SupTrainer, Performance)):
-                self.loger.regist_config(obj, self.current_epoch, flag_name="epoch",
-                                         config_filename=key)  # for trainer.configure
-            elif isinstance(obj, Optimizer):
-                self.loger.regist_config(obj,
-                                         self.step if obj.decay_type == "step" else self.current_epoch,
-                                         flag_name=obj.decay_type,
-                                         config_filename=key
-                                         )  # for trainer.configure
+        if (configs_names is None) or "model" in configs_names:
+            for name, model in self._models.items():
+                self.loger.regist_config(model, self.current_epoch, self.step, config_filename=name)
+        if (configs_names is None) or "dataset" in configs_names:
+            for name, dataset in self._datasets.items():
+                self.loger.regist_config(dataset, self.current_epoch, self.step, config_filename=name)
+        if (configs_names is None) or "optimizer" in configs_names:
+            for name, opt in self._opts.items():
+                self.loger.regist_config(opt, self.current_epoch, self.step, config_filename=name)
+        if (configs_names is None) or "trainer" in configs_names or (configs_names is None):
+            self.loger.regist_config(self, config_filename=self.__class__.__name__)
+        if (configs_names is None) or "performance" in configs_names:
+            self.loger.regist_config(self.performance, self.current_epoch, self.step, config_filename="performance")
 
     def plot_graphs_lazy(self):
         """Plot model graph on tensorboard.
@@ -295,23 +305,20 @@ class SupTrainer(object):
 
         :return:
         """
-        # for key, obj in vars(self).items():
-        #     if isinstance(obj, Model):
-        #         self.watcher.graph_lazy(obj, key)
-        for name, model in self.__model__.items():
+        for name, model in self._models.items():
             self.watcher.graph_lazy(model, name)
 
     def _check_point(self):
-        for name, model in self.__model__.items():
+        for name, model in self._models.items():
             model.check_point_epoch(name, self.current_epoch, self.logdir)
-        # for name, model in vars(self).items():
-        #     if isinstance(model, Model):
-        #         model.check_point_epoch(name, self.current_epoch, self.logdir)
 
     def _change_lr(self, decay_type="step", position=2):
-        for opt in self.__opt__:
-            if opt.decay_type == decay_type:
-                opt.update_state(position)
+        is_change = False
+        for name, opt in self._opts.items():
+            if opt.decay_type == decay_type and opt.use_decay(position):
+                opt.do_lr_decay()
+                is_change = True
+        return is_change
 
     def valid_epoch(self):
         pass
@@ -402,15 +409,15 @@ class Loger(object):
             os.makedirs(self.logdir)
 
     def regist_config(self, opt_model_data: Union[SupTrainer, Optimizer, Model, DataLoadersFactory, Performance],
-                      flag=None,
-                      flag_name="epoch",
+                      epoch=None,
+                      step=None,
                       config_filename: str = None):
         """
         get obj's configure. flag is time point, usually use `epoch`.
         obj_name default is 'opt_model_data' class name.
         If you pass two same class boj, you should give each of them a unique `obj_name`
         :param opt_model_data: Optm, Model or  dataset
-        :param flag: time point such as `epoch`
+        :param epoch: time point such as `epoch`
         :param flag_name: name of flag `epoch`
         :param config_filename: default is 'opt_model_data' class name
         :return:
@@ -418,27 +425,33 @@ class Loger(object):
 
         if config_filename is None:
             config_filename = opt_model_data.__class__.__name__
-        config_dic = opt_model_data.configure.copy()
+        obj_config_dic = opt_model_data.configure.copy()
         path = os.path.join(self.logdir, config_filename + ".csv")
 
         is_registed = config_filename in self.regist_dict.keys()
         if not is_registed:
             # 若没有注册过，注册该config
-            self.regist_dict[config_filename] = config_dic.copy()
-            if flag is not None:
-                config_dic.update({flag_name: flag})
+            self.regist_dict[config_filename] = obj_config_dic.copy()
+            config_dic = dict()
+            if step is not None:
+                config_dic.update({"step": step})
+            if epoch is not None:
+                config_dic.update({"epoch": epoch})
+            config_dic.update(obj_config_dic)
             pdg = pd.DataFrame.from_dict(config_dic, orient="index").transpose()
             pdg.to_csv(path, mode="w", encoding="utf-8", index=False, header=True)
         else:
             # 已经注册过config
             last_config = self.regist_dict[config_filename]
-            current_config = config_dic
-            if last_config != current_config:
-                # if 1:
+            if last_config != obj_config_dic:
                 # 若已经注册过config，比对最后一次结果，如果不同，则写入，相同无操作。
-                self.regist_dict[config_filename] = current_config.copy()
-                if flag is not None:
-                    config_dic.update({flag_name: flag})
+                self.regist_dict[config_filename] = obj_config_dic.copy()
+                config_dic = dict()
+                if step is not None:
+                    config_dic.update({"step": step})
+                if epoch is not None:
+                    config_dic.update({"epoch": epoch})
+                config_dic.update(obj_config_dic)
                 pdg = pd.DataFrame.from_dict(config_dic, orient="index").transpose()
                 pdg.to_csv(path, mode="a", encoding="utf-8", index=False, header=False)
 
@@ -629,9 +642,9 @@ if __name__ == '__main__':
 
     test_log = Loger('log')
     test_model = nn.Linear(10, 1)
-    test_opt = Optimizer(test_model.parameters(), torch.optim.Adam, lr_decay=2, decay_position=[1, 3])
-    test_log.regist_config(test_opt, flag=1)
+    test_opt = Optimizer(test_model.parameters(), "Adam", lr_decay=2, decay_position=[1, 3])
+    test_log.regist_config(test_opt, epoch=1)
     test_opt.do_lr_decay()
-    test_log.regist_config(test_opt, flag=2)
-    test_log.regist_config(test_opt, flag=3)
+    test_log.regist_config(test_opt, epoch=2)
+    test_log.regist_config(test_opt, epoch=3)
     test_log.regist_config(test_opt)

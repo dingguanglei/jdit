@@ -187,18 +187,18 @@ class DataLoadersFactory(metaclass=ABCMeta):
     @property
     def configure(self):
         configs = dict()
-        configs["dataset_name"] = [str(self.dataset_train.__class__.__name__)]
-        configs["batch_size"] = [str(self.batch_size)]
-        configs["shuffle"] = [str(self.shuffle)]
-        configs["root"] = [str(self.root)]
-        configs["num_workers"] = [str(self.num_workers)]
-        configs["sample_dataset_size"] = [str(self.sample_dataset_size)]
-        configs["nsteps_train"] = [str(self.nsteps_train)]
-        configs["nsteps_valid"] = [str(self.nsteps_valid)]
-        configs["nsteps_test"] = [str(self.nsteps_test)]
-        configs["dataset_train"] = [str(self.dataset_train)]
-        configs["dataset_valid"] = [str(self.dataset_valid)]
-        configs["dataset_test"] = [str(self.dataset_test)]
+        configs["dataset_name"] = str(self.dataset_train.__class__.__name__)
+        configs["batch_size"] = str(self.batch_size)
+        configs["shuffle"] = str(self.shuffle)
+        configs["root"] = str(self.root)
+        configs["num_workers"] = str(self.num_workers)
+        configs["sample_dataset_size"] = str(self.sample_dataset_size)
+        configs["nsteps_train"] = str(self.nsteps_train)
+        configs["nsteps_valid"] = str(self.nsteps_valid)
+        configs["nsteps_test"] = str(self.nsteps_test)
+        configs["dataset_train"] = str(self.dataset_train)
+        configs["dataset_valid"] = str(self.dataset_valid)
+        configs["dataset_test"] = str(self.dataset_test)
         return configs
 
 

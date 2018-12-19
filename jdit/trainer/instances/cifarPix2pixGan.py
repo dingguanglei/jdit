@@ -80,10 +80,10 @@ class CifarPix2pixGanTrainer(Pix2pixGanTrainer):
         super(CifarPix2pixGanTrainer, self).__init__(logdir, nepochs, gpu_ids_abs, netG, netD, optG, optD,
                                                      datasets)
 
-    def get_data_from_batch(self, batch_data):
+    def get_data_from_batch(self, batch_data, device):
         ground_truth_cpu, label = batch_data[0], batch_data[1]
         input_cpu = ground_truth_cpu[:, 0, :, :].unsqueeze(1)  # only use one channel [?,3,32,32] =>[?,1,32,32]
-        return input_cpu.to(self.device), ground_truth_cpu.to(self.device)
+        return input_cpu, ground_truth_cpu
 
     def compute_d_loss(self):
         d_fake = self.netD(self.fake.detach())
@@ -136,13 +136,13 @@ def start_cifarPix2pixGanTrainer(gpus=(), nepochs=200, lr=1e-3, depth_G=32, dept
     G_net = Generator(input_nc=1, output_nc=image_channel, depth=depth_G)
     G = Model(G_net, gpu_ids_abs=gpus, init_method="kaiming", check_point_pos=50)
     print('===> Building optimizer')
-    opt_D = Optimizer(D.parameters(),**D_hprams)
-    opt_G = Optimizer(G.parameters(),**G_hprams)
+    opt_D = Optimizer(D.parameters(), **D_hprams)
+    opt_G = Optimizer(G.parameters(), **G_hprams)
     print('===> Training')
     Trainer = CifarPix2pixGanTrainer("log/cifar_p2p", nepochs, gpus, G, D, opt_G, opt_D, cifar10)
-    if run_type=="train":
+    if run_type == "train":
         Trainer.train()
-    elif run_type=="debug":
+    elif run_type == "debug":
         Trainer.debug()
 
 

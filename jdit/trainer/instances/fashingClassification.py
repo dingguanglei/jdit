@@ -59,12 +59,12 @@ class FashingClassTrainer(ClassificationTrainer):
         return var_dic
 
 
-def start_fashingClassTrainer(gpus=(), nepochs=100, run_type="train"):
+def start_fashingClassTrainer(gpus=(), nepochs=100, run_type="debug"):
     """" An example of fashing-mnist classification
 
     """
     num_class = 10
-    depth = 32,
+    depth = 32
     gpus = gpus
     batch_size = 64
     nepochs = nepochs

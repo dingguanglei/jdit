@@ -47,6 +47,7 @@ class SupGanTrainer(SupTrainer):
                 return input_cpu.to(self.device), ground_truth_cpu.to(self.device)
 
         :param batch_data: one batch data load from ``DataLoader``
+        :param device: A device variable. ``torch.device``
         :return: input Tensor, ground_truth Tensor
         """
         input_tensor, ground_truth_tensor = batch_data[0], batch_data[1]
@@ -204,7 +205,7 @@ class SupGanTrainer(SupTrainer):
         self.netG.eval()
         self.netD.eval()
         for iteration, batch in enumerate(self.datasets.loader_valid, 1):
-            self.input, self.ground_truth = self.get_data_from_batch(batch,self.device)
+            self.input, self.ground_truth = self.get_data_from_batch(batch, self.device)
             with torch.no_grad():
                 self.fake = self.netG(self.input)
                 dic: dict = self.compute_valid()

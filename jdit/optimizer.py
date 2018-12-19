@@ -103,7 +103,7 @@ class Optimizer(object):
     """
 
     def __init__(self, params, optimizer: "[Adam,RMSprop,SGD]", lr_decay=0.92, decay_position: Union[int, list] = None,
-                 decay_type: "['epoch','step']" = "epoch", lr_minimum=1e-5, **kwargs):
+                 decay_type: "['epoch','step']" = "epoch", lr_minimum=1e-5,**kwargs):
         assert isinstance(decay_position,
                           (int, tuple, list)), "`decay_position` should be int or tuple/list, get %s instead" % type(
                 decay_position)
@@ -118,9 +118,9 @@ class Optimizer(object):
         for param_group in self.opt.param_groups:
             self.lr = param_group["lr"]
 
-    def __str__(self):
+    def __repr__(self):
 
-        string = "(" + str(self.opt)+ "\n    %s:%s\n" % ("lr_decay", self.lr_decay)
+        string = "(" + str(self.opt) + "\n    %s:%s\n" % ("lr_decay", self.lr_decay)
         string = string + "    %s:%s\n" % ("lr_minimum", self.lr_minimum)
         string = string + "    %s:%s\n" % ("decay_position", self.decay_position)
         string = string + "    %s:%s\n)" % ("decay_type", self.decay_type) + ")"
@@ -131,10 +131,9 @@ class Optimizer(object):
         return getattr(self.opt, name)
 
     def use_decay(self, position: Optional[int]) -> bool:
-        """Check if this is a position of applying for learning rate decay.
+        """Judge if use learning decay on this position.
 
-        :param step: The steps of back propagation
-        :param epoch: The epoch of back propagation
+        :param position: (int) A position of step or epoch.
         :return: bool
         """
         assert isinstance(position, int)
@@ -144,9 +143,9 @@ class Optimizer(object):
             is_change_lr = position in self.decay_position
         return is_change_lr
 
-    def update_state(self, position: int):
-        if self.use_decay(position):
-            self.do_lr_decay()
+    # def update_state(self, position: int):
+    #     if self.use_decay(position):
+    #         self.do_lr_decay()
 
     def do_lr_decay(self, reset_lr_decay: float = None, reset_lr: float = None):
         """Do learning rate decay, or reset them.
@@ -172,7 +171,6 @@ class Optimizer(object):
             self.lr = reset_lr
         for param_group in self.opt.param_groups:
             param_group["lr"] = self.lr
-        print(self.lr)
 
     @property
     def configure(self):
