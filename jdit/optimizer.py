@@ -1,6 +1,7 @@
 # coding=utf-8
 from typing import Optional, Union
 import torch.optim as optim
+from inspect import signature
 
 
 class Optimizer(object):
@@ -93,28 +94,44 @@ class Optimizer(object):
             lr: 1
             weight_decay: 1e-05
         )
-        >>> opt.use_decay(1)
+        >>> opt.is_lrdecay(1)
         False
-        >>> opt.use_decay(10)
+        >>> opt.is_lrdecay(10)
         True
-        >>> opt.use_decay(20)
+        >>> opt.is_lrdecay(20)
         True
 
     """
 
-    def __init__(self, params, optimizer: "[Adam,RMSprop,SGD]", lr_decay=0.92, decay_position: Union[int, list] = None,
-                 decay_type: "['epoch','step']" = "epoch", lr_minimum=1e-5,**kwargs):
-        assert isinstance(decay_position,
-                          (int, tuple, list)), "`decay_position` should be int or tuple/list, get %s instead" % type(
-                decay_position)
-        assert decay_type in ['epoch', 'step'], "You need to set `decay_type` 'step' or 'epoch'"
+    def __init__(self, params: "parameters of model",
+                 optimizer: "[Adam,RMSprop,SGD...]",
+                 lr_decay=0.92,
+                 decay_position: Union[int, list] = None,
+                 decay_type: "['epoch','step']" = "epoch",
+                 lr_minimum=1e-5,
+                 **kwargs):
+        if not isinstance(decay_position, (int, tuple, list)):
+            raise TypeError("`decay_position` should be int or tuple/list, get %s instead" % type(
+                    decay_position))
+        if decay_type not in ['epoch', 'step']:
+            raise AttributeError("You need to set `decay_type` 'step' or 'epoch', get %s instead" % decay_type)
         self.lr_decay = lr_decay
         self.lr_minimum = lr_minimum
         self.decay_position = decay_position
         self.decay_type = decay_type
         self.opt_name = optimizer
-        Optim = getattr(optim, optimizer)
-        self.opt = Optim(filter(lambda p: p.requires_grad, params), **kwargs)
+
+        try:
+            Optim = getattr(optim, optimizer)
+            self.opt = Optim(filter(lambda p: p.requires_grad, params), **kwargs)
+        except TypeError as e:
+            raise TypeError(
+                    "%s\n`%s` parameters are:\n %s\n Got %s instead." % (e, optimizer, signature(self.opt), kwargs))
+        except AttributeError as e:
+            opts = [i for i in dir(optim) if not i.endswith("__") and i not in ['lr_scheduler', 'Optimizer']]
+            raise AttributeError(
+                    "%s\n`%s` is not an optimizer in torch.optim. Availible optims are:\n%s" % (e, optimizer, opts))
+
         for param_group in self.opt.param_groups:
             self.lr = param_group["lr"]
 
@@ -130,22 +147,20 @@ class Optimizer(object):
 
         return getattr(self.opt, name)
 
-    def use_decay(self, position: Optional[int]) -> bool:
+    def is_lrdecay(self, position: Optional[int]) -> bool:
         """Judge if use learning decay on this position.
 
         :param position: (int) A position of step or epoch.
         :return: bool
         """
+        if not self.decay_position:
+            return False
         assert isinstance(position, int)
         if isinstance(self.decay_position, int):
             is_change_lr = position > 0 and (position % self.decay_position) == 0
         else:
             is_change_lr = position in self.decay_position
         return is_change_lr
-
-    # def update_state(self, position: int):
-    #     if self.use_decay(position):
-    #         self.do_lr_decay()
 
     def do_lr_decay(self, reset_lr_decay: float = None, reset_lr: float = None):
         """Do learning rate decay, or reset them.
@@ -200,14 +215,11 @@ if __name__ == '__main__':
     print(opt.configure['lr_decay'])
     opt.do_lr_decay(reset_lr=0.2)
     print(opt.configure)
-    print(opt.use_decay(1))
-    print(opt.use_decay(2))
-    print(opt.use_decay(40))
-    print(opt.use_decay(10))
+    print(opt.is_lrdecay(1))
+    print(opt.is_lrdecay(2))
+    print(opt.is_lrdecay(40))
+    print(opt.is_lrdecay(10))
     param = torch.nn.Linear(10, 1).parameters()
     hpd = {"optimizer": "Adam", "lr_decay": 0.1, "decay_position": [1, 3, 5], "decay_type": "epoch",
            "lr": 0.9, "betas": (0.9, 0.999), "weight_decay": 1e-5}
     opt = Optimizer(param, **hpd)
-    print(opt.update_state(1), opt.opt)
-    print(opt.update_state(3), opt.opt)
-    print(opt.update_state(40), opt.lr)

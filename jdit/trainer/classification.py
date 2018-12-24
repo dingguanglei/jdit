@@ -18,7 +18,6 @@ class ClassificationTrainer(SupTrainer):
         self.labels = None
         self.output = None
 
-
     def train_epoch(self, subbar_disable=False):
         # self._watch_images(show_imgs_num=3, tag="Train")
         for iteration, batch in tqdm(enumerate(self.datasets.loader_train, 1), unit="step", disable=subbar_disable):

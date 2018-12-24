@@ -6,7 +6,6 @@ from torch import save, load
 from typing import Union
 from collections import OrderedDict
 from types import FunctionType
-from typing import List, Optional
 
 
 class _cached_property(object):
@@ -92,6 +91,7 @@ class Model(object):
         >>> output = net(input_tensor)
 
     """
+
     def __init__(self, proto_model: Module,
                  gpu_ids_abs: Union[list, tuple] = (),
                  init_method: Union[str, FunctionType, None] = "kaiming",
@@ -244,14 +244,16 @@ class Model(object):
         weights = self._fix_weights(self.model.state_dict(), "remove", False)  # try to remove '.module' in keys.
         save(weights, model_weights_path)
 
-    def check_point_epoch(self, model_name: str, epoch: int, logdir="log"):
+    def is_checkpoint(self, model_name: str, epoch: int, logdir="log"):
+        if not self.check_point_pos:
+            return False
         if isinstance(epoch, int):
             is_check_point = epoch > 0 and (epoch % self.check_point_pos) == 0
         else:
             is_check_point = epoch in self.check_point_pos
         if is_check_point:
             self.check_point(model_name, epoch, logdir)
-        return  is_check_point
+        return is_check_point
 
     @staticmethod
     def count_params(proto_model: Module):
@@ -320,7 +322,7 @@ class Model(object):
                 if is_strict:
                     assert not k.startswith("module."), "The key of weights dict is %s. Can not add 'module.'" % k
                 if not k.startswith("module."):
-                    name = "module.".join(k)  # add `module.`
+                    name = "module."+ k  # add `module.`
                 else:
                     name = k
             else:
@@ -366,7 +368,6 @@ class Model(object):
         config_dic["total_params"] = self.num_params
         config_dic["structure"] = str(self.model)
         return config_dic
-
 
 
 if __name__ == '__main__':

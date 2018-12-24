@@ -310,12 +310,12 @@ class SupTrainer(object):
 
     def _check_point(self):
         for name, model in self._models.items():
-            model.check_point_epoch(name, self.current_epoch, self.logdir)
+            model.is_checkpoint(name, self.current_epoch, self.logdir)
 
     def _change_lr(self, decay_type="step", position=2):
         is_change = False
         for name, opt in self._opts.items():
-            if opt.decay_type == decay_type and opt.use_decay(position):
+            if opt.decay_type == decay_type and opt.is_lrdecay(position):
                 opt.do_lr_decay()
                 is_change = True
         return is_change

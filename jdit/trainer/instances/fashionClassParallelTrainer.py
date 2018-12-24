@@ -3,9 +3,10 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from jdit.trainer.classification import ClassificationTrainer
-from jdit import Model
+from jdit.model import Model
 from jdit.optimizer import Optimizer
 from jdit.dataset import FashionMNIST
+from jdit.parallel import SupParallelTrainer
 
 
 class SimpleModel(nn.Module):
@@ -29,15 +30,12 @@ class SimpleModel(nn.Module):
 
 
 class FashingClassTrainer(ClassificationTrainer):
-    def __init__(self, logdir, nepochs, gpu_ids, net, opt, datasets, num_class):
-        super(FashingClassTrainer, self).__init__(logdir, nepochs, gpu_ids, net, opt, datasets, num_class)
-        data, label = self.datasets.samples_train
-        self.watcher.embedding(data, data, label, 1)
+    def __init__(self, logdir, nepochs, gpu_ids, net, opt, dataset, num_class):
+        super(FashingClassTrainer, self).__init__(logdir, nepochs, gpu_ids, net, opt, dataset, num_class)
 
     def compute_loss(self):
         var_dic = {}
         var_dic["CEP"] = loss = nn.CrossEntropyLoss()(self.output, self.labels.squeeze().long())
-
         _, predict = torch.max(self.output.detach(), 1)  # 0100=>1  0010=>2
         total = predict.size(0) * 1.0
         labels = self.labels.squeeze().long()
@@ -48,7 +46,7 @@ class FashingClassTrainer(ClassificationTrainer):
 
     def compute_valid(self):
         var_dic = {}
-        var_dic["CEP"] = cep = nn.CrossEntropyLoss()(self.output, self.labels.squeeze().long())
+        var_dic["CEP"] = nn.CrossEntropyLoss()(self.output, self.labels.squeeze().long())
 
         _, predict = torch.max(self.output.detach(), 1)  # 0100=>1  0010=>2
         total = predict.size(0) * 1.0
@@ -59,40 +57,53 @@ class FashingClassTrainer(ClassificationTrainer):
         return var_dic
 
 
-def start_fashingClassTrainer(gpus=(), nepochs=100, run_type="debug"):
-    """" An example of fashing-mnist classification
+def build_task_trainer(unfixed_params):
+    logdir = unfixed_params['logdir']
+    gpu_ids_abs = unfixed_params["gpu_ids_abs"]
+    depth = unfixed_params["depth"]
+    lr = unfixed_params["lr"]
 
-    """
+    batch_size = 32
+    opt_name = "RMSprop"
+    lr_decay = 0.94
+    decay_position= 1
+    decay_type = "epoch"
+    weight_decay = 2e-5
+    momentum = 0
+    nepochs = 100
     num_class = 10
-    depth = 32
-    gpus = gpus
-    batch_size = 64
-    nepochs = nepochs
-    opt_hpm = {"optimizer": "Adam",
-               "lr_decay": 0.94,
-               "decay_position": 10,
-               "decay_type": "epoch",
-               "lr": 1e-3,
-               "weight_decay": 2e-5,
-               "betas": (0.9, 0.99)}
-
-    print('===> Build dataset')
-    mnist = FashionMNIST(batch_size=batch_size)
     torch.backends.cudnn.benchmark = True
-    print('===> Building model')
-    net = Model(SimpleModel(depth=depth), gpu_ids_abs=gpus, init_method="kaiming", check_point_pos=1)
-    print('===> Building optimizer')
-    opt = Optimizer(net.parameters(), **opt_hpm)
-    print('===> Training')
-    print("using `tensorboard --logdir=log` to see learning curves and net structure."
-          "training and valid_epoch data, configures info and checkpoint were save in `log` directory.")
-    Trainer = FashingClassTrainer("log/fashion_classify", nepochs, gpus, net, opt, mnist, num_class)
-    if run_type == "train":
-        Trainer.train()
-    elif run_type == "debug":
-        Trainer.debug()
+    mnist = FashionMNIST(root="datasets/fashion_data", batch_size=batch_size, num_workers=2)
+    net = Model(SimpleModel(depth), gpu_ids_abs=gpu_ids_abs, init_method="kaiming", verbose=False)
+    opt = Optimizer(net.parameters(), opt_name, lr_decay, decay_position, decay_type,
+                    lr=lr, weight_decay=weight_decay, momentum=momentum)
+    Trainer = FashingClassTrainer(logdir, nepochs, gpu_ids_abs, net, opt, mnist, num_class)
+    return Trainer
 
 
+def trainerParallel():
+    unfixed_params = [
+        {'task_id': 1, 'gpu_ids_abs': [],
+         'depth': 4, 'lr': 1e-3,
+         },
+        {'task_id': 1, 'gpu_ids_abs': [],
+         'depth': 8, 'lr': 1e-2,
+         },
+
+        {'task_id': 2, 'gpu_ids_abs': [],
+         'depth': 4, 'lr': 1e-3,
+         },
+        {'task_id': 2, 'gpu_ids_abs': [],
+         'depth': 8, 'lr': 1e-2,
+         },
+        ]
+    tp = SupParallelTrainer(unfixed_params, build_task_trainer)
+    return tp
+
+
+def start_fashingClassPrarallelTrainer():
+    tp = trainerParallel()
+    tp.train()
 
 if __name__ == '__main__':
-    start_fashingClassTrainer()
+    start_fashingClassPrarallelTrainer()
