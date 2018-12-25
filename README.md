@@ -172,6 +172,7 @@ training and valid_epoch data, configures info and checkpoint were save in `log`
 ```
 To see learning curves in tensorboard. Pay attention to your code about ``var_dic["ACC"], var_dic["CEP"]``.
 This will be shown in the tensorboard.
+
 For learning curves:
 
 ![tb_curves](https://github.com/dingguanglei/jdit/blob/master/resources/tb_scalars.png)
