@@ -171,16 +171,16 @@ This will be shown in the tensorboard.
 
 For learning curves:
 
-![tb_curves](https://github.com/dingguanglei/jdit/blob/pages/resources/tb_scalars.png)
+![tb_curves](https://github.com/dingguanglei/jdit/blob/master/resources/tb_scalars.png)
 
 For Model structure:
 
-![tb_curves](https://github.com/dingguanglei/jdit/blob/pages/resources/tb_graphs.png)
+![tb_curves](https://github.com/dingguanglei/jdit/blob/master/resources/tb_graphs.png)
 
 For dataaset:
 You need to apply ``self.watcher.embedding(data, data, label)``)
 
-![tb_curves](https://github.com/dingguanglei/jdit/blob/pages/resources/tb_projector.png)
+![tb_curves](https://github.com/dingguanglei/jdit/blob/master/resources/tb_projector.png)
 
 -   It will search a fashing mnist dataset.
 -   Then build a resnet18 for classification.
