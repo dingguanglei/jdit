@@ -15,6 +15,10 @@ You only need to implement you ideas and don't do anything with training
 framework, multiply-gpus, checkpoint, process visualization, performance
 evaluation and so on.
 
+Guide: [https://dingguanglei.com/jdit](https://dingguanglei.com/jdit)
+
+Docs: [https://jdit.readthedocs.io/en/latest/index.html](https://jdit.readthedocs.io/en/latest/index.html)
+
 ## Install 
 Requires:
 
