@@ -182,7 +182,7 @@ This will be shown in the tensorboard.
 
 ![tb_graphs](https://github.com/dingguanglei/jdit/blob/master/resources/tb_graphs.png)
 
-### Dataaset
+### Dataset
 
 You need to apply ``self.watcher.embedding(data, data, label)``)
 
@@ -191,27 +191,32 @@ You need to apply ``self.watcher.embedding(data, data, label)``)
 ### Log
 All of these will be saved in ``log/fashion_classify``, because of parameter ``logdir = "log/fashion_classify"``.
 
-![tb_curves](https://github.com/dingguanglei/jdit/blob/master/resources/class_log.png)
+![Log list](https://github.com/dingguanglei/jdit/blob/master/resources/class_log.jpg)
 
 #### Process data
 For the most thing that we care about are training process and valid process data. 
 They are saved in ``Train.csv`` and ``Valid.csv``. The following are the content.
 
+**Train.csv**
 ![Valid data](https://github.com/dingguanglei/jdit/blob/master/resources/class_valid.png)
 
+**Valid.csv**
 ![Training data](https://github.com/dingguanglei/jdit/blob/master/resources/class_train.png)
 
 #### Model
 The info of model will be saved in ``net.csv``. (The file name is given by your variable name(``net``).)
 If your model changes during the process, it will be recorded in this file.
+
 ![Model info](https://github.com/dingguanglei/jdit/blob/master/resources/class_net.png)
 
 #### Learning rate trace
 From file ``opt.csv`` you can see the learning rate variation. It will be saved only feature changed.
+
 ![Optimizer info](https://github.com/dingguanglei/jdit/blob/master/resources/class_opt.png)
 
 #### Dataset info
 From file ``datasets.csv`` you can see the information of your dataset.
+
 ![Dataset info](https://github.com/dingguanglei/jdit/blob/master/resources/class_dataset.png)
 
 #### Others
@@ -238,8 +243,11 @@ easily by using jdit framework. Jdit framework can deal with
 For other templates, you can see and learn form here. 
 
 [Classification Guide](https://dingguanglei.com/jdit)
+
 [Gan for Generation Guide](https://dingguanglei.com/jdit) 
+
 [Gan for Pix2pix Guide](https://dingguanglei.com/jdit)
+
 [Parallel Task Guide](https://dingguanglei.com/jdit)
 ......
 
