@@ -39,10 +39,10 @@ class Discriminator(nn.Module):
 class Generator(nn.Module):
     def __init__(self, input_nc=256, output_nc=1, depth=64):
         super(Generator, self).__init__()
-        self.latent_to_features = nn.Sequential(
+        self.encoder = nn.Sequential(
                 nn.ConvTranspose2d(input_nc, 4 * depth, 4, 1, 0),  # 256,1,1 =>  256,4,4
                 nn.ReLU())
-        self.features_to_image = nn.Sequential(
+        self.decoder = nn.Sequential(
                 nn.ConvTranspose2d(4 * depth, 4 * depth, 4, 2, 1),  # 256,4,4 =>  256,8,8
                 nn.ReLU(),
                 nn.BatchNorm2d(4 * depth),
@@ -56,13 +56,13 @@ class Generator(nn.Module):
                 )
 
     def forward(self, input_data):
-        out = self.latent_to_features(input_data)
-        out = self.features_to_image(out)
+        out = self.encoder(input_data)
+        out = self.decoder(out)
         return out
 
 
 class FashingGenerateGenerateGanTrainer(GenerateGanTrainer):
-    d_turn = 5
+    d_turn = 1
     def __init__(self, logdir, nepochs, gpu_ids_abs, netG, netD, optG, optD, dataset, latent_shape):
         super(FashingGenerateGenerateGanTrainer, self).__init__(logdir, nepochs, gpu_ids_abs, netG, netD, optG, optD,
                                                                 dataset,

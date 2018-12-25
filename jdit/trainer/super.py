@@ -295,7 +295,7 @@ class SupTrainer(object):
         if (configs_names is None) or "dataset" in configs_names:
             _datasets = super(SupTrainer, self).__getattribute__("_datasets")
             for name, dataset in _datasets.items():
-                self.loger.regist_config(dataset, self.current_epoch, self.step, config_filename=name)
+                self.loger.regist_config(dataset, config_filename=name)
         if (configs_names is None) or "optimizer" in configs_names:
             _opts = super(SupTrainer, self).__getattribute__("_opts")
             for name, opt in _opts.items():
