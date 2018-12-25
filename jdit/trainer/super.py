@@ -81,31 +81,40 @@ class SupTrainer(object):
         super(SupTrainer, self).__setattr__(key, value)
 
         if key == "step" and value != 0:
-            is_change = self._change_lr("step", value)
+            # is_change = self._change_lr("step", value)
+            is_change = super(SupTrainer, self).__getattribute__("_change_lr")("step", value)
             if is_change:
-                self._record_configs("optimizer")
+                # self._record_configs("optimizer")
+                super(SupTrainer, self).__getattribute__("_record_configs")("optimizer")
         elif key == "current_epoch" and value != 0:
-            is_change = self._change_lr("epoch", value)
+            is_change = super(SupTrainer, self).__getattribute__("_change_lr")("epoch", value)
             if is_change:
-                self._record_configs("optimizer")
-            self._check_point()
-            self._record_configs("performance")
+                super(SupTrainer, self).__getattribute__("_record_configs")("optimizer")
+                super(SupTrainer, self).__getattribute__("_check_point")()
+            super(SupTrainer, self).__getattribute__("_record_configs")("performance")
         elif isinstance(value, Model):
-            self._models.update({key: value})
+            super(SupTrainer, self).__getattribute__("_models").update({key: value})
         elif isinstance(value, Optimizer):
-            self._opts.update({key: value})
+            super(SupTrainer, self).__getattribute__("_opts").update({key: value})
         elif isinstance(value, DataLoadersFactory):
-            self._datasets.update({key: value})
+            super(SupTrainer, self).__getattribute__("_datasets").update({key: value})
         else:
             pass
 
     def __delattr__(self, item):
         if isinstance(item, Model):
-            self._models.pop(item)
+            super(SupTrainer, self).__getattribute__("_models").pop(item)
         elif isinstance(item, Optimizer):
-            self._opts.pop(item)
+            super(SupTrainer, self).__getattribute__("_opts").pop(item)
         elif isinstance(item, DataLoadersFactory):
-            self._datasets.pop(item)
+            super(SupTrainer, self).__getattribute__("_datasets").pop(item)
+
+    def __getattribute__(self, name):
+        v = super(SupTrainer, self).__getattribute__(name)
+        if name == "get_data_from_batch":
+            new_fc = super(SupTrainer, self).__getattribute__("_mv_device")(v)
+            return new_fc
+        return v
 
     def debug(self):
         """Debug the trainer.
@@ -209,18 +218,12 @@ class SupTrainer(object):
         """
         pass
 
-    def __getattribute__(self, name):
-        v = super().__getattribute__(name)
-        if name == "get_data_from_batch":
-            new_fc = self._mv_device(v)
-            return new_fc
-        return v
-
     def _mv_device(self, f):
         @wraps(f)
         def wrapper(*args, **kwargs):
             variables = f(*args, **kwargs)
-            variables = tuple(v.to(self.device) if hasattr(v, "to") else v for v in variables)
+            device = super(SupTrainer, self).__getattribute__("device")
+            variables = tuple(v.to(device) if hasattr(v, "to") else v for v in variables)
             return variables
 
         return wrapper
@@ -286,13 +289,16 @@ class SupTrainer(object):
         :return:
         """
         if (configs_names is None) or "model" in configs_names:
-            for name, model in self._models.items():
+            _models = super(SupTrainer, self).__getattribute__("_models")
+            for name, model in _models.items():
                 self.loger.regist_config(model, self.current_epoch, self.step, config_filename=name)
         if (configs_names is None) or "dataset" in configs_names:
-            for name, dataset in self._datasets.items():
+            _datasets = super(SupTrainer, self).__getattribute__("_datasets")
+            for name, dataset in _datasets.items():
                 self.loger.regist_config(dataset, self.current_epoch, self.step, config_filename=name)
         if (configs_names is None) or "optimizer" in configs_names:
-            for name, opt in self._opts.items():
+            _opts = super(SupTrainer, self).__getattribute__("_opts")
+            for name, opt in _opts.items():
                 self.loger.regist_config(opt, self.current_epoch, self.step, config_filename=name)
         if (configs_names is None) or "trainer" in configs_names or (configs_names is None):
             self.loger.regist_config(self, config_filename=self.__class__.__name__)
@@ -305,16 +311,21 @@ class SupTrainer(object):
 
         :return:
         """
-        for name, model in self._models.items():
+        _models = super(SupTrainer, self).__getattribute__("_models")
+        for name, model in _models.items():
             self.watcher.graph_lazy(model, name)
 
     def _check_point(self):
-        for name, model in self._models.items():
-            model.is_checkpoint(name, self.current_epoch, self.logdir)
+        _models = super(SupTrainer, self).__getattribute__("_models")
+        current_epoch = super(SupTrainer, self).__getattribute__("current_epoch")
+        logdir = super(SupTrainer, self).__getattribute__("logdir")
+        for name, model in _models.items():
+            model.is_checkpoint(name, current_epoch, logdir)
 
     def _change_lr(self, decay_type="step", position=2):
         is_change = False
-        for name, opt in self._opts.items():
+        _opts = super(SupTrainer, self).__getattribute__("_opts")
+        for name, opt in _opts.items():
             if opt.decay_type == decay_type and opt.is_lrdecay(position):
                 opt.do_lr_decay()
                 is_change = True

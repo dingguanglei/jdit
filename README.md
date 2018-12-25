@@ -1,4 +1,4 @@
-![logo](https://github.com/dingguanglei/jdit/blob/master/logo.png)
+![logo](https://github.com/dingguanglei/jdit/blob/master/resources/logo.png)
 
 ---
 
@@ -45,6 +45,104 @@ this code in ipython cmd.(Create a main.py file is also acceptable.)
 from jdit.trainer.instances.fashingClassification import start_fashingClassTrainer
 start_fashingClassTrainer()
 ```
+The following is the accomplishment of ``start_fashingClassTrainer()``
+
+``` {.sourceCode .python}
+# coding=utf-8
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from jdit.trainer.classification import ClassificationTrainer
+from jdit import Model
+from jdit.optimizer import Optimizer
+from jdit.dataset import FashionMNIST
+
+# This is your model. Defined by torch.nn.Module
+class SimpleModel(nn.Module):
+    def __init__(self, depth=64, num_class=10):
+        super(SimpleModel, self).__init__()
+        self.num_class = num_class
+        self.layer1 = nn.Conv2d(1, depth, 3, 1, 1)
+        self.layer2 = nn.Conv2d(depth, depth * 2, 4, 2, 1)
+        self.layer3 = nn.Conv2d(depth * 2, depth * 4, 4, 2, 1)
+        self.layer4 = nn.Conv2d(depth * 4, depth * 8, 4, 2, 1)
+        self.layer5 = nn.Conv2d(depth * 8, num_class, 4, 1, 0)
+
+    def forward(self, input):
+        out = F.relu(self.layer1(input))
+        out = F.relu(self.layer2(out))
+        out = F.relu(self.layer3(out))
+        out = F.relu(self.layer4(out))
+        out = self.layer5(out)
+        out = out.view(-1, self.num_class)
+        return out
+
+# A trainer, you need to rewrite the loss and valid function.
+class FashingClassTrainer(ClassificationTrainer):
+    def __init__(self, logdir, nepochs, gpu_ids, net, opt, datasets, num_class):
+        super(FashingClassTrainer, self).__init__(logdir, nepochs, gpu_ids, net, opt, datasets, num_class)
+        data, label = self.datasets.samples_train
+        # plot samples of dataset in tensorboard.
+        self.watcher.embedding(data, data, label, 1)
+
+    def compute_loss(self):
+        var_dic = {}
+        var_dic["CEP"] = loss = nn.CrossEntropyLoss()(self.output, self.labels.squeeze().long())
+
+        _, predict = torch.max(self.output.detach(), 1)  # 0100=>1  0010=>2
+        total = predict.size(0) * 1.0
+        labels = self.labels.squeeze().long()
+        correct = predict.eq(labels).cpu().sum().float()
+        acc = correct / total
+        var_dic["ACC"] = acc
+        return loss, var_dic
+
+    def compute_valid(self):
+        var_dic = {}
+        var_dic["CEP"] = cep = nn.CrossEntropyLoss()(self.output, self.labels.squeeze().long())
+
+        _, predict = torch.max(self.output.detach(), 1)  # 0100=>1  0010=>2
+        total = predict.size(0) * 1.0
+        labels = self.labels.squeeze().long()
+        correct = predict.eq(labels).cpu().sum().float()
+        acc = correct / total
+        var_dic["ACC"] = acc
+        return var_dic
+
+
+def start_fashingClassTrainer(gpus=(), nepochs=10, run_type="train"):
+    num_class = 10
+    depth = 32
+    gpus = gpus
+    batch_size = 64
+    nepochs = nepochs
+    opt_hpm = {"optimizer": "Adam",
+               "lr_decay": 0.94,
+               "decay_position": 10,
+               "decay_type": "epoch",
+               "lr": 1e-3,
+               "weight_decay": 2e-5,
+               "betas": (0.9, 0.99)}
+
+    print('===> Build dataset')
+    mnist = FashionMNIST(batch_size=batch_size)
+    torch.backends.cudnn.benchmark = True
+    print('===> Building model')
+    net = Model(SimpleModel(depth=depth), gpu_ids_abs=gpus, init_method="kaiming", check_point_pos=1)
+    print('===> Building optimizer')
+    opt = Optimizer(net.parameters(), **opt_hpm)
+    print('===> Training')
+    print("using `tensorboard --logdir=log` to see learning curves and net structure."
+          "training and valid_epoch data, configures info and checkpoint were save in `log` directory.")
+    Trainer = FashingClassTrainer("log/fashion_classify", nepochs, gpus, net, opt, mnist, num_class)
+    if run_type == "train":
+        Trainer.train()
+    elif run_type == "debug":
+        Trainer.debug()
+
+if __name__ == '__main__':
+    start_fashingClassTrainer()
+```
 
 Then you will see something like this as following.
 
@@ -68,6 +166,20 @@ training and valid_epoch data, configures info and checkpoint were save in `log`
   0%|            | 0/10 [00:00<?, ?epoch/s]
 0step [00:00, step?/s]
 ```
+To see learning curves in tensorboard. Pay attention to your code about ``var_dic["ACC"], var_dic["CEP"]``.
+This will be shown in the tensorboard.
+For learning curves:
+
+![tb_curves](https://github.com/dingguanglei/jdit/blob/master/resources/tb_scalars.png)
+
+For Model structure:
+
+![tb_curves](https://github.com/dingguanglei/jdit/blob/master/resources/tb_graphs.png)
+
+For dataaset:
+You need to apply ``self.watcher.embedding(data, data, label)``)
+
+![tb_curves](https://github.com/dingguanglei/jdit/blob/master/resources/tb_projector.png)
 
 -   It will search a fashing mnist dataset.
 -   Then build a resnet18 for classification.
@@ -291,13 +403,8 @@ Something like this:
 
     def train():
        for epoch in range(nepochs):
-           self._record_configs() # record info
            self.train_epoch()
            self.valid_epoch()
-           # do learning rate decay
-           self._change_lr()
-           # save model check point
-           self._check_point()
        self.test()
 
 Every method will be rewrite by the second level templates. It only
@@ -357,15 +464,9 @@ Up to this level every this is clear. So, inherit the
 
 ``` {.sourceCode .python}
 class FashingClassTrainer(ClassificationTrainer):
-    mode = "L" # used by tensorboard display
-    num_class = 10
-    every_epoch_checkpoint = 20
-    every_epoch_changelr = 10
 
     def __init__(self, logdir, nepochs, gpu_ids, net, opt, dataset):
         super(FashingClassTrainer, self).__init__(logdir, nepochs, gpu_ids, net, opt, dataset)
-        # to print the network on tensorboard
-        self.watcher.graph(net, (4, 1, 32, 32), self.use_gpu)
 
     def compute_loss(self):
         var_dic = {}
