@@ -91,10 +91,10 @@ def trainerParallel():
          },
 
         {'task_id': 2, 'gpu_ids_abs': [],
-         'depth': 4, 'lr': 1e-3,
+         'depth': 4, 'lr': 1e-2,
          },
         {'task_id': 2, 'gpu_ids_abs': [],
-         'depth': 8, 'lr': 1e-2,
+         'depth': 8, 'lr': 1e-3,
          },
         ]
     tp = SupParallelTrainer(unfixed_params, build_task_trainer)

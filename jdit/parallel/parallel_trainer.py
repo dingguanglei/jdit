@@ -305,12 +305,6 @@ class SupParallelTrainer(object):
 
     """
 
-    # def __new__(cls, unfixed_params_listsss, train_func=None):
-    #     instance = super(SupParallelTrainer, cls).__new__(cls)
-    #     if not train_func:
-    #         instance.build_task_trainer = MethodType(train_func, instance)
-    #     return instance
-
     def __init__(self, unfixed_params_list: list, train_func=None):
         """
 

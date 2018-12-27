@@ -15,7 +15,7 @@ You only need to implement you ideas and don't do anything with training
 framework, multiply-gpus, checkpoint, process visualization, performance
 evaluation and so on.
 
-Guide: [https://dingguanglei.com/jdit](https://dingguanglei.com/jdit)
+Guide: [https://dingguanglei.com/tag/jdit](https://dingguanglei.com/tag/jdit)
 
 Docs: [https://jdit.readthedocs.io/en/latest/index.html](https://jdit.readthedocs.io/en/latest/index.html)
 
@@ -259,13 +259,17 @@ easily by using jdit framework. Jdit framework can deal with
 ## More
 For other templates, you can see and learn form here. 
 
-[Classification Guide](https://dingguanglei.com/jdit)
+Guide List:
 
-[Gan for Generation Guide](https://dingguanglei.com/jdit) 
+* [Classification](https://dingguanglei.com/jdit_start)
 
-[Gan for Pix2pix Guide](https://dingguanglei.com/jdit)
+* [Generative Adversarial Networks](https://dingguanglei.com/jdit_gan) 
 
-[Parallel Task Guide](https://dingguanglei.com/jdit)
+* [Gan for Generation](https://dingguanglei.com/jdit_gan_generataion) 
+
+* [Gan for Pix2pix](https://dingguanglei.com/jdit_gan_pix2pix)
+
+* [Parallel Task](https://dingguanglei.com/jdit_parallel)
 
 ......
 
