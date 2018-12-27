@@ -1,4 +1,4 @@
-![logo](https://github.com/dingguanglei/jdit/blob/master/resources/logo.png)
+![Jdit](https://raw.githubusercontent.com/dingguanglei/jdit/master/resources/logo.png)
 
 ---
 
@@ -44,7 +44,7 @@ This method is recommended, because you can keep the newest version.
 3. Install
     You will find packages in `jdit/dist/`. Use pip to install.
     ```
-    pip install dist/jdit-0.0.3-py3-none-any.whl
+    pip install dist/jdit-0.0.6-py3-none-any.whl
     ```
 
 ### From pip
@@ -190,22 +190,23 @@ This will be shown in the tensorboard.
 
 ### Learning curves
 
-![tb_scalars](https://github.com/dingguanglei/jdit/blob/master/resources/tb_scalars.png)
+![tb_scalars](https://raw.githubusercontent.com/dingguanglei/jdit/master/resources/tb_scalars.png
+)
 
 ### Model structure
 
-![tb_graphs](https://github.com/dingguanglei/jdit/blob/master/resources/tb_graphs.png)
+![tb_graphs](https://raw.githubusercontent.com/dingguanglei/jdit/master/resources/tb_graphs.png)
 
 ### Dataset
 
 You need to apply ``self.watcher.embedding(data, data, label)``)
 
-![tb_projector](https://github.com/dingguanglei/jdit/blob/master/resources/tb_projector.png)
+![tb_projector](https://raw.githubusercontent.com/dingguanglei/jdit/master/resources/tb_projector.png)
 
 ### Log
 All of these will be saved in ``log/fashion_classify``, because of parameter ``logdir = "log/fashion_classify"``.
 
-![Log list](https://github.com/dingguanglei/jdit/blob/master/resources/class_log.jpg)
+![Log list](https://raw.githubusercontent.com/dingguanglei/jdit/master/resources/class_log.jpg)
 
 #### Process data
 For the most thing that we care about are training process and valid process data. 
@@ -213,27 +214,27 @@ They are saved in ``Train.csv`` and ``Valid.csv``. The following are the content
 
 **Train.csv**
 
-![Valid data](https://github.com/dingguanglei/jdit/blob/master/resources/class_valid.png)
+![Valid data](https://raw.githubusercontent.com/dingguanglei/jdit/master/resources/class_valid.png)
 
 **Valid.csv**
 
-![Training data](https://github.com/dingguanglei/jdit/blob/master/resources/class_train.png)
+![Training data](https://raw.githubusercontent.com/dingguanglei/jdit/master/resources/class_train.png)
 
 #### Model
 The info of model will be saved in ``net.csv``. (The file name is given by your variable name(``net``).)
 If your model changes during the process, it will be recorded in this file.
 
-![Model info](https://github.com/dingguanglei/jdit/blob/master/resources/class_net.png)
+![Model info](https://raw.githubusercontent.com/dingguanglei/jdit/master/resources/class_net.png)
 
 #### Learning rate trace
 From file ``opt.csv`` you can see the learning rate variation. It will be saved only feature changed.
 
-![Optimizer info](https://github.com/dingguanglei/jdit/blob/master/resources/class_opt.png)
+![Optimizer info](https://raw.githubusercontent.com/dingguanglei/jdit/master/resources/class_opt.png)
 
 #### Dataset info
 From file ``datasets.csv`` you can see the information of your dataset.
 
-![Dataset info](https://github.com/dingguanglei/jdit/blob/master/resources/class_dataset.png)
+![Dataset info](https://raw.githubusercontent.com/dingguanglei/jdit/master/resources/class_dataset.png)
 
 #### Others
 

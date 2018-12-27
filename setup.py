@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name="jdit",  # pypi中的名称，pip或者easy_install安装时使用的名称，或生成egg文件的名称
-        version="0.0.4",
+        version="0.0.6",
     author="Guanglei Ding",
     author_email="dingguanglei.bupt@qq.com",
     maintainer='Guanglei Ding',
@@ -10,6 +10,7 @@ setup(
     description=("Make it easy to do research on pytorch"),
     # long_description=open('docs/source/index.rst').read(),
     long_description=open('README.md').read(),
+        long_description_content_type="text/markdown",
     license="Apache License 2.0",
     keywords="pytorch research framework",
     platforms=["all"],
@@ -42,6 +43,9 @@ setup(
         'Programming Language :: Python :: Implementation',
         'Programming Language :: Python :: 3.6',
         # 'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: Implementation :: CPython',
+        'Topic :: Scientific/Engineering :: Artificial Intelligence',
+        'Topic :: Scientific/Engineering :: Visualization  '
     ],
     # 此项需要，否则卸载时报windows error
     zip_safe=False
