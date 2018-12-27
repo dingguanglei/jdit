@@ -63,6 +63,7 @@ class Generator(nn.Module):
 
 class FashingGenerateGenerateGanTrainer(GenerateGanTrainer):
     d_turn = 1
+
     def __init__(self, logdir, nepochs, gpu_ids_abs, netG, netD, optG, optD, dataset, latent_shape):
         super(FashingGenerateGenerateGanTrainer, self).__init__(logdir, nepochs, gpu_ids_abs, netG, netD, optG, optD,
                                                                 dataset,
@@ -91,7 +92,7 @@ class FashingGenerateGenerateGanTrainer(GenerateGanTrainer):
         return var_dic
 
 
-def start_fashingGenerateGanTrainer(gpus=(), nepochs=200, lr=1e-3, depth_G=32, depth_D=32, latent_shape=(256, 1, 1),
+def start_fashingGenerateGanTrainer(gpus=(), nepochs=50, lr=1e-3, depth_G=32, depth_D=32, latent_shape=(256, 1, 1),
                                     run_type="train"):
     gpus = gpus  # set `gpus = []` to use cpu
     batch_size = 64
@@ -101,13 +102,13 @@ def start_fashingGenerateGanTrainer(gpus=(), nepochs=200, lr=1e-3, depth_G=32, d
     depth_G = depth_G
     depth_D = depth_D
 
-    G_hprams = {"optimizer": "Adam", "lr_decay": 0.9,
-                "decay_position": 10, "decay_type": "epoch",
+    G_hprams = {"optimizer": "Adam", "lr_decay": 0.94,
+                "decay_position": 2, "decay_type": "epoch",
                 "lr": lr, "weight_decay": 2e-5,
                 "betas": (0.9, 0.99)
                 }
-    D_hprams = {"optimizer": "RMSprop", "lr_decay": 0.9,
-                "decay_position": 10, "decay_type": "epoch",
+    D_hprams = {"optimizer": "RMSprop", "lr_decay": 0.94,
+                "decay_position": 2, "decay_type": "epoch",
                 "lr": lr, "weight_decay": 2e-5,
                 "momentum": 0
                 }
@@ -119,13 +120,13 @@ def start_fashingGenerateGanTrainer(gpus=(), nepochs=200, lr=1e-3, depth_G=32, d
     torch.backends.cudnn.benchmark = True
     print('===> Building model')
     D_net = Discriminator(input_nc=image_channel, depth=depth_D)
-    D = Model(D_net, gpu_ids_abs=gpus, init_method="kaiming", check_point_pos=50)
+    D = Model(D_net, gpu_ids_abs=gpus, init_method="kaiming", check_point_pos=10)
     # -----------------------------------
     G_net = Generator(input_nc=latent_shape[0], output_nc=image_channel, depth=depth_G)
-    G = Model(G_net, gpu_ids_abs=gpus, init_method="kaiming", check_point_pos=50)
+    G = Model(G_net, gpu_ids_abs=gpus, init_method="kaiming", check_point_pos=10)
     print('===> Building optimizer')
-    opt_D = Optimizer(D.parameters(),**D_hprams)
-    opt_G = Optimizer(G.parameters(),**G_hprams)
+    opt_D = Optimizer(D.parameters(), **D_hprams)
+    opt_G = Optimizer(G.parameters(), **G_hprams)
     print('===> Training')
     print("using `tensorboard --logdir=log` to see learning curves and net structure."
           "training and valid_epoch data, configures info and checkpoint were save in `log` directory.")

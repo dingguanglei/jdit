@@ -19,23 +19,37 @@ Guide: [https://dingguanglei.com/jdit](https://dingguanglei.com/jdit)
 
 Docs: [https://jdit.readthedocs.io/en/latest/index.html](https://jdit.readthedocs.io/en/latest/index.html)
 
+If you have any problems, or you find bugs you can contact the author.
+
+E-mail: dingguanglei.bupt@qq.com
+
 ## Install 
 Requires:
-
+```
     tensorboard >= 1.12.0
     tensorboardX >= 1.4
     pytorch >= 0.4.1
-    
-By using `setup.py` to install the package.
+``` 
+### From source
+This method is recommended, because you can keep the newest version.
+1. Clone from github
+    ```
+    git clone https://github.com/dingguanglei/jdit
+    ```
+2. Setup
+    By using `setup.py` to install the package.
+    ```
+    python setup.py bdist_wheel
+    ```
+3. Install
+    You will find packages in `jdit/dist/`. Use pip to install.
+    ```
+    pip install dist/jdit-0.0.3-py3-none-any.whl
+    ```
 
+### From pip
 ```
-python setup.py bdist_wheel
-```
-
-You will find packages in `jdit/dist/`. Use pip to install.
-
-```
-pip install jdit-0.0.3-py3-none-any.whl
+pip install jdit
 ```
 
 
@@ -198,9 +212,11 @@ For the most thing that we care about are training process and valid process dat
 They are saved in ``Train.csv`` and ``Valid.csv``. The following are the content.
 
 **Train.csv**
+
 ![Valid data](https://github.com/dingguanglei/jdit/blob/master/resources/class_valid.png)
 
 **Valid.csv**
+
 ![Training data](https://github.com/dingguanglei/jdit/blob/master/resources/class_train.png)
 
 #### Model
@@ -249,6 +265,7 @@ For other templates, you can see and learn form here.
 [Gan for Pix2pix Guide](https://dingguanglei.com/jdit)
 
 [Parallel Task Guide](https://dingguanglei.com/jdit)
+
 ......
 
 

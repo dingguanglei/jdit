@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name="jdit",  # pypi中的名称，pip或者easy_install安装时使用的名称，或生成egg文件的名称
-    version="0.0.3",
+        version="0.0.4",
     author="Guanglei Ding",
     author_email="dingguanglei.bupt@qq.com",
     maintainer='Guanglei Ding',
@@ -34,8 +34,8 @@ setup(
     classifiers=[  # 程序的所属分类列表
         "Topic :: Scientific/Engineering :: Artificial Intelligence",
         "License :: OSI Approved :: Apache Software License",
-        'Development Status :: 2 - Pre-Alpha',
-
+        # 'Development Status :: 2 - Pre-Alpha',
+        'Development Status :: 3 - Alpha',
         'Operating System :: OS Independent',
         'Intended Audience :: Developers',
         "Programming Language :: Python :: 3 :: Only",

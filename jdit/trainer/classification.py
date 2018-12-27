@@ -19,11 +19,10 @@ class ClassificationTrainer(SupTrainer):
         self.output = None
 
     def train_epoch(self, subbar_disable=False):
-        # self._watch_images(show_imgs_num=3, tag="Train")
         for iteration, batch in tqdm(enumerate(self.datasets.loader_train, 1), unit="step", disable=subbar_disable):
             self.step += 1
 
-            self.input, self.ground_truth, self.labels = self.get_data_from_batch(batch, self.device)
+            self.input, self.labels = self.get_data_from_batch(batch, self.device)
             self.output = self.net(self.input)
             self._train_iteration(self.opt, self.compute_loss, csv_filename="Train")
 
@@ -131,7 +130,7 @@ class ClassificationTrainer(SupTrainer):
         avg_dic = dict()
         self.net.eval()
         for iteration, batch in enumerate(self.datasets.loader_valid, 1):
-            self.input, self.ground_truth, self.labels = self.get_data_from_batch(batch, self.device)
+            self.input, self.labels = self.get_data_from_batch(batch, self.device)
             self.output = self.net(self.input).detach()
             dic = self.compute_valid()
             if avg_dic == {}:
@@ -148,21 +147,22 @@ class ClassificationTrainer(SupTrainer):
         self.loger.write(self.step, self.current_epoch, avg_dic, "Valid", header=self.current_epoch <= 1)
         self.net.train()
 
-    def get_data_from_batch(self, batch_data, device, use_onehot=True):
-        input_tensor, labels = batch_data[0], batch_data[1]
-        if use_onehot:
-            # label => onehot
-            y_onehot = torch.zeros(labels.size(0), self.num_class)
-            if labels.size() != (labels.size(0), self.num_class):
-                labels = labels.reshape((labels.size(0), 1))
-            ground_truth_tensor = y_onehot.scatter_(1, labels, 1).long()  # labels =>    [[],[],[]]  batchsize,num_class
-            labels_tensor = labels
-        else:
-            # onehot => label
-            ground_truth_tensor = labels
-            labels_tensor = torch.max(self.labels.detach(), 1)
+    def get_data_from_batch(self, batch_data, device):
+        input_tensor, labels_tensor = batch_data[0], batch_data[1]
+        # if use_onehot:
+        #     # label => onehot
+        #     y_onehot = torch.zeros(labels.size(0), self.num_class)
+        #     if labels.size() != (labels.size(0), self.num_class):
+        #         labels = labels.reshape((labels.size(0), 1))
+        #     ground_truth_tensor = y_onehot.scatter_(1, labels, 1).long()  # labels =>    [[],[],[]]  batchsize,
+        #     num_class
+        #     labels_tensor = labels
+        # else:
+        #     # onehot => label
+        #     ground_truth_tensor = labels
+        #     labels_tensor = torch.max(self.labels.detach(), 1)
 
-        return input_tensor, ground_truth_tensor, labels_tensor
+        return input_tensor, labels_tensor
 
     def _watch_images(self, show_imgs_num=4, tag="Train"):
         pass
