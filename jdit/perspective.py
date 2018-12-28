@@ -15,7 +15,7 @@ class FeatureVisualization(object):
     :param log:The log directory and ``--logdir=`` of tensorboard will be run in this dir.
     """
 
-    def __init__(self, model: Union[Model, Module], log: str):
+    def __init__(self, model: Union[Model, Module], logdir: str):
         model.eval()
         self.model = model
         self.activations: Dict[str, Tensor] = {}
@@ -73,7 +73,7 @@ class FeatureVisualization(object):
                 if isinstance(input_tensor, Tensor):
                     input_tensor = input_tensor.cuda()
                     self.model(input_tensor)
-                elif isinstance(input_tensor, tuple) or isinstance(input_tensor, list):
+                elif isinstance(input_tensor, (tuple, list)):
                     input_tensor = [item.cuda() for item in input_tensor]
                     self.model(*input_tensor)
                 else:
@@ -83,7 +83,7 @@ class FeatureVisualization(object):
             else:
                 if isinstance(input_tensor, Tensor):
                     self.model(input_tensor)
-                elif isinstance(input_tensor, tuple) or isinstance(input_tensor, list):
+                elif isinstance(input_tensor, (tuple, list)):
                     self.model(*input_tensor)
                 else:
                     raise TypeError(
@@ -133,7 +133,7 @@ class FeatureVisualization(object):
         """
         self.trace_activation(input_tensor, block_names)
         if show_struct:
-            self.watcher.graph(self.model, None, use_gpu, input_tensor)
+            self.watcher.graph(self.model, self.model.__class__.__name__, use_gpu, input_tensor.size())
 
         for layer_name, tensor in self.activations.items():
             if len(tensor.shape) == 4:

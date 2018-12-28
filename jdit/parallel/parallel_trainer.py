@@ -72,7 +72,7 @@ import copy
 #
 #         self.candidate_params_list = self._build_candidate_params(default_params, unfixed_params_list)
 #         # [{params1..},{params2...}]
-#         self.parallel_plans = self._distribute_task_on_devices(self.candidate_params_list)
+#         self.parallel_plans = self._distribute_task(self.candidate_params_list)
 #         # self.parallel_plans = {(task_id):[{param1},{param2}]}
 #
 #     @abstractmethod
@@ -167,7 +167,7 @@ import copy
 #                 print(traceback.print_exc())
 #                 print('traceback.format_exc():\n%s' % traceback.format_exc())
 #
-#     def _distribute_task_on_devices(self, candidate_params_list: list):
+#     def _distribute_task(self, candidate_params_list: list):
 #         for params in candidate_params_list:
 #             assert "gpu_ids_abs" in params and "task_id" in params, "You must pass params `gpu_ids_abs` to set device"
 #             assert "task_id" in params, "You must pass params `task_id` to set a task ID"
@@ -324,7 +324,7 @@ class SupParallelTrainer(object):
 
         candidate_params_list = self._add_logdirs_to_unfixed_params(unfixed_params_list)
         # [{params1..},{params2...}]
-        self.parallel_plans = self._distribute_task_on_devices(candidate_params_list)
+        self.parallel_plans = self._distribute_task(candidate_params_list)
         # self.parallel_plans = {task_id:[{param1},{param2}]}
 
     def build_task_trainer(self, unfixed_params: dict):
@@ -416,7 +416,7 @@ class SupParallelTrainer(object):
                 print(traceback.print_exc())
                 print('traceback.format_exc():\n%s' % traceback.format_exc())
 
-    def _distribute_task_on_devices(self, candidate_params_list: list):
+    def _distribute_task(self, candidate_params_list: list):
         for params in candidate_params_list:
             # assert "gpu_ids_abs" in params and "task_id" in params, "You must pass params `gpu_ids_abs` to set device"
             assert "task_id" in params, "You must pass params `task_id` to set a task ID"

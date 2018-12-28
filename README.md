@@ -30,6 +30,10 @@ Requires:
     tensorboardX >= 1.4
     pytorch >= 0.4.1
 ``` 
+Install requirement.
+```
+pip install -r requirements.txt
+```
 ### From source
 This method is recommended, because you can keep the newest version.
 1. Clone from github
@@ -44,7 +48,7 @@ This method is recommended, because you can keep the newest version.
 3. Install
     You will find packages in `jdit/dist/`. Use pip to install.
     ```
-    pip install dist/jdit-0.0.6-py3-none-any.whl
+    pip install dist/jdit-0.0.x-py3-none-any.whl
     ```
 
 ### From pip

@@ -154,7 +154,7 @@ class Pix2pixGanTrainer(SupGanTrainer):
         """
         for index, batch in enumerate(self.datasets.loader_test, 1):
             # For test only have input without groundtruth
-            self.input, _ = self.get_data_from_batch(batch)
+            self.input, _ = self.get_data_from_batch(batch, self.device)
             # self.input = batch.to(self.device) if isinstance(batch,tuple) else batch[0].to(self.device)
             self.netG.eval()
             with torch.no_grad():
