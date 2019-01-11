@@ -2,6 +2,7 @@ from .sup_gan import SupGanTrainer
 from abc import abstractmethod
 import torch
 
+
 class Pix2pixGanTrainer(SupGanTrainer):
     d_turn = 1
 
@@ -19,7 +20,7 @@ class Pix2pixGanTrainer(SupGanTrainer):
         """
         super(Pix2pixGanTrainer, self).__init__(logdir, nepochs, gpu_ids_abs, netG, netD, optG, optD, datasets)
 
-    def get_data_from_batch(self,batch_data: list, device: torch.device):
+    def get_data_from_batch(self, batch_data: list, device: torch.device):
         input_tensor, ground_truth_tensor = batch_data[0], batch_data[1]
         return input_tensor, ground_truth_tensor
 
@@ -113,10 +114,10 @@ class Pix2pixGanTrainer(SupGanTrainer):
         self.netG.eval()
         self.netD.eval()
         if self.fixed_input is None:
-            for iteration, batch in enumerate(self.datasets.loader_test, 1):
-                if isinstance(batch, list):
+            for batch in self.datasets.loader_test:
+                if isinstance(batch, (list, tuple)):
                     self.fixed_input, fixed_ground_truth = self.get_data_from_batch(batch, self.device)
-                    self.watcher.image(self.fixed_input, self.current_epoch, tag="Fixed/groundtruth",
+                    self.watcher.image(fixed_ground_truth, self.current_epoch, tag="Fixed/groundtruth",
                                        grid_size=(6, 6),
                                        shuffle=False)
                 else:
@@ -125,6 +126,7 @@ class Pix2pixGanTrainer(SupGanTrainer):
                                    grid_size=(6, 6),
                                    shuffle=False)
                 break
+
         # watching the variation during training by a fixed input
         with torch.no_grad():
             fake = self.netG(self.fixed_input).detach()
@@ -152,10 +154,8 @@ class Pix2pixGanTrainer(SupGanTrainer):
                 self.watcher.image(fake, self.current_epoch, tag="Test/fake", grid_size=(4, 4), shuffle=False)
             self.netG.train()
         """
-        for index, batch in enumerate(self.datasets.loader_test, 1):
-            # For test only have input without groundtruth
+        for batch in self.datasets.loader_test:
             self.input, _ = self.get_data_from_batch(batch, self.device)
-            # self.input = batch.to(self.device) if isinstance(batch,tuple) else batch[0].to(self.device)
             self.netG.eval()
             with torch.no_grad():
                 fake = self.netG(self.input).detach()

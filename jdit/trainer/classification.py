@@ -68,19 +68,6 @@ class ClassificationTrainer(SupTrainer):
           return loss, var_dic
 
         """
-        var_dic = {}
-        # Input: (N,C) where C = number of classes
-        # Target: (N) where each value is 0≤targets[i]≤C−1
-        # ground_truth = self.ground_truth.long().squeeze()
-        var_dic["CEP"] = loss = CrossEntropyLoss()(self.output, self.labels.squeeze().long())
-
-        _, predict = torch.max(self.output.detach(), 1)  # 0100=>1  0010=>2
-        total = predict.size(0) * 1.0
-        labels = self.labels.squeeze().long()
-        correct = predict.eq(labels).cpu().sum().float()
-        acc = correct / total
-        var_dic["ACC"] = acc
-        return loss, var_dic
 
     @abstractmethod
     def compute_valid(self):
@@ -112,19 +99,6 @@ class ClassificationTrainer(SupTrainer):
           return var_dic
 
         """
-        var_dic = dict()
-        # Input: (N,C) where C = number of classes
-        # Target: (N) where each value is 0≤targets[i]≤C−1
-        # ground_truth = self.ground_truth.long().squeeze()
-        var_dic["CEP"] = CrossEntropyLoss()(self.output, self.labels.squeeze().long())
-
-        _, predict = torch.max(self.output.detach(), 1)  # 0100=>1  0010=>2
-        total = predict.size(0) * 1.0
-        labels = self.labels.squeeze().long()
-        correct = predict.eq(labels).cpu().sum().float()
-        acc = correct / total
-        var_dic["ACC"] = acc
-        return var_dic
 
     def valid_epoch(self):
         avg_dic = dict()

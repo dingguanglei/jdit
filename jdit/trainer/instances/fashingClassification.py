@@ -48,7 +48,7 @@ class FashingClassTrainer(ClassificationTrainer):
 
     def compute_valid(self):
         var_dic = {}
-        var_dic["CEP"] = cep = nn.CrossEntropyLoss()(self.output, self.labels.squeeze().long())
+        var_dic["CEP"] = nn.CrossEntropyLoss()(self.output, self.labels.squeeze().long())
 
         _, predict = torch.max(self.output.detach(), 1)  # 0100=>1  0010=>2
         total = predict.size(0) * 1.0

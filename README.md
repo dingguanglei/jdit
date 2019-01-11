@@ -26,13 +26,13 @@ E-mail: dingguanglei.bupt@qq.com
 
 ## Install 
 Requires:
-```
+``` {.sourceCode .bash}
     tensorboard >= 1.12.0
     tensorboardX >= 1.4
     pytorch >= 0.4.1
 ``` 
 Install requirement.
-```
+``` {.sourceCode .bash}
 pip install -r requirements.txt
 ```
 ### From source
@@ -277,4 +277,4 @@ Guide List:
 
 *   [Parallel Task](https://dingguanglei.com/jdit_parallel)
 
-*    ......
+*   ......

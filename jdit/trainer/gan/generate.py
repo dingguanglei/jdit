@@ -91,7 +91,7 @@ class GenerateGanTrainer(SupGanTrainer):
         return var_dic
 
     def test(self):
-        self.input = Variable(torch.randn((16, *self.latent_shape))).to(self.device)
+        self.input = Variable(torch.randn((self.datasets.batch_size, *self.latent_shape))).to(self.device)
         self.netG.eval()
         with torch.no_grad():
             fake = self.netG(self.input).detach()
