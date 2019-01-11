@@ -19,7 +19,6 @@ import numpy as np
 from tensorboardX import SummaryWriter
 
 from functools import wraps
-from typing import Tuple
 
 
 class SupTrainer(object):
@@ -325,7 +324,7 @@ class SupTrainer(object):
     def _change_lr(self, decay_type="step", position=2):
         is_change = False
         _opts = super(SupTrainer, self).__getattribute__("_opts")
-        for name, opt in _opts.items():
+        for opt in _opts.values():
             if opt.decay_type == decay_type and opt.is_lrdecay(position):
                 opt.do_lr_decay()
                 is_change = True
@@ -509,7 +508,8 @@ class Watcher(object):
     @staticmethod
     def _sample(tensor: torch.Tensor, num_samples: int, shuffle=True):
         total = len(tensor)
-        assert num_samples <= total
+        if num_samples > total:
+            raise ValueError("sample(%d) greater than the total amount(%d)!" % (num_samples, len(tensor)))
         if shuffle:
             rand_index = random.sample(list(range(total)), num_samples)
             sampled_tensor: torch.Tensor = tensor[rand_index]
@@ -520,7 +520,8 @@ class Watcher(object):
     def image(self, img_tensors: torch.Tensor, global_step: int, tag: str = "Train/input",
               grid_size: Union[list, tuple] = (3, 1), shuffle=True, save_file=False):
 
-        assert len(img_tensors.size()) == 4, "img_tensors rank should be 4, got %d instead" % len(img_tensors.size())
+        if len(img_tensors.size()) != 4:
+            raise TypeError("img_tensors rank should be 4, got %d instead" % len(img_tensors.size()))
         self._build_dir(os.path.join(self.logdir, "plots", tag))
         rows, columns = grid_size[0], grid_size[1]
         batch_size = len(img_tensors)  # img_tensors =>(batchsize, 3, 256, 256)
@@ -550,12 +551,11 @@ class Watcher(object):
         self.writer.add_embedding(features, metadata=label, label_img=label_img, global_step=global_step, tag=tag)
 
     def set_training_progress_images(self, img_tensors: torch.Tensor, grid_size: Union[list, tuple] = (3, 1)):
-        assert len(img_tensors.size()) == 4, "img_tensors rank should be 4, got %d instead" % len(img_tensors.size())
+        if len(img_tensors.size()) != 4:
+            raise ValueError("img_tensors rank should be 4, got %d instead" % len(img_tensors.size()))
         rows, columns = grid_size[0], grid_size[1]
         batch_size = len(img_tensors)  # img_tensors =>(batchsize, 3, 256, 256)
         num_samples = min(batch_size, rows * columns)
-        assert len(img_tensors) >= num_samples, "you want to show grid %s, but only have %d tensors to show." % (
-            grid_size, len(img_tensors))
         sampled_tensor = self._sample(img_tensors, num_samples, False).detach().cpu()  # (sample_num, 3, 32,32)  tensors
         sampled_images = make_grid(sampled_tensor, nrow=rows, normalize=True, scale_each=True)
         img_grid = np.transpose(sampled_images.numpy(), (1, 2, 0))
@@ -611,9 +611,9 @@ class Watcher(object):
         self.scalars({'ParamsNum': num_params}, 0, tag=name)
         self.scalars({'ParamsNum': num_params}, 1, tag=name)
 
-        def hook(model, input, output):
+        def hook(model, layer_input, layer_output):
             writer_for_model = SummaryWriter(log_dir=model_logdir)
-            input_for_test = tuple(i.detach().clone()[0:2] for i in input)
+            input_for_test = tuple(i.detach().clone()[0:2] for i in layer_input)
             handel.remove()
             if isinstance(proto_model, torch.nn.DataParallel):
                 writer_for_model.add_graph(proto_model.module, input_for_test)

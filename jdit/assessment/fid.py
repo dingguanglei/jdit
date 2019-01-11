@@ -47,7 +47,7 @@ from torch.autograd import Variable
 from torch.nn.functional import adaptive_avg_pool2d
 
 
-class _InceptionV3(nn.Module):
+class InceptionV3(nn.Module):
     """Pretrained _InceptionV3 network returning feature maps"""
 
     # Index of default block of inception to return,
@@ -63,7 +63,7 @@ class _InceptionV3(nn.Module):
         }
 
     def __init__(self,
-                 output_blocks=[DEFAULT_BLOCK_INDEX],
+                 output_blocks=(DEFAULT_BLOCK_INDEX,),
                  resize_input=True,
                  normalize_input=True,
                  requires_grad=False):
@@ -89,7 +89,7 @@ class _InceptionV3(nn.Module):
             If true, parameters of the model require gradient. Possibly useful
             for finetuning the network
         """
-        super(_InceptionV3, self).__init__()
+        super(InceptionV3, self).__init__()
 
         self.resize_input = resize_input
         self.normalize_input = normalize_input
@@ -184,9 +184,10 @@ class _InceptionV3(nn.Module):
 
         return outp
 
+
 # ______________________________________________________________
 
-def compute_act_statistics_from_loader(dataloader:DataLoader, model, gpu_ids):
+def compute_act_statistics_from_loader(dataloader: DataLoader, model, gpu_ids):
     """
 
     :param dataloader:
@@ -414,4 +415,3 @@ def FID_score(source, target, sample_prop=1.0, gpu_ids=(), dim=2048, batchsize=1
 
     fid_value = calculate_frechet_distance(s_mu, s_sigma, t_mu, t_sigma)
     return fid_value
-

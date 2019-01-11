@@ -155,7 +155,8 @@ class Optimizer(object):
         """
         if not self.decay_position:
             return False
-        assert isinstance(position, int)
+        # assert isinstance(position, int)
+
         if isinstance(self.decay_position, int):
             is_change_lr = position > 0 and (position % self.decay_position) == 0
         else:

@@ -61,10 +61,11 @@ class FeatureVisualization(object):
         :param use_gpu:If use GPU. Default: False
         :return:The activations dic with block_names as the keys.
         """
-        if len(input_tensor.shape) == 4:
-            assert input_tensor.shape[0] == 1, (
+        if len(input_tensor.shape) == 4 and input_tensor.shape[0] != 1:
+            raise ValueError(
                     "You can only pass one sample to do feature visualization, but %d was given" %
                     input_tensor.shape[0])
+
         for name in block_names:
             self._register_forward_hook(name)
         with torch.no_grad():

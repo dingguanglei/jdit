@@ -416,10 +416,11 @@ class SupParallelTrainer(object):
                 print(traceback.print_exc())
                 print('traceback.format_exc():\n%s' % traceback.format_exc())
 
-    def _distribute_task(self, candidate_params_list: list):
+    @staticmethod
+    def _distribute_task(candidate_params_list: list):
         for params in candidate_params_list:
-            # assert "gpu_ids_abs" in params and "task_id" in params, "You must pass params `gpu_ids_abs` to set device"
-            assert "task_id" in params, "You must pass params `task_id` to set a task ID"
+            if "task_id" not in params:
+                raise ValueError("You must pass params `task_id` as a key to set a task ID")
         tasks_plan = dict({})  # (task_id):[t3],(task_id):[t1,t2]
         for candidate_params in candidate_params_list:
             task_id = candidate_params["task_id"]
@@ -433,7 +434,6 @@ class SupParallelTrainer(object):
         return tasks_plan
 
     def _add_logdirs_to_unfixed_params(self, unfixed_params_list: list):
-        import copy
         final_unfixed_params_list = copy.deepcopy(unfixed_params_list)
         use_auto_logdir = not "logdir" in unfixed_params_list[0]
         if use_auto_logdir:
@@ -494,78 +494,70 @@ class SupParallelTrainer(object):
         """
         print(msg)
 
-
-"""
-task_id
-params = [dic1{}, dic2{}, .....]
-
-"""
-
-
-class Task(object):
-
-    def __init__(self, *param_dicts):
-
-        candidate_params_list = self._add_logdirs_to_unfixed_params(param_dicts)
-
-        self.parallel_plans = self._distribute_task_on_devices(candidate_params_list)
-
-    def _add_logdirs_to_unfixed_params(self, unfixed_params_list: tuple):
-
-        final_unfixed_params_list = copy.deepcopy(unfixed_params_list)
-        use_auto_logdir = not "logdir" in unfixed_params_list[0]
-        if use_auto_logdir:
-            print("Build log directories automatically!")
-            for index, params_dict in enumerate(unfixed_params_list):  # [dict(),dict()]
-                logdir_name = []
-                for key, value in params_dict.items():  # params_dict = {p1:1, p2:2}
-                    if key == "task_id":
-                        continue
-                    if key == 'gpu_ids_abs':
-                        key = 'gpu'
-                    param_name = "=".join([str(key), str(value)])
-                    logdir_name.append(param_name)
-                    final_unfixed_params_list[index]["logdir"] = "plog/" + ",".join(logdir_name)
-        else:
-            for index, params_dict in enumerate(unfixed_params_list):  # [dict(),dict()]
-                final_unfixed_params_list[index]["logdir"] = self._convert_to_dirname(
-                        unfixed_params_list[index]["logdir"])
-
-        print("logdir names are:\n\t%s" % "\n\t".join([params["logdir"] for params in final_unfixed_params_list]))
-
-        return final_unfixed_params_list  # [dir1, dir2, dir3]
-
-    def _distribute_task_on_devices(self, candidate_params_list: tuple):
-        for params in candidate_params_list:
-            assert "task_id" in params, "You must pass params `task_id` to set a task ID"
-        tasks_plan = dict({})  # (task_id):[t3],(task_id):[t1,t2]
-        for candidate_params in candidate_params_list:
-            task_id = candidate_params["task_id"]
-            if task_id in tasks_plan:
-                # if task_id have been used, append to the former tasks.
-                tasks_plan[task_id].append(candidate_params)
-            else:
-                # if task_id  have not been used, create a new task list.
-                tasks_plan[task_id] = [candidate_params]
-        # trainers_plan = list(gpu_used_plan.values)  # [[t1,t2],[t3]...]
-        return tasks_plan
-
-    def _convert_to_dirname(self, item: str):
-        dir_name = item.strip()
-        replace_dict = {"*": "",
-                        ">": "greater",
-                        "<": "smaller",
-                        "|": "-",
-                        ":": "%",
-                        "?": "$",
-                        "/": "_",
-                        "\\": "_",
-                        }
-        for key, value in replace_dict.items():
-            dir_name = str(dir_name).replace(key, value)
-            if len(dir_name) > 50:
-                import warnings
-                warnings.warn("the length of `dir_name`(%d) is greater than 50."
-                              "It will be cut to `dir_name[0:50]`" % len(dir_name))
-                dir_name = dir_name[0:50]
-        return dir_name
+# class Task(object):
+#
+#     def __init__(self, *param_dicts):
+#
+#         candidate_params_list = self._add_logdirs_to_unfixed_params(param_dicts)
+#
+#         self.parallel_plans = self._distribute_task_on_devices(candidate_params_list)
+#
+#     def _add_logdirs_to_unfixed_params(self, unfixed_params_list: tuple):
+#
+#         final_unfixed_params_list = copy.deepcopy(unfixed_params_list)
+#         use_auto_logdir = not "logdir" in unfixed_params_list[0]
+#         if use_auto_logdir:
+#             print("Build log directories automatically!")
+#             for index, params_dict in enumerate(unfixed_params_list):  # [dict(),dict()]
+#                 logdir_name = []
+#                 for key, value in params_dict.items():  # params_dict = {p1:1, p2:2}
+#                     if key == "task_id":
+#                         continue
+#                     if key == 'gpu_ids_abs':
+#                         key = 'gpu'
+#                     param_name = "=".join([str(key), str(value)])
+#                     logdir_name.append(param_name)
+#                     final_unfixed_params_list[index]["logdir"] = "plog/" + ",".join(logdir_name)
+#         else:
+#             for index, params_dict in enumerate(unfixed_params_list):  # [dict(),dict()]
+#                 final_unfixed_params_list[index]["logdir"] = self._convert_to_dirname(
+#                         unfixed_params_list[index]["logdir"])
+#
+#         print("logdir names are:\n\t%s" % "\n\t".join([params["logdir"] for params in final_unfixed_params_list]))
+#
+#         return final_unfixed_params_list  # [dir1, dir2, dir3]
+#
+#     def _distribute_task_on_devices(self, candidate_params_list: tuple):
+#         for params in candidate_params_list:
+#             assert "task_id" in params, "You must pass params `task_id` to set a task ID"
+#         tasks_plan = dict({})  # (task_id):[t3],(task_id):[t1,t2]
+#         for candidate_params in candidate_params_list:
+#             task_id = candidate_params["task_id"]
+#             if task_id in tasks_plan:
+#                 # if task_id have been used, append to the former tasks.
+#                 tasks_plan[task_id].append(candidate_params)
+#             else:
+#                 # if task_id  have not been used, create a new task list.
+#                 tasks_plan[task_id] = [candidate_params]
+#         # trainers_plan = list(gpu_used_plan.values)  # [[t1,t2],[t3]...]
+#         return tasks_plan
+#
+#     def _convert_to_dirname(self, item: str):
+#         dir_name = item.strip()
+#         replace_dict = {"*": "",
+#                         ">": "greater",
+#                         "<": "smaller",
+#                         "|": "-",
+#                         ":": "%",
+#                         "?": "$",
+#                         "/": "_",
+#                         "\\": "_",
+#                         }
+#         for key, value in replace_dict.items():
+#             dir_name = str(dir_name).replace(key, value)
+#             if len(dir_name) > 50:
+#                 import warnings
+#                 warnings.warn("the length of `dir_name`(%d) is greater than 50."
+#                               "It will be cut to `dir_name[0:50]`" % len(dir_name))
+#                 dir_name = dir_name[0:50]
+#         return dir_name

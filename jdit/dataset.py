@@ -132,12 +132,18 @@ class DataLoadersFactory(metaclass=ABCMeta):
         The previous function ``self.build_datasets()`` has created datasets.
         Use these datasets to build their's dataloaders
         """
-        assert self.dataset_train is not None, "`self.dataset_train` can't be `None`. " \
-                                               "Rewrite `build_datasets` method and pass your own dataset to " \
-                                               "self.dataset_train"
-        assert self.dataset_valid is not None, "`self.dataset_valid` can't be `None`. " \
-                                               "Rewrite `build_datasets` method and pass your own dataset to " \
-                                               "self.dataset_valid"
+
+        if self.dataset_train is None:
+            raise ValueError(
+                    "`self.dataset_train` can't be `None`! Rewrite `build_datasets` method and pass your own dataset "
+                    "to "
+                    "`self.dataset_train`")
+        if self.dataset_train is None:
+            raise ValueError(
+                    "`self.dataset_valid` can't be `None`! Rewrite `build_datasets` method and pass your own dataset "
+                    "to "
+                    "`self.dataset_valid`")
+
         # Create dataloaders
         self.loader_train = DataLoader(self.dataset_train, batch_size=self.batch_size, shuffle=self.shuffle)
         self.loader_valid = DataLoader(self.dataset_valid, batch_size=self.batch_size, shuffle=self.shuffle)
@@ -165,16 +171,18 @@ class DataLoadersFactory(metaclass=ABCMeta):
     @staticmethod
     def _get_samples(dataset, sample_dataset_size=0.1):
         import math
-        assert len(dataset) > 10, "Dataset is (%d) to small" % len(dataset)
+        if int(len(dataset) * sample_dataset_size) <= 0:
+            raise ValueError(
+                    "Dataset is %d too small. `sample_dataset_size` is %f" % (len(dataset), sample_dataset_size))
         size_is_prop = isinstance(sample_dataset_size, float)
         size_is_amount = isinstance(sample_dataset_size, int)
         if size_is_prop:
-            assert 0 < sample_dataset_size <= 1, \
-                "sample_dataset_size proportion should between 0. and 1."
+            if not (0 < sample_dataset_size <= 1):
+                raise ValueError("sample_dataset_size proportion should between 0. and 1.")
             subdata_size = math.floor(sample_dataset_size * len(dataset))
         elif size_is_amount:
-            assert sample_dataset_size < len(dataset), \
-                "sample_dataset_size amount should be smaller than length of dataset"
+            if not (sample_dataset_size < len(dataset)):
+                raise ValueError("sample_dataset_size amount should be smaller than length of dataset")
             subdata_size = math.floor(sample_dataset_size * len(dataset))
         else:
             raise Exception("sample_dataset_size should be float or int."
@@ -241,7 +249,7 @@ class HandMNIST(DataLoadersFactory):
 
     """
 
-    def __init__(self, root="datasets/hand_data", batch_size = 64, num_workers=-1):
+    def __init__(self, root="datasets/hand_data", batch_size=64, num_workers=-1):
         super(HandMNIST, self).__init__(root, batch_size, num_workers)
 
     def build_datasets(self):
@@ -257,7 +265,7 @@ class HandMNIST(DataLoadersFactory):
 
 
 class FashionMNIST(DataLoadersFactory):
-    def __init__(self, root="datasets/fashion_data", batch_size = 64, num_workers=-1):
+    def __init__(self, root="datasets/fashion_data", batch_size=64, num_workers=-1):
         super(FashionMNIST, self).__init__(root, batch_size, num_workers)
 
     def build_datasets(self):
@@ -268,7 +276,7 @@ class FashionMNIST(DataLoadersFactory):
 
 
 class Cifar10(DataLoadersFactory):
-    def __init__(self, root="datasets/cifar10", batch_size = 32, num_workers=-1):
+    def __init__(self, root="datasets/cifar10", batch_size=32, num_workers=-1):
         super(Cifar10, self).__init__(root, batch_size, num_workers)
 
     def build_datasets(self):
@@ -279,7 +287,7 @@ class Cifar10(DataLoadersFactory):
 
 
 class Lsun(DataLoadersFactory):
-    def __init__(self, root, batch_size = 32, num_workers=-1):
+    def __init__(self, root, batch_size=32, num_workers=-1):
         super(Lsun, self).__init__(root, batch_size, num_workers)
 
     def build_datasets(self):

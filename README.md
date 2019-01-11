@@ -4,7 +4,7 @@
 
 [![](http://img.shields.io/travis/dingguanglei/jdit.svg)](https://github.com/dingguanglei/jdit)
 [![Documentation Status](https://readthedocs.org/projects/jdit/badge/?version=latest)](https://jdit.readthedocs.io/en/latest/?badge=latest)
-[![codebeat badge](https://codebeat.co/badges/f8c6cfa5-5e6b-499c-b318-2656bc91cab0)](https://codebeat.co/projects/github-com-dingguanglei-jdit-master)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/1a5aa0721e2f44ebb61b0b73627bbc90)](https://www.codacy.com/app/dingguanglei/jdit?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=dingguanglei/jdit&amp;utm_campaign=Badge_Grade)
 ![Packagist](https://img.shields.io/hexpm/l/plug.svg)
 ![pypi download](https://img.shields.io/pypi/dm/jdit.svg)
 
@@ -37,23 +37,25 @@ pip install -r requirements.txt
 ```
 ### From source
 This method is recommended, because you can keep the newest version.
-1. Clone from github
+1.  Clone from github
     ```
     git clone https://github.com/dingguanglei/jdit
     ```
-2. Setup
+    
+2.  Setup
     By using `setup.py` to install the package.
     ```
     python setup.py bdist_wheel
     ```
-3. Install
+    
+3.  Install
     You will find packages in `jdit/dist/`. Use pip to install.
     ```
     pip install dist/jdit-0.0.x-py3-none-any.whl
     ```
 
 ### From pip
-```
+``` {.sourceCode .bash}
 pip install jdit
 ```
 

@@ -97,7 +97,10 @@ class Model(object):
                  init_method: Union[str, FunctionType, None] = "kaiming",
                  show_structure=False,
                  check_point_pos=None, verbose=True):
-        assert isinstance(proto_model, Module)
+
+        if not isinstance(proto_model, Module):
+            raise TypeError(
+                    "The type of `proto_model` must be `torch.nn.Module`, but got %s instead" % type(proto_model))
         self.model: Union[DataParallel, Module] = None
         self.model_name = proto_model.__class__.__name__
         self.weights_init = None
@@ -314,15 +317,14 @@ class Model(object):
         new_state_dict = OrderedDict()
         for k, v in weights.items():
             if fix_type == "remove":
-                if is_strict:
-                    assert k.startswith(
-                            "module."), "The key of weights dict doesn't start with 'module.'. %s instead" % k
+                if is_strict and not k.startswith("module."):
+                    raise ValueError("The key of weights dict doesn't start with 'module.'. %s instead" % k)
                 name = k.replace("module.", "", 1)  # remove `module.`
             elif fix_type == "add":
-                if is_strict:
-                    assert not k.startswith("module."), "The key of weights dict is %s. Can not add 'module.'" % k
+                if is_strict and k.startswith("module."):
+                    raise ValueError("The key of weights dict is %s. Can not add 'module.'" % k)
                 if not k.startswith("module."):
-                    name = "module."+ k  # add `module.`
+                    name = "module." + k  # add `module.`
                 else:
                     name = k
             else:
@@ -338,13 +340,17 @@ class Model(object):
         gpu_available = torch.cuda.is_available()
         model_name = proto_model.__class__.__name__
         if len(gpu_ids) == 1:
-            assert gpu_available, "No gpu available! torch.cuda.is_available() is False. CUDA_VISIBLE_DEVICES=%s" % \
-                                  os.environ["CUDA_VISIBLE_DEVICES"]
+            if not gpu_available:
+                raise EnvironmentError("No gpu available! torch.cuda.is_available() is False. "
+                                       "CUDA_VISIBLE_DEVICES=%s" % \
+                                       os.environ["CUDA_VISIBLE_DEVICES"])
             proto_model = proto_model.cuda(gpu_ids[0])
             self._print("%s model use GPU %s!" % (model_name, gpu_ids_abs))
         elif len(gpu_ids) > 1:
-            assert gpu_available, "No gpu available! torch.cuda.is_available() is False. CUDA_VISIBLE_DEVICES=%s" % \
-                                  os.environ["CUDA_VISIBLE_DEVICES"]
+            if not gpu_available:
+                raise EnvironmentError("No gpu available! torch.cuda.is_available() is False. "
+                                       "CUDA_VISIBLE_DEVICES=%s" % \
+                                       os.environ["CUDA_VISIBLE_DEVICES"])
             proto_model = DataParallel(proto_model.cuda(), gpu_ids)
             self._print("%s dataParallel use GPUs%s!" % (model_name, gpu_ids_abs))
         else:

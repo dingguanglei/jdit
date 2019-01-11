@@ -6,13 +6,16 @@ import os
 
 
 class TestInstances(TestCase):
-    def test_start_fashingClassTrainer(self):
+    @staticmethod
+    def test_start_fashingClassTrainer():
         start_fashingClassTrainer(run_type="debug")
 
-    def test_start_fashingGenerateGanTrainer(self):
+    @staticmethod
+    def test_start_fashingGenerateGanTrainer():
         start_fashingGenerateGanTrainer(run_type="debug")
 
-    def test_start_cifarPix2pixGanTrainer(self):
+    @staticmethod
+    def test_start_cifarPix2pixGanTrainer():
         start_cifarPix2pixGanTrainer(run_type="debug")
 
     def setUp(self):
