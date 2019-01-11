@@ -38,19 +38,19 @@ pip install -r requirements.txt
 ### From source
 This method is recommended, because you can keep the newest version.
 1.  Clone from github
-    ```
+    ``` {.sourceCode .bash}
     git clone https://github.com/dingguanglei/jdit
     ```
     
 2.  Setup
     By using `setup.py` to install the package.
-    ```
+    ``` {.sourceCode .bash}
     python setup.py bdist_wheel
     ```
     
 3.  Install
     You will find packages in `jdit/dist/`. Use pip to install.
-    ```
+    ``` {.sourceCode .bash}
     pip install dist/jdit-0.0.x-py3-none-any.whl
     ```
 
@@ -58,7 +58,6 @@ This method is recommended, because you can keep the newest version.
 ``` {.sourceCode .bash}
 pip install jdit
 ```
-
 
 ## Quick start
 
@@ -219,11 +218,11 @@ All of these will be saved in ``log/fashion_classify``, because of parameter ``l
 For the most thing that we care about are training process and valid process data. 
 They are saved in ``Train.csv`` and ``Valid.csv``. The following are the content.
 
-**Train.csv**
+##### Train.csv
 
 ![Valid data](https://raw.githubusercontent.com/dingguanglei/jdit/master/resources/class_valid.png)
 
-**Valid.csv**
+##### Valid.csv
 
 ![Training data](https://raw.githubusercontent.com/dingguanglei/jdit/master/resources/class_train.png)
 
@@ -245,9 +244,9 @@ From file ``datasets.csv`` you can see the information of your dataset.
 
 #### Others
 
-* For file ``performance.csv``, it saves the memory cost during the training.
-* For file ``FashingClassTrainer.csv``, it saves some parameters, such as the amount of epochs. 
-* Model checkpoint in the ``checkpoint`` directory.
+*   For file ``performance.csv``, it saves the memory cost during the training.
+*   For file ``FashingClassTrainer.csv``, it saves some parameters, such as the amount of epochs. 
+*   Model checkpoint in the ``checkpoint`` directory.
 
 ### Conclusion
 Due to this simple classification example, there are many interesting features not showed here.
@@ -256,28 +255,26 @@ It seems that your code doesn't have these functions. So, this is what Jdit did.
 
 Although it is just an example, you still can build your own project
 easily by using jdit framework. Jdit framework can deal with 
-* Data visualization. (learning curves, images in pilot process) 
-* CPU, GPU or GPUs. (Training your model on specify devices) 
-* Intermediate data storage. (Saving training data into a csv file) 
-* Model checkpoint automatically. 
-* Flexible templates can be used to integrate and custom overrides. 
-* ...
+*   Data visualization. (learning curves, images in pilot process) 
+*   CPU, GPU or GPUs. (Training your model on specify devices) 
+*   Intermediate data storage. (Saving training data into a csv file) 
+*   Model checkpoint automatically. 
+*   Flexible templates can be used to integrate and custom overrides. 
+*   ...
 
 ## More
 For other templates, you can see and learn form here. 
 
 Guide List:
 
-* [Classification](https://dingguanglei.com/jdit_start)
+*   [Classification](https://dingguanglei.com/jdit_start)
 
-* [Generative Adversarial Networks](https://dingguanglei.com/jdit_gan) 
+*   [Generative Adversarial Networks](https://dingguanglei.com/jdit_gan) 
 
-* [Gan for Generation](https://dingguanglei.com/jdit_gan_generataion) 
+*   [Gan for Generation](https://dingguanglei.com/jdit_gan_generataion) 
 
-* [Gan for Pix2pix](https://dingguanglei.com/jdit_gan_pix2pix)
+*   [Gan for Pix2pix](https://dingguanglei.com/jdit_gan_pix2pix)
 
-* [Parallel Task](https://dingguanglei.com/jdit_parallel)
+*   [Parallel Task](https://dingguanglei.com/jdit_parallel)
 
-......
-
-
+*    ......
