@@ -103,12 +103,12 @@ def start_fashingGenerateGanTrainer(gpus=(), nepochs=50, lr=1e-3, depth_G=32, de
     depth_D = depth_D
 
     G_hprams = {"optimizer": "Adam", "lr_decay": 0.94,
-                "decay_position": 2, "decay_type": "epoch",
+                "decay_position": 2, "position_type": "epoch",
                 "lr": lr, "weight_decay": 2e-5,
                 "betas": (0.9, 0.99)
                 }
     D_hprams = {"optimizer": "RMSprop", "lr_decay": 0.94,
-                "decay_position": 2, "decay_type": "epoch",
+                "decay_position": 2, "position_type": "epoch",
                 "lr": lr, "weight_decay": 2e-5,
                 "momentum": 0
                 }

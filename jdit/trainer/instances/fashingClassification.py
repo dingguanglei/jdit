@@ -71,8 +71,9 @@ def start_fashingClassTrainer(gpus=(), nepochs=10, run_type="train"):
     opt_hpm = {"optimizer": "Adam",
                "lr_decay": 0.94,
                "decay_position": 10,
-               "decay_type": "epoch",
-               "lr": 1e-3,
+               "position_type": "epoch",
+               "lr_reset": {2: 5e-4, 3: 1e-3},
+               "lr": 1e-4,
                "weight_decay": 2e-5,
                "betas": (0.9, 0.99)}
 

@@ -80,10 +80,8 @@ class SupTrainer(object):
         super(SupTrainer, self).__setattr__(key, value)
 
         if key == "step" and value != 0:
-            # is_change = self._change_lr("step", value)
             is_change = super(SupTrainer, self).__getattribute__("_change_lr")("step", value)
             if is_change:
-                # self._record_configs("optimizer")
                 super(SupTrainer, self).__getattribute__("_record_configs")("optimizer")
         elif key == "current_epoch" and value != 0:
             is_change = super(SupTrainer, self).__getattribute__("_change_lr")("epoch", value)
@@ -160,7 +158,7 @@ class SupTrainer(object):
                 item.check_point_pos = 1
             if isinstance(item, Optimizer):
                 item.check_point_pos = 1
-                item.decay_type = "step"
+                item.position_type = "step"
         # the tested functions
         debug_fcs = [self._record_configs, self.train_epoch, self.valid_epoch,
                      self._change_lr, self._check_point, self.test]
@@ -265,6 +263,8 @@ class SupTrainer(object):
         loss.backward()
         opt.step()
         self.watcher.scalars(var_dict=var_dic, global_step=self.step, tag="Train")
+        opt_name = list(self._opts.keys())[list(self._opts.values()).index(opt)]
+        self.watcher.scalars(var_dict={"Learning rate": opt.lr}, global_step=self.step, tag=opt_name)
         self.loger.write(self.step, self.current_epoch, var_dic, csv_filename, header=self.step <= 1)
 
     def _record_configs(self, configs_names=None):
@@ -321,13 +321,18 @@ class SupTrainer(object):
         for name, model in _models.items():
             model.is_checkpoint(name, current_epoch, logdir)
 
-    def _change_lr(self, decay_type="step", position=2):
-        is_change = False
+    def _change_lr(self, position_type="step", position=2):
+        is_change = True
         _opts = super(SupTrainer, self).__getattribute__("_opts")
         for opt in _opts.values():
-            if opt.decay_type == decay_type and opt.is_lrdecay(position):
-                opt.do_lr_decay()
-                is_change = True
+            if opt.position_type == position_type:
+                reset_lr = opt.is_reset_lr(position)
+                if reset_lr:
+                    opt.do_lr_decay(reset_lr=reset_lr)
+                elif opt.is_decay_lr(position):
+                    opt.do_lr_decay()
+                else:
+                    is_change = False
         return is_change
 
     def valid_epoch(self):

@@ -1,7 +1,5 @@
 numpy
 psutil
-torch
-torchvision
 tqdm
 mock
 scipy

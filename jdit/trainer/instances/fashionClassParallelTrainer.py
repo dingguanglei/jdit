@@ -67,7 +67,7 @@ def build_task_trainer(unfixed_params):
     opt_name = "RMSprop"
     lr_decay = 0.94
     decay_position= 1
-    decay_type = "epoch"
+    position_type = "epoch"
     weight_decay = 2e-5
     momentum = 0
     nepochs = 100
@@ -75,7 +75,7 @@ def build_task_trainer(unfixed_params):
     torch.backends.cudnn.benchmark = True
     mnist = FashionMNIST(root="datasets/fashion_data", batch_size=batch_size, num_workers=2)
     net = Model(SimpleModel(depth), gpu_ids_abs=gpu_ids_abs, init_method="kaiming", verbose=False)
-    opt = Optimizer(net.parameters(), opt_name, lr_decay, decay_position, decay_type,
+    opt = Optimizer(net.parameters(), opt_name, lr_decay, decay_position, position_type=position_type,
                     lr=lr, weight_decay=weight_decay, momentum=momentum)
     Trainer = FashingClassTrainer(logdir, nepochs, gpu_ids_abs, net, opt, mnist, num_class)
     return Trainer

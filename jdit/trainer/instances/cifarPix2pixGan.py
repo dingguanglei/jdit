@@ -116,12 +116,12 @@ def start_cifarPix2pixGanTrainer(gpus=(), nepochs=200, lr=1e-3, depth_G=32, dept
     depth_D = depth_D
 
     G_hprams = {"optimizer": "Adam", "lr_decay": 0.9,
-                "decay_position": 10, "decay_type": "epoch",
+                "decay_position": 10, "position_type": "epoch",
                 "lr": lr, "weight_decay": 2e-5,
                 "betas": (0.9, 0.99)
                 }
     D_hprams = {"optimizer": "RMSprop", "lr_decay": 0.9,
-                "decay_position": 10, "decay_type": "epoch",
+                "decay_position": 10, "position_type": "epoch",
                 "lr": lr, "weight_decay": 2e-5,
                 "momentum": 0
                 }

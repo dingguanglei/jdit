@@ -16,8 +16,8 @@ class TestOptimizer(TestCase):
         self.assertEqual(self.opt.lr, 0.6)
 
     def test_is_lrdecay(self):
-        self.assert_(not self.opt.is_lrdecay(2))
-        self.assert_(self.opt.is_lrdecay(3))
+        self.assert_(not self.opt.is_decay_lr(2))
+        self.assert_(self.opt.is_decay_lr(3))
 
     def test_configure(self):
         self.opt.do_lr_decay(reset_lr=2, reset_lr_decay=0.3)
