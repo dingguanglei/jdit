@@ -84,10 +84,11 @@ class SupTrainer(object):
             if is_change:
                 super(SupTrainer, self).__getattribute__("_record_configs")("optimizer")
         elif key == "current_epoch" and value != 0:
-            is_change = super(SupTrainer, self).__getattribute__("_change_lr")("epoch", value)
-            if is_change:
+            is_change_lr = super(SupTrainer, self).__getattribute__("_change_lr")("epoch", value)
+            if is_change_lr:
                 super(SupTrainer, self).__getattribute__("_record_configs")("optimizer")
-                super(SupTrainer, self).__getattribute__("_check_point")()
+            super(SupTrainer, self).__getattribute__("_check_point")()
+
             super(SupTrainer, self).__getattribute__("_record_configs")("performance")
         elif isinstance(value, Model):
             super(SupTrainer, self).__getattribute__("_models").update({key: value})

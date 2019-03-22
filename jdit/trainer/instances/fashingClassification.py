@@ -79,6 +79,7 @@ def start_fashingClassTrainer(gpus=(), nepochs=10, run_type="train"):
 
     print('===> Build dataset')
     mnist = FashionMNIST(batch_size=batch_size)
+    # mnist.dataset_train = mnist.dataset_test
     torch.backends.cudnn.benchmark = True
     print('===> Building model')
     net = Model(SimpleModel(depth=depth), gpu_ids_abs=gpus, init_method="kaiming", check_point_pos=1)
