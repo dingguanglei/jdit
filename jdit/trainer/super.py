@@ -156,9 +156,9 @@ class SupTrainer(object):
                 item.dataset_test, _ = random_split(item.dataset_test, [2, len(item.dataset_test) - 2])
                 item.build_loaders()
             if isinstance(item, Model):
-                item.check_point_pos = 1
+                item.check_point_pos = 2
             if isinstance(item, Optimizer):
-                item.check_point_pos = 1
+                item.check_point_pos = 2
                 item.position_type = "step"
         # the tested functions
         debug_fcs = [self._record_configs, self.train_epoch, self.valid_epoch,
