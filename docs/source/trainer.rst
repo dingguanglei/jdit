@@ -13,10 +13,28 @@ SupTrainer
 .. autoclass:: SupTrainer
     :members:
 
+single
+------
+
+.. automodule:: jdit.trainer.single
+.. currentmodule:: jdit.trainer.single
+
+SupSingleModelTrainer
+>>>>>>>>>>>>>>>>>>>>>
+
+.. autoclass:: SupSingleModelTrainer
+    :members:
+
 ClassificationTrainer
----------------------
+>>>>>>>>>>>>>>>>>>>>>
 
 .. autoclass:: ClassificationTrainer
+    :members:
+
+AutoEncoderTrainer
+>>>>>>>>>>>>>>>>>>>>>
+
+.. autoclass:: AutoEncoderTrainer
     :members:
 
 Generative Adversarial Networks Trainer
