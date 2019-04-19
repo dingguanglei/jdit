@@ -13,11 +13,11 @@ SupTrainer
 .. autoclass:: SupTrainer
     :members:
 
-single
-------
+Single Model Trainer
+--------------------
 
-.. automodule:: jdit.trainer.single
-.. currentmodule:: jdit.trainer.single
+.. automodule:: jdit.trainer
+.. currentmodule:: jdit.trainer
 
 SupSingleModelTrainer
 >>>>>>>>>>>>>>>>>>>>>
