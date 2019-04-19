@@ -2,7 +2,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from jdit.trainer.classification import ClassificationTrainer
+from jdit.trainer.single.classification import ClassificationTrainer
 from jdit.model import Model
 from jdit.optimizer import Optimizer
 from jdit.dataset import FashionMNIST

@@ -53,7 +53,7 @@ class DataLoadersFactory(metaclass=ABCMeta):
 
     """
 
-    def __init__(self, root: str, batch_size: int, num_workers=-1, shuffle=True, subdata_size=0.1):
+    def __init__(self, root: str, batch_size: int, num_workers=-1, shuffle=True, subdata_size=1):
         """ Build data loaders.
 
         :param root: root path of datasets.
@@ -135,14 +135,14 @@ class DataLoadersFactory(metaclass=ABCMeta):
 
         if self.dataset_train is None:
             raise ValueError(
-                    "`self.dataset_train` can't be `None`! Rewrite `build_datasets` method and pass your own dataset "
-                    "to "
-                    "`self.dataset_train`")
+                "`self.dataset_train` can't be `None`! Rewrite `build_datasets` method and pass your own dataset "
+                "to "
+                "`self.dataset_train`")
         if self.dataset_train is None:
             raise ValueError(
-                    "`self.dataset_valid` can't be `None`! Rewrite `build_datasets` method and pass your own dataset "
-                    "to "
-                    "`self.dataset_valid`")
+                "`self.dataset_valid` can't be `None`! Rewrite `build_datasets` method and pass your own dataset "
+                "to "
+                "`self.dataset_valid`")
 
         # Create dataloaders
         self.loader_train = DataLoader(self.dataset_train, batch_size=self.batch_size, shuffle=self.shuffle)
@@ -169,11 +169,11 @@ class DataLoadersFactory(metaclass=ABCMeta):
         return self._get_samples(self.dataset_train, self.sample_dataset_size)
 
     @staticmethod
-    def _get_samples(dataset, sample_dataset_size=0.1):
+    def _get_samples(dataset, sample_dataset_size=1):
         import math
         if int(len(dataset) * sample_dataset_size) <= 0:
             raise ValueError(
-                    "Dataset is %d too small. `sample_dataset_size` is %f" % (len(dataset), sample_dataset_size))
+                "Dataset is %d too small. `sample_dataset_size` is %f" % (len(dataset), sample_dataset_size))
         size_is_prop = isinstance(sample_dataset_size, float)
         size_is_amount = isinstance(sample_dataset_size, int)
         if size_is_prop:
@@ -183,7 +183,7 @@ class DataLoadersFactory(metaclass=ABCMeta):
         elif size_is_amount:
             if not (sample_dataset_size < len(dataset)):
                 raise ValueError("sample_dataset_size amount should be smaller than length of dataset")
-            subdata_size = math.floor(sample_dataset_size * len(dataset))
+            subdata_size = sample_dataset_size
         else:
             raise Exception("sample_dataset_size should be float or int."
                             "%s was given" % str(sample_dataset_size))
@@ -263,6 +263,12 @@ class HandMNIST(DataLoadersFactory):
         self.dataset_valid = datasets.MNIST(self.root, train=False, download=True,
                                             transform=transforms.Compose(self.valid_transform_list))
 
+    def build_transforms(self, resize: int = 32):
+        self.train_transform_list = self.valid_transform_list = [
+            transforms.Resize(resize),
+            transforms.ToTensor(),
+            transforms.Normalize([0.5], [0.5])]
+
 
 class FashionMNIST(DataLoadersFactory):
     def __init__(self, root="datasets/fashion_data", batch_size=64, num_workers=-1):
@@ -273,6 +279,12 @@ class FashionMNIST(DataLoadersFactory):
                                                    transform=transforms.Compose(self.train_transform_list))
         self.dataset_valid = datasets.FashionMNIST(self.root, train=False, download=True,
                                                    transform=transforms.Compose(self.valid_transform_list))
+
+    def build_transforms(self, resize: int = 32):
+        self.train_transform_list = self.valid_transform_list = [
+            transforms.Resize(resize),
+            transforms.ToTensor(),
+            transforms.Normalize([0.5], [0.5])]
 
 
 class Cifar10(DataLoadersFactory):
@@ -307,7 +319,7 @@ def get_mnist_dataloaders(root=r'..\data', batch_size=128):
         transforms.Resize(28),
         transforms.ToTensor(),
         # transforms.Normalize([0.5],[0.5])
-        ])
+    ])
     # Get train and test data
     train_data = datasets.MNIST(root, train=True, download=True,
                                 transform=all_transforms)
@@ -331,7 +343,7 @@ def get_fashion_mnist_dataloaders(root=r'.\dataset\fashion_data', batch_size=128
             transforms.Resize(resize),
             transforms.ToTensor(),
             transforms.Normalize([0.5], [0.5])
-            ]
+        ]
     all_transforms = transforms.Compose(transform_list)
     # Get train and test data
     train_data = datasets.FashionMNIST(root, train=True, download=True,
@@ -356,7 +368,7 @@ def get_lsun_dataloader(path_to_data='/data/dgl/LSUN', dataset='bedroom_train',
         transforms.Resize(128),
         transforms.CenterCrop(128),
         transforms.ToTensor()
-        ])
+    ])
 
     # Get dataset
     lsun_dset = datasets.LSUN(root=path_to_data, classes=[dataset],

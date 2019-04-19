@@ -56,7 +56,8 @@ class SupTrainer(object):
         self.step = 0
         self.start_epoch = 1
 
-    def train(self, process_bar_header: str = None, process_bar_position: int = None, subbar_disable=False, **kwargs):
+    def train(self, process_bar_header: str = None, process_bar_position: int = None, subbar_disable=False,
+              record_configs=True, show_network=False, **kwargs):
         """The main training loop of epochs.
 
         :param process_bar_header: The tag name of process bar header,
@@ -64,10 +65,14 @@ class SupTrainer(object):
         :param process_bar_position: The process bar's position. It is useful in multitask,
          which is used in ``tqdm(position=process_bar_position)``
         :param subbar_disable: If show the info of every training set,
+        :param record_configs: If record the training processing data.
+        :param show_network: If show the structure of network. It will cost extra memory,
         :param kwargs: Any other parameters that passing to ``tqdm()`` to control the behavior of process bar.
         """
-        self._record_configs()
-        self.plot_graphs_lazy()
+        if record_configs:
+            self._record_configs()
+        if show_network:
+            self.plot_graphs_lazy()
         for epoch in tqdm(range(self.start_epoch, self.nepochs + 1), total=self.nepochs,
                           unit="epoch", desc=process_bar_header, position=process_bar_position, **kwargs):
             self.current_epoch = epoch
@@ -154,6 +159,8 @@ class SupTrainer(object):
                 item.dataset_valid, _ = random_split(item.dataset_valid, [2, len(item.dataset_valid) - 2])
                 item.dataset_test, _ = random_split(item.dataset_test, [2, len(item.dataset_test) - 2])
                 item.build_loaders()
+                print("datas range: (%s, %s)" % (item.samples_train[0].min().cpu().numpy(),
+                                                 item.samples_train[0].max().cpu().numpy()))
             if isinstance(item, Model):
                 item.check_point_pos = 1
             if isinstance(item, Optimizer):
@@ -373,24 +380,27 @@ class Performance(object):
     def gpu_info(self):
         # pip install nvidia-ml-py3
         if len(self.gpu_ids) >= 0 and torch.cuda.is_available():
-            import pynvml
-            pynvml.nvmlInit()
-            self.config_dic['gpu_driver_version'] = pynvml.nvmlSystemGetDriverVersion()
-            for gpu_id in self.gpu_ids:
-                handle = pynvml.nvmlDeviceGetHandleByIndex(gpu_id)
-                gpu_id_name = "gpu%s" % gpu_id
-                mem_info = pynvml.nvmlDeviceGetMemoryInfo(handle)
-                gpu_utilize = pynvml.nvmlDeviceGetUtilizationRates(handle)
-                self.config_dic['%s_device_name' % gpu_id_name] = pynvml.nvmlDeviceGetName(handle)
-                self.config_dic['%s_mem_total' % gpu_id_name] = gpu_mem_total = round(mem_info.total / 1024 ** 3, 2)
-                self.config_dic['%s_mem_used' % gpu_id_name] = gpu_mem_used = round(mem_info.used / 1024 ** 3, 2)
-                # self.config_dic['%s_mem_free' % gpu_id_name] = gpu_mem_free = mem_info.free // 1024 ** 2
-                self.config_dic['%s_mem_percent' % gpu_id_name] = round((gpu_mem_used / gpu_mem_total) * 100, 1)
-                self._set_dict_smooth('%s_utilize_gpu' % gpu_id_name, gpu_utilize.gpu, 0.8)
-                # self.config_dic['%s_utilize_gpu' % gpu_id_name] = gpu_utilize.gpu
-                # self.config_dic['%s_utilize_memory' % gpu_id_name] = gpu_utilize.memory
+            try:
+                import pynvml
+                pynvml.nvmlInit()
+                self.config_dic['gpu_driver_version'] = pynvml.nvmlSystemGetDriverVersion()
+                for gpu_id in self.gpu_ids:
+                    handle = pynvml.nvmlDeviceGetHandleByIndex(gpu_id)
+                    gpu_id_name = "gpu%s" % gpu_id
+                    mem_info = pynvml.nvmlDeviceGetMemoryInfo(handle)
+                    gpu_utilize = pynvml.nvmlDeviceGetUtilizationRates(handle)
+                    self.config_dic['%s_device_name' % gpu_id_name] = pynvml.nvmlDeviceGetName(handle)
+                    self.config_dic['%s_mem_total' % gpu_id_name] = gpu_mem_total = round(mem_info.total / 1024 ** 3, 2)
+                    self.config_dic['%s_mem_used' % gpu_id_name] = gpu_mem_used = round(mem_info.used / 1024 ** 3, 2)
+                    # self.config_dic['%s_mem_free' % gpu_id_name] = gpu_mem_free = mem_info.free // 1024 ** 2
+                    self.config_dic['%s_mem_percent' % gpu_id_name] = round((gpu_mem_used / gpu_mem_total) * 100, 1)
+                    self._set_dict_smooth('%s_utilize_gpu' % gpu_id_name, gpu_utilize.gpu, 0.8)
+                    # self.config_dic['%s_utilize_gpu' % gpu_id_name] = gpu_utilize.gpu
+                    # self.config_dic['%s_utilize_memory' % gpu_id_name] = gpu_utilize.memory
 
-            pynvml.nvmlShutdown()
+                pynvml.nvmlShutdown()
+            except Exception as e:
+                print(e)
 
     def _set_dict_smooth(self, key: str, value, smooth: float = 0.3):
         now = value
@@ -618,7 +628,7 @@ class Watcher(object):
 
         def hook(model, layer_input, layer_output):
             writer_for_model = SummaryWriter(log_dir=model_logdir)
-            input_for_test = tuple(i.detach().clone()[0:2] for i in layer_input)
+            input_for_test = tuple(i.detach().clone()[0] for i in layer_input)
             handel.remove()
             if isinstance(proto_model, torch.nn.DataParallel):
                 writer_for_model.add_graph(proto_model.module, input_for_test)
