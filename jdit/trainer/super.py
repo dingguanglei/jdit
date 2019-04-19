@@ -89,10 +89,11 @@ class SupTrainer(object):
             if is_change:
                 super(SupTrainer, self).__getattribute__("_record_configs")("optimizer")
         elif key == "current_epoch" and value != 0:
-            is_change = super(SupTrainer, self).__getattribute__("_change_lr")("epoch", value)
-            if is_change:
+            is_change_lr = super(SupTrainer, self).__getattribute__("_change_lr")("epoch", value)
+            if is_change_lr:
                 super(SupTrainer, self).__getattribute__("_record_configs")("optimizer")
-                super(SupTrainer, self).__getattribute__("_check_point")()
+            super(SupTrainer, self).__getattribute__("_check_point")()
+
             super(SupTrainer, self).__getattribute__("_record_configs")("performance")
         elif isinstance(value, Model):
             super(SupTrainer, self).__getattribute__("_models").update({key: value})
@@ -162,9 +163,9 @@ class SupTrainer(object):
                 print("datas range: (%s, %s)" % (item.samples_train[0].min().cpu().numpy(),
                                                  item.samples_train[0].max().cpu().numpy()))
             if isinstance(item, Model):
-                item.check_point_pos = 1
+                item.check_point_pos = 2
             if isinstance(item, Optimizer):
-                item.check_point_pos = 1
+                item.decay_position = 2
                 item.position_type = "step"
         # the tested functions
         debug_fcs = [self._record_configs, self.train_epoch, self.valid_epoch,
@@ -175,10 +176,14 @@ class SupTrainer(object):
         for fc in debug_fcs:
             print("{:_^30}".format(fc.__name__ + "()"))
             try:
-                if fc.__name__ == "_change_lr()":
+                if fc.__name__ == "_change_lr":
                     self.step = 2
-                elif fc.__name__ == "_check_point()":
+                    is_lr_change = fc()
+                    if not is_lr_change:
+                        raise AssertionError("doesn't change learning rate!")
+                elif fc.__name__ == "_check_point":
                     self.current_epoch = 2
+                    fc()
                 else:
                     fc()
             except Exception as e:

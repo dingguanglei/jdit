@@ -250,7 +250,7 @@ class Model(object):
     def is_checkpoint(self, model_name: str, epoch: int, logdir="log"):
         if not self.check_point_pos:
             return False
-        if isinstance(epoch, int):
+        if isinstance(self.check_point_pos, int):
             is_check_point = epoch > 0 and (epoch % self.check_point_pos) == 0
         else:
             is_check_point = epoch in self.check_point_pos
