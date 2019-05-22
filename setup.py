@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name="jdit",  # pypi中的名称，pip或者easy_install安装时使用的名称，或生成egg文件的名称
-    version="0.0.11",
+    version="0.0.13",
     author="Guanglei Ding",
     author_email="dingguanglei.bupt@qq.com",
     maintainer='Guanglei Ding',
@@ -26,7 +26,7 @@ setup(
     # 需要安装的依赖
     install_requires=[
         "nvidia_ml_py3>=7.352.0",
-        'imageio'
+        'imageio',
     ],
 
     # # 添加这个选项，在windows下Python目录的scripts下生成exe文件

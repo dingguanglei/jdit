@@ -160,6 +160,7 @@ class SupTrainer(object):
                 item.dataset_valid, _ = random_split(item.dataset_valid, [2, len(item.dataset_valid) - 2])
                 item.dataset_test, _ = random_split(item.dataset_test, [2, len(item.dataset_test) - 2])
                 item.build_loaders()
+                item.sample_dataset_size = 1
                 print("datas range: (%s, %s)" % (item.samples_train[0].min().cpu().numpy(),
                                                  item.samples_train[0].max().cpu().numpy()))
             if isinstance(item, Model):
@@ -509,7 +510,7 @@ class Watcher(object):
 
     def __init__(self, logdir: str):
         self.logdir = logdir
-        self.writer = SummaryWriter(log_dir=logdir)
+        self.writer = SummaryWriter(logdir)
         self._build_dir(logdir)
         self.training_progress_images = []
         self.gif_duration = 0.5
