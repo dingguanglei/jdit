@@ -99,9 +99,9 @@ class Model(object):
                  show_structure=False,
                  check_point_pos=None, verbose=True):
 
-        if not isinstance(proto_model, Module):
-            raise TypeError(
-                "The type of `proto_model` must be `torch.nn.Module`, but got %s instead" % type(proto_model))
+        # if not isinstance(proto_model, Module):
+        #     raise TypeError(
+        #         "The type of `proto_model` must be `torch.nn.Module`, but got %s instead" % type(proto_model))
         self.model: Union[DataParallel, Module] = None
         self.model_name = proto_model.__class__.__name__
         self.weights_init = None
@@ -404,23 +404,26 @@ class Model(object):
     def _set_device(self, proto_model: Module, gpu_ids_abs: list) -> Union[Module, DataParallel]:
         if not gpu_ids_abs:
             gpu_ids_abs = []
-        os.environ["CUDA_VISIBLE_DEVICES"] = ",".join([str(i) for i in gpu_ids_abs])
-        gpu_ids = [i for i in range(len(gpu_ids_abs))]
+        # old_enviroment = os.environ["CUDA_VISIBLE_DEVICES"]
+        # os.environ["CUDA_VISIBLE_DEVICES"] = ",".join([str(i) for i in gpu_ids_abs])
+        # gpu_ids = [i for i in range(len(gpu_ids_abs))]
         gpu_available = torch.cuda.is_available()
         model_name = proto_model.__class__.__name__
-        if len(gpu_ids) == 1:
+
+        if len(gpu_ids_abs) == 1:
             if not gpu_available:
                 raise EnvironmentError("No gpu available! torch.cuda.is_available() is False. "
                                        "CUDA_VISIBLE_DEVICES=%s" % \
                                        os.environ["CUDA_VISIBLE_DEVICES"])
-            proto_model = proto_model.cuda(gpu_ids[0])
+
+            proto_model = proto_model.cuda(gpu_ids_abs[0])
             self._print("%s model use GPU %s!" % (model_name, gpu_ids_abs))
-        elif len(gpu_ids) > 1:
+        elif len(gpu_ids_abs) > 1:
             if not gpu_available:
                 raise EnvironmentError("No gpu available! torch.cuda.is_available() is False. "
                                        "CUDA_VISIBLE_DEVICES=%s" % \
                                        os.environ["CUDA_VISIBLE_DEVICES"])
-            proto_model = DataParallel(proto_model.cuda(), gpu_ids)
+            proto_model = DataParallel(proto_model.cuda(gpu_ids_abs[0]), gpu_ids_abs)
             self._print("%s dataParallel use GPUs%s!" % (model_name, gpu_ids_abs))
         else:
             self._print("%s model use CPU!" % model_name)

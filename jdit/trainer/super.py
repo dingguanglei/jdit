@@ -40,15 +40,16 @@ class SupTrainer(object):
         return instance
 
     def __init__(self, nepochs: int, logdir: str, gpu_ids_abs: Union[list, tuple] = ()):
-        os.environ["CUDA_VISIBLE_DEVICES"] = ",".join([str(i) for i in gpu_ids_abs])
-        self.gpu_ids = [i for i in range(len(gpu_ids_abs))]
+        # os.environ["CUDA_VISIBLE_DEVICES"] = ",".join([str(i) for i in gpu_ids_abs])
+        # self.gpu_ids = [i for i in range(len(gpu_ids_abs))]
+        self.gpu_ids = gpu_ids_abs
         self.logdir = logdir
         self.performance = Performance(gpu_ids_abs)
         self.watcher = Watcher(logdir)
         self.loger = Loger(logdir)
 
         self.use_gpu = True if (len(self.gpu_ids) > 0) and torch.cuda.is_available() else False
-        self.device = torch.device("cuda") if self.use_gpu else torch.device("cpu")
+        self.device = torch.device("cuda:%d" % self.gpu_ids[0]) if self.use_gpu else torch.device("cpu")
         self.input = torch.Tensor()
         self.ground_truth = torch.Tensor()
         self.nepochs = nepochs
