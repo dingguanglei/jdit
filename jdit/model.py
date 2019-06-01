@@ -2,6 +2,7 @@
 import torch
 import os
 from torch.nn import init, Conv2d, Linear, ConvTranspose2d, InstanceNorm2d, BatchNorm2d, DataParallel, Module
+from torch.nn.parallel import DataParallel, DistributedDataParallel
 from torch import save, load
 from typing import Union
 from collections import OrderedDict
@@ -100,7 +101,7 @@ class Model(object):
 
         if not isinstance(proto_model, Module):
             raise TypeError(
-                    "The type of `proto_model` must be `torch.nn.Module`, but got %s instead" % type(proto_model))
+                "The type of `proto_model` must be `torch.nn.Module`, but got %s instead" % type(proto_model))
         self.model: Union[DataParallel, Module] = None
         self.model_name = proto_model.__class__.__name__
         self.weights_init = None
@@ -257,6 +258,74 @@ class Model(object):
         if is_check_point:
             self.check_point(model_name, epoch, logdir)
         return is_check_point
+
+    def convert_to_distributed(self, device_ids=None,
+                               output_device=None, dim=0, broadcast_buffers=True,
+                               process_group=None, bucket_cap_mb=25,
+                               find_unused_parameters=False,
+                               check_reduction=False):
+        """
+            Args:
+        module (Module): module to be parallelized
+        device_ids (list of int or torch.device): CUDA devices. This should
+                   only be provided when the input module resides on a single
+                   CUDA device. For single-device modules, the ``i``th
+                   :attr:`module` replica is placed on ``device_ids[i]``. For
+                   multi-device modules and CPU modules, device_ids must be None
+                   or an empty list, and input data for the forward pass must be
+                   placed on the correct device. (default: all devices for
+                   single-device modules)
+        output_device (int or torch.device): device location of output for
+                      single-device CUDA modules. For multi-device modules and
+                      CPU modules, it must be None, and the module itself
+                      dictates the output location. (default: device_ids[0] for
+                      single-device modules)
+        broadcast_buffers (bool): flag that enables syncing (broadcasting) buffers of
+                          the module at beginning of the forward function.
+                          (default: ``True``)
+        process_group: the process group to be used for distributed data
+                       all-reduction. If ``None``, the default process group, which
+                       is created by ```torch.distributed.init_process_group```,
+                       will be used. (default: ``None``)
+        bucket_cap_mb: DistributedDataParallel will bucket parameters into
+                       multiple buckets so that gradient reduction of each
+                       bucket can potentially overlap with backward computation.
+                       :attr:`bucket_cap_mb` controls the bucket size in MegaBytes (MB)
+                       (default: 25)
+        find_unused_parameters (bool): Traverse the autograd graph of all tensors
+                                       contained in the return value of the wrapped
+                                       module's ``forward`` function.
+                                       Parameters that don't receive gradients as
+                                       part of this graph are preemptively marked
+                                       as being ready to be reduced.
+                                       (default: ``False``)
+        check_reduction: when setting to ``True``, it enables DistributedDataParallel
+                         to automatically check if the previous iteration's
+                         backward reductions were successfully issued at the
+                         beginning of every iteration's forward function.
+                         You normally don't need this option enabled unless you
+                         are observing weird behaviors such as different ranks
+                         are getting different gradients, which should not
+                         happen if DistributedDataParallel is correctly used.
+                         (default: ``False``)
+
+    Attributes:
+        module (Module): the module to be parallelized
+
+    Example::
+
+        >>> torch.distributed.init_process_group(backend='nccl', world_size=4, init_method='...')
+        >>> net.convert_to_distributed(pg)
+        >>> # same thing
+        >>> net.model = torch.nn.DistributedDataParallel(net.model, pg)
+
+        """
+        assert isinstance(self.model, DataParallel), "please only use one gpu for one task"
+        self.model = DistributedDataParallel(self.model, device_ids,
+                                             output_device, dim, broadcast_buffers,
+                                             process_group, bucket_cap_mb,
+                                             find_unused_parameters,
+                                             check_reduction)
 
     @staticmethod
     def count_params(proto_model: Module):

@@ -3,7 +3,7 @@ from torchvision import datasets, transforms
 import psutil
 from typing import Union
 from abc import ABCMeta, abstractmethod
-
+from torch.utils.data.distributed import DistributedSampler
 
 class DataLoadersFactory(metaclass=ABCMeta):
     """This is a super class of dataloader.
@@ -155,6 +155,30 @@ class DataLoadersFactory(metaclass=ABCMeta):
 
         self.loader_test = DataLoader(self.dataset_test, batch_size=self.batch_size, shuffle=self.shuffle)
         self.nsteps_test = len(self.loader_test)
+
+    def convert_to_distributed(self, which_dataset=None, num_replicas=None, rank=None):
+        samplers = {}
+        if which_dataset is None:
+            samplers["train"] = DistributedSampler(self.dataset_train, num_replicas=None, rank=None)
+            self.loader_train = DataLoader(self.dataset_train, self.batch_size, False, sampler=samplers["train"])
+
+        else:
+            if which_dataset == "train":
+                samplers["train"] = DistributedSampler(self.dataset_train, num_replicas=num_replicas, rank=rank)
+                self.loader_train = DataLoader(self.dataset_train, self.batch_size, False,
+                                               sampler=samplers["train"])
+            elif which_dataset == "valid":
+                samplers["valid"] = DistributedSampler(self.dataset_valid, num_replicas=num_replicas, rank=rank)
+                self.loader_valid = DataLoader(self.dataset_valid, self.batch_size, False,
+                                               sampler=samplers["valid"])
+            elif which_dataset == "test":
+                self.loader_test.sampler = samplers["test"]
+                self.loader_test = DataLoader(self.dataset_test, self.batch_size, False,
+                                              sampler=samplers["test"])
+            else:
+                ValueError(
+                    "param `which_dataset` can only be set 'train, valid and test'. Got %s instead" % which_dataset)
+        return samplers
 
     @property
     def samples_train(self):

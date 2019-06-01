@@ -81,6 +81,33 @@ class SupTrainer(object):
         self.test()
         self.watcher.close()
 
+    def dist_train(self, process_bar_header: str = None, process_bar_position: int = None,
+                   subbar_disable=False,
+                   record_configs=True, show_network=False, **kwargs):
+        """The main training loop of epochs.
+
+        :param process_bar_header: The tag name of process bar header,
+         which is used in ``tqdm(desc=process_bar_header)``
+        :param process_bar_position: The process bar's position. It is useful in multitask,
+         which is used in ``tqdm(position=process_bar_position)``
+        :param subbar_disable: If show the info of every training set,
+        :param record_configs: If record the training processing data.
+        :param show_network: If show the structure of network. It will cost extra memory,
+        :param kwargs: Any other parameters that passing to ``tqdm()`` to control the behavior of process bar.
+        """
+        if record_configs:
+            self._record_configs()
+        if show_network:
+            self.plot_graphs_lazy()
+        for epoch in tqdm(range(self.start_epoch, self.nepochs + 1), total=self.nepochs,
+                          unit="epoch", desc=process_bar_header, position=process_bar_position, **kwargs):
+            self._datasets["datasets"].loader_train.sampler.set_epoch(epoch)
+            self.current_epoch = epoch
+            self.train_epoch(subbar_disable)
+            self.valid_epoch()
+        self.test()
+        self.watcher.close()
+
     def __setattr__(self, key, value):
         super(SupTrainer, self).__setattr__(key, value)
 
