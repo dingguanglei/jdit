@@ -320,7 +320,7 @@ class Model(object):
         >>> net.model = torch.nn.DistributedDataParallel(net.model, pg)
 
         """
-        assert isinstance(self.model, DataParallel), "please only use one gpu for one task"
+        # assert isinstance(self.model, DataParallel), "please only use one gpu for one task"
         self.model = DistributedDataParallel(self.model, device_ids,
                                              output_device, dim, broadcast_buffers,
                                              process_group, bucket_cap_mb,
