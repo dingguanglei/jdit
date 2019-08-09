@@ -18,7 +18,8 @@ from torch.utils.tensorboard import SummaryWriter
 
 import os
 import random
-import pandas as pd
+# import pandas as pd
+import csv
 import numpy as np
 
 from functools import wraps
@@ -500,8 +501,14 @@ class Loger(object):
             if epoch is not None:
                 config_dic.update({"epoch": epoch})
             config_dic.update(obj_config_dic)
-            pdg = pd.DataFrame.from_dict(config_dic, orient="index").transpose()
-            pdg.to_csv(path, mode="w", encoding="utf-8", index=False, header=True)
+            # pdg = pd.DataFrame.from_dict(config_dic, orient="index").transpose()
+            # pdg.to_csv(path, mode="w", encoding="utf-8", index=False, header=True)
+            with open(path, "w", encoding="utf-8") as csvfile:
+                writer = csv.writer(csvfile)
+                # 先写入columns_name
+                writer.writerow(config_dic.keys())
+                # 写入多行用writerows
+                writer.writerow(config_dic.values())
         else:
             # 已经注册过config
             last_config = self.regist_dict[config_filename]
@@ -514,8 +521,14 @@ class Loger(object):
                 if epoch is not None:
                     config_dic.update({"epoch": epoch})
                 config_dic.update(obj_config_dic)
-                pdg = pd.DataFrame.from_dict(config_dic, orient="index").transpose()
-                pdg.to_csv(path, mode="a", encoding="utf-8", index=False, header=False)
+                # pdg = pd.DataFrame.from_dict(config_dic, orient="index").transpose()
+                # pdg.to_csv(path, mode="a", encoding="utf-8", index=False, header=False)
+                with open(path, "a", encoding="utf-8") as csvfile:
+                    writer = csv.writer(csvfile)
+                    # 先写入columns_name
+                    # writer.writerow(config_dic.keys())
+                    # 写入多行用writerows
+                    writer.writerow(config_dic.values())
 
     def write(self, step: int, current_epoch: int, msg_dic: dict, filename: str, header=True):
         if msg_dic is None:
@@ -527,8 +540,13 @@ class Loger(object):
         path = os.path.join(self.logdir, filename + ".csv")
         dic = dict({"step": step, "current_epoch": current_epoch})
         dic.update(msg_dic)
-        pdg = pd.DataFrame.from_dict(dic, orient="index").transpose()
-        pdg.to_csv(path, mode="a", encoding="utf-8", index=False, header=header)
+        # pdg = pd.DataFrame.from_dict(dic, orient="index").transpose()
+        # pdg.to_csv(path, mode="a", encoding="utf-8", index=False, header=header)
+        with open(path, "a", encoding="utf-8") as csvfile:
+            writer = csv.writer(csvfile)
+            if header:
+                writer.writerow(dic.keys())
+            writer.writerow(dic.values())
 
     def clear_regist(self):
         self.regist_dict = dict({})

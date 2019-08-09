@@ -4,7 +4,6 @@ tensorflow
 tensorboard
 tqdm
 imageio
-pandas
 Pillow
 psutil
 numpy
