@@ -27,8 +27,8 @@ E-mail: dingguanglei.bupt@qq.com
 ## Install 
 Requires:
 ``` {.sourceCode .bash}
-    tensorboard >= 1.14.0
-    pytorch >= 1.1.0
+tensorboard >= 1.14.0
+pytorch >= 1.1.0
 ``` 
 Install requirement.
 ``` {.sourceCode .bash}
@@ -50,7 +50,7 @@ This method is recommended, because you can keep the newest version.
 3.  Install
     You will find packages in `jdit/dist/`. Use pip to install.
     ``` {.sourceCode .bash}
-    pip install dist/jdit-0.0.x-py3-none-any.whl
+    pip install dist/jdit-0.x.0-py3-none-any.whl
     ```
 
 ### From pip
