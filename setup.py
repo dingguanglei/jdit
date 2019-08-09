@@ -10,7 +10,7 @@ setup(
     description=("Make it easy to do research on pytorch"),
     # long_description=open('docs/source/index.rst').read(),
     long_description=open('README.md').read(),
-        long_description_content_type="text/markdown",
+    long_description_content_type="text/markdown",
     license="Apache License 2.0",
     keywords="pytorch research framework",
     platforms=["all"],
@@ -22,7 +22,7 @@ setup(
               'jdit/trainer/instances',
               'jdit/assessment',
               'jdit/parallel'],
-              # 'mypackage','mypackage/model','mypackage/metric','mypackage/model/shared'],  # 需要打包的目录列表
+    # 'mypackage','mypackage/model','mypackage/metric','mypackage/model/shared'],  # 需要打包的目录列表
 
     # 需要安装的依赖
     install_requires=[
@@ -41,7 +41,9 @@ setup(
         "Topic :: Scientific/Engineering :: Artificial Intelligence",
         "License :: OSI Approved :: Apache Software License",
         # 'Development Status :: 2 - Pre-Alpha',
-        'Development Status :: 3 - Alpha',
+        # 'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
+        # 'Development Status :: 5 - Production/Stable',
         'Operating System :: OS Independent',
         'Intended Audience :: Developers',
         "Programming Language :: Python :: 3 :: Only",
