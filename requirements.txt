@@ -10,6 +10,5 @@ pandas
 Pillow
 imageio
 scikit_learn
-tensorboardX
 imageio
 nvidia_ml_py3

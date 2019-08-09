@@ -12,11 +12,14 @@ from jdit.optimizer import Optimizer
 import torch
 import torchvision.transforms as transforms
 from torchvision.utils import make_grid
+
+
+from torch.utils.tensorboard import SummaryWriter
+
 import os
 import random
 import pandas as pd
 import numpy as np
-from tensorboardX import SummaryWriter
 
 from functools import wraps
 
@@ -662,7 +665,7 @@ class Watcher(object):
 
         def hook(model, layer_input, layer_output):
             writer_for_model = SummaryWriter(log_dir=model_logdir)
-            input_for_test = tuple(i.detach().clone()[0] for i in layer_input)
+            input_for_test = tuple(i[0].detach().clone().unsqueeze(0) for i in layer_input)
             handel.remove()
             if isinstance(proto_model, torch.nn.DataParallel):
                 writer_for_model.add_graph(proto_model.module, input_for_test)
