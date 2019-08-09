@@ -395,7 +395,7 @@ def FID_score(source, target, sample_prop=1.0, gpu_ids=(), dim=2048, batchsize=1
 
     """
     assert sample_prop <= 1 and sample_prop > 0, "sample_prop must between 0 and 1, but %s got" % sample_prop
-    model = _InceptionV3([_InceptionV3.BLOCK_INDEX_BY_DIM[dim]])
+    model = InceptionV3([InceptionV3.BLOCK_INDEX_BY_DIM[dim]])
     if isinstance(source, Tensor) and isinstance(target, Tensor):
         # source[?,C,H,W] target[?,C,H,W]
         s_length = len(source)
