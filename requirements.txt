@@ -1,5 +1,7 @@
 torch
 torchvision
+tensorflow
+tensorboard
 numpy
 psutil
 tqdm
@@ -12,5 +14,4 @@ pandas
 Pillow
 imageio
 scikit_learn
-imageio
 nvidia_ml_py3
