@@ -1,4 +1,4 @@
-Welcome to jdit's documentation!
+Welcome to jdit documentation!
 ================================
 .. toctree::
    :glob:

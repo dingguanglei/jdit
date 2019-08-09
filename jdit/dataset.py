@@ -5,6 +5,7 @@ from typing import Union
 from abc import ABCMeta, abstractmethod
 from torch.utils.data.distributed import DistributedSampler
 
+
 class DataLoadersFactory(metaclass=ABCMeta):
     """This is a super class of dataloader.
 

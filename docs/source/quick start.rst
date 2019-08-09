@@ -17,7 +17,7 @@ To start a simple classification task.
 
 Then you will see something like this as following.
 
-.. code:: python
+.. code::
 
     ===> Build dataset
     use 8 thread!

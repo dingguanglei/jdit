@@ -1,8 +1,10 @@
 from .super import SupTrainer
 from .gan import *
 from .single import *
-# from .instances import *
 from jdit.trainer import instances
+
+# from .instances import *
+
 # from jdit.trainer import single
 #
 # __all__ = ['SupTrainer',

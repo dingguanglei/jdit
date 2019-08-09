@@ -1,7 +1,7 @@
-from torch.nn import CrossEntropyLoss
+# from torch.nn import CrossEntropyLoss
 from .sup_single import *
 from abc import abstractmethod
-from tqdm import *
+# from tqdm import *
 
 
 class ClassificationTrainer(SupSingleModelTrainer):

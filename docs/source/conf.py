@@ -16,31 +16,33 @@
 import os
 import sys
 import mock
+
 MOCK_MODULES = ['numpy', 'scipy',
                 'pandas',
                 'matplotlib', 'matplotlib.pyplot',
                 'scipy.interpolate',
-                'tensorboardX','tensorboardX.SummaryWriter',
+                # 'tensorboardX','tensorboardX.SummaryWriter',
                 'tensorboard',
                 'torch',
                 'torch.optim',
-                'torch.nn','torch.nn.functional','torch.nn.utils',
-                'torch.utils','torch.utils.data','torch.utils.model_zoo',
-                'torch.autograd','torch.autograd.Variable',
+                'torch.nn', 'torch.nn.functional', 'torch.nn.utils', "torch.nn.parallel"
+                'torch.utils', 'torch.utils.data', 'torch.utils.model_zoo',
+                'torch.autograd', 'torch.autograd.Variable',
                 'torchvision',
                 'torchvision.transforms', 'torchvision.utils',
-                'torchvision.transforms.Resize','torchvision.transforms.ToTensor',
+                'torchvision.transforms.Resize', 'torchvision.transforms.ToTensor',
                 'torchvision.transforms.Normalize',
-                'torchvision.utils.make_grid','torchvision.datasets',
-                'torchvision.datasets.MNIST','torchvision.datasets.FashionMNIST',
-                'torchvision.datasets.CIFAR10','torchvision.datasets.LSUN',
+                'torchvision.utils.make_grid', 'torchvision.datasets',
+                'torchvision.datasets.MNIST', 'torchvision.datasets.FashionMNIST',
+                'torchvision.datasets.CIFAR10', 'torchvision.datasets.LSUN',
                 ]
+
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = mock.Mock()
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '../../'))
 # sys.path.insert(0, os.path.abspath('../../'))
-# import jdit
+import jdit
 
 
 # -- Project information -----------------------------------------------------
@@ -52,7 +54,6 @@ author = 'dingguanglei'
 version = ''
 # The full version, including alpha/beta/rc tags
 release = '0.0.2'
-
 
 # -- General configuration ---------------------------------------------------
 
@@ -70,7 +71,6 @@ extensions = [
     'sphinx.ext.intersphinx',
     'sphinx.ext.viewcode',
 ]
-
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['ntemplates']
@@ -99,13 +99,13 @@ exclude_patterns = []
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
 
-
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-#sphinx_rtd_theme,alabaster
+# sphinx_rtd_theme,alabaster
 import sphinx_rtd_theme
+
 html_theme = 'sphinx_rtd_theme'
 
 html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
@@ -137,7 +137,6 @@ html_static_path = ['nstatic']
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'jditdoc'
 
-
 # -- Options for LaTeX output ------------------------------------------------
 
 latex_elements = {
@@ -166,7 +165,6 @@ latex_documents = [
      'dingguanglei', 'manual'),
 ]
 
-
 # -- Options for manual page output ------------------------------------------
 
 # One entry per manual page. List of tuples
@@ -175,7 +173,6 @@ man_pages = [
     (master_doc, 'jdit', 'jdit Documentation',
      [author], 1)
 ]
-
 
 # -- Options for Texinfo output ----------------------------------------------
 
@@ -187,6 +184,5 @@ texinfo_documents = [
      author, 'jdit', 'One line description of project.',
      'Miscellaneous'),
 ]
-
 
 # -- Extension configuration -------------------------------------------------
