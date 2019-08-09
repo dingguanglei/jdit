@@ -27,9 +27,8 @@ E-mail: dingguanglei.bupt@qq.com
 ## Install 
 Requires:
 ``` {.sourceCode .bash}
-    tensorboard >= 1.12.0
-    tensorboardX >= 1.4
-    pytorch >= 0.4.1
+    tensorboard >= 1.14.0
+    pytorch >= 1.1.0
 ``` 
 Install requirement.
 ``` {.sourceCode .bash}
