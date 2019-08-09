@@ -42,7 +42,7 @@ for mod_name in MOCK_MODULES:
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '../../'))
 # sys.path.insert(0, os.path.abspath('../../'))
-import jdit
+# import jdit
 
 
 # -- Project information -----------------------------------------------------
