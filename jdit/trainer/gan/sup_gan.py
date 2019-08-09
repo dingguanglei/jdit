@@ -220,7 +220,7 @@ class SupGanTrainer(SupTrainer):
             avg_dic[key] = avg_dic[key] / self.datasets.nsteps_valid
 
         self.watcher.scalars(avg_dic, self.step, tag="Valid")
-        self.loger.write(self.step, self.current_epoch, avg_dic, "Valid", header=self.step <= 1)
+        self.loger.write(self.step, self.current_epoch, avg_dic, "Valid", header=self.current_epoch <= 1)
         self._watch_images(tag="Valid")
         self.netG.train()
         self.netD.train()
