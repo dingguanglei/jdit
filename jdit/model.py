@@ -265,7 +265,7 @@ class Model(object):
                                find_unused_parameters=False,
                                check_reduction=False):
         """
-            Args:
+        Args:
         module (Module): module to be parallelized
         device_ids (list of int or torch.device): CUDA devices. This should
                    only be provided when the input module resides on a single
@@ -309,15 +309,15 @@ class Model(object):
                          happen if DistributedDataParallel is correctly used.
                          (default: ``False``)
 
-    Attributes:
+        Attributes:
         module (Module): the module to be parallelized
 
-    Example::
+        Example::
 
-        >>> torch.distributed.init_process_group(backend='nccl', world_size=4, init_method='...')
-        >>> net.convert_to_distributed(pg)
-        >>> # same thing
-        >>> net.model = torch.nn.DistributedDataParallel(net.model, pg)
+            >>> torch.distributed.init_process_group(backend='nccl', world_size=4, init_method='...')
+            >>> net.convert_to_distributed(pg)
+            >>> # same thing
+            >>> net.model = torch.nn.DistributedDataParallel(net.model, pg)
 
         """
         # assert isinstance(self.model, DataParallel), "please only use one gpu for one task"
