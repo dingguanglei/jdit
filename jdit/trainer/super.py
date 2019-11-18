@@ -503,7 +503,7 @@ class Loger(object):
             config_dic.update(obj_config_dic)
             # pdg = pd.DataFrame.from_dict(config_dic, orient="index").transpose()
             # pdg.to_csv(path, mode="w", encoding="utf-8", index=False, header=True)
-            with open(path, "w", encoding="utf-8") as csvfile:
+            with open(path, "w", newline = "", encoding="utf-8") as csvfile:
                 writer = csv.writer(csvfile)
                 # 先写入columns_name
                 writer.writerow(config_dic.keys())
@@ -523,7 +523,7 @@ class Loger(object):
                 config_dic.update(obj_config_dic)
                 # pdg = pd.DataFrame.from_dict(config_dic, orient="index").transpose()
                 # pdg.to_csv(path, mode="a", encoding="utf-8", index=False, header=False)
-                with open(path, "a", encoding="utf-8") as csvfile:
+                with open(path, "a",newline = "",  encoding="utf-8") as csvfile:
                     writer = csv.writer(csvfile)
                     # 先写入columns_name
                     # writer.writerow(config_dic.keys())
@@ -542,7 +542,7 @@ class Loger(object):
         dic.update(msg_dic)
         # pdg = pd.DataFrame.from_dict(dic, orient="index").transpose()
         # pdg.to_csv(path, mode="a", encoding="utf-8", index=False, header=header)
-        with open(path, "a", encoding="utf-8") as csvfile:
+        with open(path, "a", newline = "", encoding="utf-8") as csvfile:
             writer = csv.writer(csvfile)
             if header:
                 writer.writerow(dic.keys())
