@@ -15,7 +15,7 @@ class ClassificationTrainer(SupSingleModelTrainer):
         self.opt = opt
         self.datasets = datasets
         self.num_class = num_class
-        self.labels = None
+
 
     @abstractmethod
     def compute_loss(self):
@@ -92,7 +92,7 @@ class ClassificationTrainer(SupSingleModelTrainer):
         avg_dic = dict()
         self.net.eval()
         for iteration, batch in enumerate(self.datasets.loader_valid, 1):
-            self.input, self.labels = self.get_data_from_batch(batch, self.device)
+            self.input, self.ground_truth = self.get_data_from_batch(batch, self.device)
             self.output = self.net(self.input).detach()
             dic = self.compute_valid()
             if avg_dic == {}:
