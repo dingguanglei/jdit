@@ -19,7 +19,7 @@ class FeatureVisualization(object):
         model.eval()
         self.model = model
         self.activations: Dict[str, Tensor] = {}
-        self.watcher = Watcher(logdir=log)
+        self.watcher = Watcher(logdir=logdir)
 
     def _hook(self, name: str):
         def hook(model, input, output):
