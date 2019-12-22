@@ -34,6 +34,12 @@ Install requirement.
 ``` {.sourceCode .bash}
 pip install -r requirements.txt
 ```
+
+### From pip
+``` {.sourceCode .bash}
+pip install jdit
+```
+
 ### From source
 This method is recommended, because you can keep the newest version.
 1.  Clone from github
@@ -50,13 +56,10 @@ This method is recommended, because you can keep the newest version.
 3.  Install
     You will find packages in `jdit/dist/`. Use pip to install.
     ``` {.sourceCode .bash}
-    pip install dist/jdit-0.x.0-py3-none-any.whl
+    pip install dist/jdit-x.y.z-py3-none-any.whl
     ```
 
-### From pip
-``` {.sourceCode .bash}
-pip install jdit
-```
+
 
 ## Quick start
 
@@ -109,23 +112,15 @@ class FashingClassTrainer(ClassificationTrainer):
 
     def compute_loss(self):
         var_dic = {}
-        var_dic["CEP"] = loss = nn.CrossEntropyLoss()(self.output, self.ground_truth.squeeze().long())
-
-        _, predict = torch.max(self.output.detach(), 1)  # 0100=>1  0010=>2
-        total = predict.size(0) * 1.0
         labels = self.ground_truth.squeeze().long()
-        correct = predict.eq(labels).cpu().sum().float()
-        acc = correct / total
-        var_dic["ACC"] = acc
+        var_dic["CEP"] = loss = nn.CrossEntropyLoss()(self.output, labels)
         return loss, var_dic
 
     def compute_valid(self):
-        var_dic = {}
-        var_dic["CEP"] = nn.CrossEntropyLoss()(self.output, self.labels.squeeze().long())
-
+        _, var_dic = self.compute_loss()
+        labels = self.ground_truth.squeeze().long()
         _, predict = torch.max(self.output.detach(), 1)  # 0100=>1  0010=>2
-        total = predict.size(0) * 1.0
-        labels = self.labels.squeeze().long()
+        total = predict.size(0)
         correct = predict.eq(labels).cpu().sum().float()
         acc = correct / total
         var_dic["ACC"] = acc
@@ -134,6 +129,7 @@ class FashingClassTrainer(ClassificationTrainer):
 
 def start_fashingClassTrainer(gpus=(), nepochs=10, run_type="train"):
     """" An example of fashing-mnist classification
+
     """
     num_class = 10
     depth = 32
@@ -165,8 +161,10 @@ def start_fashingClassTrainer(gpus=(), nepochs=10, run_type="train"):
         Trainer.train()
     elif run_type == "debug":
         Trainer.debug()
+
 if __name__ == '__main__':
     start_fashingClassTrainer()
+
 ```
 
 Then you will see something like this as following.

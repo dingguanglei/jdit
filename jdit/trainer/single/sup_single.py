@@ -21,9 +21,10 @@ class SupSingleModelTrainer(SupTrainer):
         self.net = net
         self.opt = opt
         self.datasets = datasets
-        self.fake = None
         self.fixed_input = None
+        self.input = None
         self.output = None
+        self.ground_truth = None
 
     def train_epoch(self, subbar_disable=False):
         for iteration, batch in tqdm(enumerate(self.datasets.loader_train, 1), unit="step", disable=subbar_disable):
@@ -108,7 +109,7 @@ class SupSingleModelTrainer(SupTrainer):
 
     def compute_loss(self) -> (torch.Tensor, dict):
         """ Rewrite this method to compute your own loss Discriminator.
-
+        Use self.input, self.output and self.ground_truth to compute loss.
         You should return a **loss** for the first position.
         You can return a ``dict`` of loss that you want to visualize on the second position.like
 
@@ -126,7 +127,7 @@ class SupSingleModelTrainer(SupTrainer):
 
     def compute_valid(self) -> dict:
         """ Rewrite this method to compute your validation values.
-
+        Use self.input, self.output and self.ground_truth to compute valid loss.
         You can return a ``dict`` of validation values that you want to visualize.
 
         Example::

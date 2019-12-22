@@ -9,9 +9,8 @@ from jdit.dataset import FashionMNIST
 
 
 class SimpleModel(nn.Module):
-    def __init__(self, depth=64, num_class=10):
+    def __init__(self, depth=32):
         super(SimpleModel, self).__init__()
-        self.num_class = num_class
         self.layer1 = nn.Conv2d(1, depth, 3, 1, 1)
         self.layer2 = nn.Conv2d(depth, depth * 2, 4, 2, 1)
         self.layer3 = nn.Conv2d(depth * 2, depth * 4, 4, 2, 1)

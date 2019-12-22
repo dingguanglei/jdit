@@ -46,15 +46,7 @@ class FashingClassTrainer(ClassificationTrainer):
         return loss, var_dic
 
     def compute_valid(self):
-        var_dic = {}
-        var_dic["CEP"] = nn.CrossEntropyLoss()(self.output, self.labels.squeeze().long())
-
-        _, predict = torch.max(self.output.detach(), 1)  # 0100=>1  0010=>2
-        total = predict.size(0) * 1.0
-        labels = self.labels.squeeze().long()
-        correct = predict.eq(labels).cpu().sum().float()
-        acc = correct / total
-        var_dic["ACC"] = acc
+        _,var_dic =  self.compute_loss()
         return var_dic
 
 
@@ -102,7 +94,7 @@ def trainerParallel():
     return tp
 
 
-def start_fashingClassPrarallelTrainer():
+def start_fashingClassPrarallelTrainer(run_type="debug"):
     tp = trainerParallel()
     tp.train()
 
