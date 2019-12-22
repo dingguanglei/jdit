@@ -61,13 +61,13 @@ class Generator(nn.Module):
         return out
 
 
-class FashionGenerateGenerateGanTrainer(GenerateGanTrainer):
+class FashionGenerateGanTrainer(GenerateGanTrainer):
     d_turn = 1
 
     def __init__(self, logdir, nepochs, gpu_ids_abs, netG, netD, optG, optD, dataset, latent_shape):
-        super(FashionGenerateGenerateGanTrainer, self).__init__(logdir, nepochs, gpu_ids_abs, netG, netD, optG, optD,
-                                                                dataset,
-                                                                latent_shape=latent_shape)
+        super(FashionGenerateGanTrainer, self).__init__(logdir, nepochs, gpu_ids_abs, netG, netD, optG, optD,
+                                                        dataset,
+                                                        latent_shape=latent_shape)
 
         data, label = self.datasets.samples_train
         self.watcher.embedding(data, data, label, global_step=1)
@@ -130,8 +130,8 @@ def start_fashionGenerateGanTrainer(gpus=(), nepochs=50, lr=1e-3, depth_G=32, de
     print('===> Training')
     print("using `tensorboard --logdir=log` to see learning curves and net structure."
           "training and valid_epoch data, configures info and checkpoint were save in `log` directory.")
-    Trainer = FashionGenerateGenerateGanTrainer("log/fashion_generate", nepochs, gpus, G, D, opt_G, opt_D, mnist,
-                                                latent_shape)
+    Trainer = FashionGenerateGanTrainer("log/fashion_generate", nepochs, gpus, G, D, opt_G, opt_D, mnist,
+                                        latent_shape)
     if run_type == "train":
         Trainer.train()
     elif run_type == "debug":
