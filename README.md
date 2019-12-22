@@ -68,10 +68,11 @@ for a quick test. Assuming that you get a new directory example. run
 this code in ipython cmd.(Create a main.py file is also acceptable.)
 
 ``` {.sourceCode .python}
-from jdit.trainer.instances.fashingClassification import start_fashingClassTrainer
-start_fashingClassTrainer()
+from jdit.trainer.instances.fashionClassification import start_fashionClassTrainer
+if __name__ == '__main__':
+    start_fashionClassTrainer()
 ```
-The following is the accomplishment of ``start_fashingClassTrainer()``
+The following is the accomplishment of ``start_fashionClassTrainer()``
 
 ``` {.sourceCode .python}
 # coding=utf-8
@@ -104,9 +105,9 @@ class SimpleModel(nn.Module):
         return out
 
 
-class FashingClassTrainer(ClassificationTrainer):
+class FashionClassTrainer(ClassificationTrainer):
     def __init__(self, logdir, nepochs, gpu_ids, net, opt, datasets, num_class):
-        super(FashingClassTrainer, self).__init__(logdir, nepochs, gpu_ids, net, opt, datasets, num_class)
+        super(FashionClassTrainer, self).__init__(logdir, nepochs, gpu_ids, net, opt, datasets, num_class)
         data, label = self.datasets.samples_train
         self.watcher.embedding(data, data, label, 1)
 
@@ -127,7 +128,7 @@ class FashingClassTrainer(ClassificationTrainer):
         return var_dic
 
 
-def start_fashingClassTrainer(gpus=(), nepochs=10, run_type="train"):
+def start_fashionClassTrainer(gpus=(), nepochs=10, run_type="train"):
     """" An example of fashing-mnist classification
 
     """
@@ -156,14 +157,14 @@ def start_fashingClassTrainer(gpus=(), nepochs=10, run_type="train"):
     print('===> Training')
     print("using `tensorboard --logdir=log` to see learning curves and net structure."
           "training and valid_epoch data, configures info and checkpoint were save in `log` directory.")
-    Trainer = FashingClassTrainer("log/fashion_classify", nepochs, gpus, net, opt, mnist, num_class)
+    Trainer = FashionClassTrainer("log/fashion_classify", nepochs, gpus, net, opt, mnist, num_class)
     if run_type == "train":
         Trainer.train()
     elif run_type == "debug":
         Trainer.debug()
 
 if __name__ == '__main__':
-    start_fashingClassTrainer()
+    start_fashionClassTrainer()
 
 ```
 
