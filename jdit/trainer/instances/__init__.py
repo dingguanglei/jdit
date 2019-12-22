@@ -1,9 +1,9 @@
-from .fashingClassification import FashingClassTrainer, start_fashingClassTrainer
-from .fashingGenerateGan import FashingGenerateGenerateGanTrainer, start_fashingGenerateGanTrainer
+from .fashionClassification import FashionClassTrainer, start_fashionClassTrainer
+from .fashionGenerateGan import FashionGenerateGenerateGanTrainer, start_fashionGenerateGanTrainer
 from .cifarPix2pixGan import start_cifarPix2pixGanTrainer
-from .fashionClassParallelTrainer import start_fashingClassPrarallelTrainer
-from .fashingAutoencoder import FashingAutoEncoderTrainer, start_fashingAotoencoderTrainer
-__all__ = ['FashingClassTrainer', 'start_fashingClassTrainer',
-           'FashingGenerateGenerateGanTrainer', 'start_fashingGenerateGanTrainer',
-           'cifarPix2pixGan', 'start_cifarPix2pixGanTrainer', 'start_fashingClassPrarallelTrainer',
-           'start_fashingAotoencoderTrainer', 'FashingAutoEncoderTrainer']
+from .fashionClassParallelTrainer import start_fashionClassPrarallelTrainer
+from .fashionAutoencoder import FashionAutoEncoderTrainer, start_fashionAutoencoderTrainer
+__all__ = ['FashionClassTrainer', 'start_fashionClassTrainer',
+           'FashionGenerateGenerateGanTrainer', 'start_fashionGenerateGanTrainer',
+           'cifarPix2pixGan', 'start_cifarPix2pixGanTrainer', 'start_fashionClassPrarallelTrainer',
+           'start_fashionAutoencoderTrainer', 'FashionAutoEncoderTrainer']

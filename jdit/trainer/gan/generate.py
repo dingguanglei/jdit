@@ -49,7 +49,13 @@ class GenerateGanTrainer(SupGanTrainer):
 
         You should return a **loss** for the first position.
         You can return a ``dict`` of loss that you want to visualize on the second position.like
-
+        The train logic is :
+            self.input, self.ground_truth = self.get_data_from_batch(batch, self.device)
+            self.fake = self.netG(self.input)
+            self._train_iteration(self.optD, self.compute_d_loss, csv_filename="Train_D")
+            if (self.step % self.d_turn) == 0:
+                self._train_iteration(self.optG, self.compute_g_loss, csv_filename="Train_G")
+        So, you use `self.input` , `self.ground_truth`, `self.fake`, `self.netG`, `self.optD` to compute loss.
         Example::
 
             d_fake = self.netD(self.fake.detach())
@@ -70,7 +76,13 @@ class GenerateGanTrainer(SupGanTrainer):
 
         You should return a **loss** for the first position.
         You can return a ``dict`` of loss that you want to visualize on the second position.like
-
+        The train logic is :
+            self.input, self.ground_truth = self.get_data_from_batch(batch, self.device)
+            self.fake = self.netG(self.input)
+            self._train_iteration(self.optD, self.compute_d_loss, csv_filename="Train_D")
+            if (self.step % self.d_turn) == 0:
+                self._train_iteration(self.optG, self.compute_g_loss, csv_filename="Train_G")
+        So, you use `self.input` , `self.ground_truth`, `self.fake`, `self.netG`, `self.optD` to compute loss.
         Example::
 
             d_fake = self.netD(self.fake, self.input)
@@ -85,6 +97,17 @@ class GenerateGanTrainer(SupGanTrainer):
 
     @abstractmethod
     def compute_valid(self):
+        """
+            The train logic is :
+            self.input, self.ground_truth = self.get_data_from_batch(batch, self.device)
+            self.fake = self.netG(self.input)
+            self._train_iteration(self.optD, self.compute_d_loss, csv_filename="Train_D")
+            if (self.step % self.d_turn) == 0:
+                self._train_iteration(self.optG, self.compute_g_loss, csv_filename="Train_G")
+        So, you use `self.input` , `self.ground_truth`, `self.fake`, `self.netG`, `self.optD` to compute validations.
+
+        :return:
+        """
         _, d_var_dic = self.compute_g_loss()
         _, g_var_dic = self.compute_d_loss()
         var_dic = dict(d_var_dic, **g_var_dic)

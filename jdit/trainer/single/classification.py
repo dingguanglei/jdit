@@ -19,14 +19,17 @@ class ClassificationTrainer(SupSingleModelTrainer):
 
     @abstractmethod
     def compute_loss(self):
-        """Compute the main loss and observed variables.
+        """Compute the main loss and observed values.
 
-        Compute the loss and other caring variables.
+        Compute the loss and other values shown in tensorboard scalars visualization.
         You should return a main loss for doing backward propagation.
 
-        For the caring variables will only be used in tensorboard scalars visualization.
-        So, if you want some variables visualized. Make a ``dict()`` with key name is the variable's name.
-
+        So, if you want some values visualized. Make a ``dict()`` with key name is the variable's name.
+        The training logic is :
+            self.input, self.ground_truth = self.get_data_from_batch(batch, self.device)
+            self.output = self.net(self.input)
+            self._train_iteration(self.opt, self.compute_loss, csv_filename="Train")
+        So, you have `self.net`, `self.input`, `self.output`, `self.ground_truth` to compute your own loss here.
 
         .. note::
 
@@ -42,17 +45,8 @@ class ClassificationTrainer(SupSingleModelTrainer):
         Example::
 
           var_dic = {}
-          # visualize the value of CrossEntropyLoss.
-          var_dic["CEP"] = loss = CrossEntropyLoss()(self.output, self.labels.squeeze().long())
-
-          _, predict = torch.max(self.output.detach(), 1)  # 0100=>1  0010=>2
-          total = predict.size(0) * 1.0
-          labels = self.labels.squeeze().long()
-          correct = predict.eq(labels).cpu().sum().float()
-          acc = correct / total
-          # visualize the value of accuracy.
-          var_dic["ACC"] = acc
-          # using CrossEntropyLoss as the main loss for backward, and return by visualized ``dict``
+          labels = self.ground_truth.squeeze().long()
+          var_dic["MSE"] = loss = nn.MSELoss()(self.output, labels)
           return loss, var_dic
 
         """
@@ -61,9 +55,10 @@ class ClassificationTrainer(SupSingleModelTrainer):
     def compute_valid(self):
         """Compute the valid_epoch variables for visualization.
 
-        Compute the caring variables.
-        For the caring variables will only be used in tensorboard scalars visualization.
+        Compute the validations.
+        For the validations will only be used in tensorboard scalars visualization.
         So, if you want some variables visualized. Make a ``dict()`` with key name is the variable's name.
+        You have `self.net`, `self.input`, `self.output`, `self.ground_truth` to compute your own validations here.
 
         .. note::
 
@@ -72,18 +67,9 @@ class ClassificationTrainer(SupSingleModelTrainer):
           So, you can compute some grads variables for visualization.
 
         Example::
-
           var_dic = {}
-          # visualize the valid_epoch curve of CrossEntropyLoss
-          var_dic["CEP"] = loss = CrossEntropyLoss()(self.output, self.labels.squeeze().long())
-
-          _, predict = torch.max(self.output.detach(), 1)  # 0100=>1  0010=>2
-          total = predict.size(0) * 1.0
-          labels = self.labels.squeeze().long()
-          correct = predict.eq(labels).cpu().sum().float()
-          acc = correct / total
-          # visualize the valid_epoch curve of accuracy
-          var_dic["ACC"] = acc
+          labels = self.ground_truth.squeeze().long()
+          var_dic["CEP"] = nn.CrossEntropyLoss()(self.output, labels)
           return var_dic
 
         """
@@ -98,7 +84,7 @@ class ClassificationTrainer(SupSingleModelTrainer):
             if avg_dic == {}:
                 avg_dic = dic
             else:
-                # 求和
+                # sum up
                 for key in dic.keys():
                     avg_dic[key] += dic[key]
 
@@ -110,20 +96,13 @@ class ClassificationTrainer(SupSingleModelTrainer):
         self.net.train()
 
     def get_data_from_batch(self, batch_data, device):
-        input_tensor, labels_tensor = batch_data[0], batch_data[1]
-        # if use_onehot:
-        #     # label => onehot
-        #     y_onehot = torch.zeros(labels.size(0), self.num_class)
-        #     if labels.size() != (labels.size(0), self.num_class):
-        #         labels = labels.reshape((labels.size(0), 1))
-        #     ground_truth_tensor = y_onehot.scatter_(1, labels, 1).long()  # labels =>    [[],[],[]]  batchsize,
-        #     num_class
-        #     labels_tensor = labels
-        # else:
-        #     # onehot => label
-        #     ground_truth_tensor = labels
-        #     labels_tensor = torch.max(self.labels.detach(), 1)
+        """If you have different behavior. You need to rewrite thisd method and the method `sllf.train_epoch()`
 
+        :param batch_data: A Tensor loads from dataset
+        :param device: compute device
+        :return: Tensors,
+        """
+        input_tensor, labels_tensor = batch_data[0], batch_data[1]
         return input_tensor, labels_tensor
 
     def _watch_images(self, tag: str, grid_size: tuple = (3, 3), shuffle=False, save_file=True):

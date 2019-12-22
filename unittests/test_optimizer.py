@@ -6,7 +6,7 @@ from jdit import Optimizer
 class TestOptimizer(TestCase):
     def setUp(self):
         param = torch.nn.Linear(10, 1).parameters()
-        self.opt = Optimizer(param, "RMSprop", 0.5, 3, "step", lr=2)
+        self.opt = Optimizer(param, "RMSprop", lr_decay=0.5, decay_position=3, position_type="step", lr=2)
 
     def test_do_lr_decay(self):
         self.opt.do_lr_decay(reset_lr=2, reset_lr_decay=0.3)

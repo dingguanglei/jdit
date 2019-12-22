@@ -159,7 +159,6 @@ class SupSingleModelTrainer(SupTrainer):
             if avg_dic == {}:
                 avg_dic: dict = dic
             else:
-                # 求和
                 for key in dic.keys():
                     avg_dic[key] += dic[key]
 

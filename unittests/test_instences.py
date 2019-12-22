@@ -1,25 +1,25 @@
 from unittest import TestCase
-from jdit.trainer.instances import start_fashingClassTrainer, start_fashingGenerateGanTrainer, \
-    start_cifarPix2pixGanTrainer, start_fashingAotoencoderTrainer, start_fashingClassPrarallelTrainer
+from jdit.trainer.instances import start_fashionClassTrainer, start_fashionGenerateGanTrainer, \
+    start_cifarPix2pixGanTrainer, start_fashionAutoencoderTrainer, start_fashionClassPrarallelTrainer
 import shutil
 import os
 
 
 class TestInstances(TestCase):
-    def test_start_fashingClassTrainer(self):
-        start_fashingClassTrainer(run_type="debug")
+    def test_start_fashionClassTrainer(self):
+        start_fashionClassTrainer(run_type="debug")
 
-    def test_start_fashingGenerateGanTrainer(self):
-        start_fashingGenerateGanTrainer(run_type="debug")
+    def test_start_fashionGenerateGanTrainer(self):
+        start_fashionGenerateGanTrainer(run_type="debug")
 
     def test_start_cifarPix2pixGanTrainer(self):
         start_cifarPix2pixGanTrainer(run_type="debug")
 
-    def test_start_fashingAotoencoderTrainer(self):
-        start_fashingAotoencoderTrainer(run_type="debug")
+    def test_start_fashionAotoencoderTrainer(self):
+        start_fashionAutoencoderTrainer(run_type="debug")
 
-    def test_start_fashingClassPrarallelTrainer(self):
-        start_fashingClassPrarallelTrainer()
+    def test_start_fashionClassPrarallelTrainer(self):
+        start_fashionClassPrarallelTrainer()
 
     def setUp(self):
         dir = "log_debug/"

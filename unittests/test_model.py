@@ -12,37 +12,34 @@ class TestModel(TestCase):
 
     def test_define(self):
         net = Model(self.mode, [], "kaiming", show_structure=False)
-        if torch.cuda.is_available():
+        if torch.cuda.device_count() == 0:
+            net = Model(self.mode, [], "kaiming", show_structure=False)
+        elif torch.cuda.device_count() == 1:
             net = Model(self.mode, [0], "kaiming", show_structure=False)
-        if torch.cuda.device_count() > 1:
+        else :
             net = Model(self.mode, [0, 1], "kaiming", show_structure=False)
-        if torch.cuda.device_count() > 2:
-            net = Model(self.mode, [2, 3], "kaiming", show_structure=False)
 
     def test_save_load_weights(self):
         print(self.mode)
-        if torch.cuda.is_available():
+        if torch.cuda.device_count() == 0:
+            net = Model(self.mode, [], "kaiming", show_structure=False)
+        elif torch.cuda.device_count() == 1:
             net = Model(self.mode, [0], "kaiming", show_structure=False)
-        elif torch.cuda.device_count() > 1:
+        else :
             net = Model(self.mode, [0, 1], "kaiming", show_structure=False)
-        elif torch.cuda.device_count() > 2:
-            net = Model(self.mode, [2, 3], "kaiming", show_structure=False)
-        else:
-            net = Model(self.mode, [0], "kaiming", show_structure=False)
         net.check_point("tm", self.epoch, "test_model")
         net.load_weights("test_model/checkpoint/Weights_tm_%d.pth" % self.epoch)
         dir = "test_model/"
         shutil.rmtree(dir)
 
     def test_load_point(self):
-        if torch.cuda.is_available():
+        if torch.cuda.device_count() == 0:
+            net = Model(self.mode, [], "kaiming", show_structure=False)
+        elif torch.cuda.device_count() == 1:
             net = Model(self.mode, [0], "kaiming", show_structure=False)
-        elif torch.cuda.device_count() > 1:
+        else :
             net = Model(self.mode, [0, 1], "kaiming", show_structure=False)
-        elif torch.cuda.device_count() > 2:
-            net = Model(self.mode, [2, 3], "kaiming", show_structure=False)
-        else:
-            net = Model(self.mode, [0], "kaiming", show_structure=False)
+
         net.check_point("tm", self.epoch, "test_model")
         net.load_point("tm", self.epoch, "test_model")
         dir = "test_model/"
@@ -56,7 +53,7 @@ class TestModel(TestCase):
         elif torch.cuda.device_count() > 2:
             net = Model(self.mode, [2, 3], "kaiming", show_structure=False)
         else:
-            net = Model(self.mode, [0], "kaiming", show_structure=False)
+            net = Model(self.mode, [], "kaiming", show_structure=False)
         net.check_point("tm", self.epoch, "test_model")
         dir = "test_model/"
         shutil.rmtree(dir)
@@ -69,7 +66,7 @@ class TestModel(TestCase):
         elif torch.cuda.device_count() > 2:
             net = Model(self.mode, [2, 3], "kaiming", show_structure=False)
         else:
-            net = Model(self.mode, [0], "kaiming", show_structure=False)
+            net = Model(self.mode, [], "kaiming", show_structure=False)
         net.init_fc = init.kaiming_normal_
         self.mode.apply(net._weight_init)
 
@@ -80,14 +77,12 @@ class TestModel(TestCase):
         pass
 
     def test_configure(self):
-        if torch.cuda.is_available():
+        if torch.cuda.device_count() == 0:
+            net = Model(self.mode, [], "kaiming", show_structure=False)
+        elif torch.cuda.device_count() == 1:
             net = Model(self.mode, [0], "kaiming", show_structure=False)
-        elif torch.cuda.device_count() > 1:
+        else :
             net = Model(self.mode, [0, 1], "kaiming", show_structure=False)
-        elif torch.cuda.device_count() > 2:
-            net = Model(self.mode, [2, 3], "kaiming", show_structure=False)
-        else:
-            net = Model(self.mode, [0], "kaiming", show_structure=False)
         self.assertEqual(net.configure,
                          {'model_name': 'Sequential', 'init_method': 'kaiming', 'total_params': 91,
                           'structure': 'Sequential(\n  (0): Conv2d(10, 1, kernel_size=(3, 3), '

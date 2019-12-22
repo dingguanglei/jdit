@@ -3,9 +3,11 @@ from jdit.parallel import SupParallelTrainer
 import os
 import shutil
 
-
-def test_print(params):
-    print(params)
+class test_print():
+    def __init__(self, params):
+        self.params = params
+    def train(self, *args, **kwargs):
+        print(self.params)
 
 
 class TestSupParallelTrainer(TestCase):

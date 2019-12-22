@@ -15,14 +15,17 @@ class AutoEncoderTrainer(SupSingleModelTrainer):
 
     @abstractmethod
     def compute_loss(self):
-        """Compute the main loss and observed variables.
+        """Compute the main loss and observed values.
 
-        Compute the loss and other caring variables.
+        Compute the loss and other values shown in tensorboard scalars visualization.
         You should return a main loss for doing backward propagation.
 
-        For the caring variables will only be used in tensorboard scalars visualization.
-        So, if you want some variables visualized. Make a ``dict()`` with key name is the variable's name.
-
+        So, if you want some values visualized. Make a ``dict()`` with key name is the variable's name.
+        The training logic is :
+            self.input, self.ground_truth = self.get_data_from_batch(batch, self.device)
+            self.output = self.net(self.input)
+            self._train_iteration(self.opt, self.compute_loss, csv_filename="Train")
+        So, you have `self.net`, `self.input`, `self.output`, `self.ground_truth` to compute your own loss here.
 
         .. note::
 
@@ -38,17 +41,7 @@ class AutoEncoderTrainer(SupSingleModelTrainer):
         Example::
 
           var_dic = {}
-          # visualize the value of CrossEntropyLoss.
-          var_dic["CEP"] = loss = CrossEntropyLoss()(self.output, self.labels.squeeze().long())
-
-          _, predict = torch.max(self.output.detach(), 1)  # 0100=>1  0010=>2
-          total = predict.size(0) * 1.0
-          labels = self.labels.squeeze().long()
-          correct = predict.eq(labels).cpu().sum().float()
-          acc = correct / total
-          # visualize the value of accuracy.
-          var_dic["ACC"] = acc
-          # using CrossEntropyLoss as the main loss for backward, and return by visualized ``dict``
+          var_dic["CEP"] = loss = nn.MSELoss(reduction="mean")(self.output, self.ground_truth)
           return loss, var_dic
 
         """
@@ -68,18 +61,8 @@ class AutoEncoderTrainer(SupSingleModelTrainer):
           So, you can compute some grads variables for visualization.
 
         Example::
-
           var_dic = {}
-          # visualize the valid_epoch curve of CrossEntropyLoss
-          var_dic["CEP"] = loss = CrossEntropyLoss()(self.output, self.labels.squeeze().long())
-
-          _, predict = torch.max(self.output.detach(), 1)  # 0100=>1  0010=>2
-          total = predict.size(0) * 1.0
-          labels = self.labels.squeeze().long()
-          correct = predict.eq(labels).cpu().sum().float()
-          acc = correct / total
-          # visualize the valid_epoch curve of accuracy
-          var_dic["ACC"] = acc
+          var_dic["CEP"] = loss = nn.MSELoss(reduction="mean")(self.output, self.ground_truth)
           return var_dic
 
         """
@@ -94,7 +77,6 @@ class AutoEncoderTrainer(SupSingleModelTrainer):
             if avg_dic == {}:
                 avg_dic = dic
             else:
-                # 求和
                 for key in dic.keys():
                     avg_dic[key] += dic[key]
 
@@ -106,6 +88,12 @@ class AutoEncoderTrainer(SupSingleModelTrainer):
         self.net.train()
 
     def get_data_from_batch(self, batch_data, device):
+        """If you have different behavior. You need to rewrite thisd method and the method `sllf.train_epoch()`
+
+        :param batch_data: A Tensor loads from dataset
+        :param device: compute device
+        :return: Tensors,
+        """
         input_tensor, ground_gruth_tensor = batch_data[0], batch_data[1]
         return input_tensor, ground_gruth_tensor
 

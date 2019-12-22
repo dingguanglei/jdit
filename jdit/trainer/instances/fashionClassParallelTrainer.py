@@ -29,9 +29,9 @@ class SimpleModel(nn.Module):
         return out
 
 
-class FashingClassTrainer(ClassificationTrainer):
+class FashionClassTrainer(ClassificationTrainer):
     def __init__(self, logdir, nepochs, gpu_ids, net, opt, dataset, num_class):
-        super(FashingClassTrainer, self).__init__(logdir, nepochs, gpu_ids, net, opt, dataset, num_class)
+        super(FashionClassTrainer, self).__init__(logdir, nepochs, gpu_ids, net, opt, dataset, num_class)
 
     def compute_loss(self):
         var_dic = {}
@@ -51,6 +51,11 @@ class FashingClassTrainer(ClassificationTrainer):
 
 
 def build_task_trainer(unfixed_params):
+    """build a task just like FashionClassTrainer.
+
+    :param unfixed_params:
+    :return:
+    """
     logdir = unfixed_params['logdir']
     gpu_ids_abs = unfixed_params["gpu_ids_abs"]
     depth = unfixed_params["depth"]
@@ -70,7 +75,7 @@ def build_task_trainer(unfixed_params):
     net = Model(SimpleModel(depth), gpu_ids_abs=gpu_ids_abs, init_method="kaiming", verbose=False)
     opt = Optimizer(net.parameters(), opt_name, lr_decay, decay_position, position_type=position_type,
                     lr=lr, weight_decay=weight_decay, momentum=momentum)
-    Trainer = FashingClassTrainer(logdir, nepochs, gpu_ids_abs, net, opt, mnist, num_class)
+    Trainer = FashionClassTrainer(logdir, nepochs, gpu_ids_abs, net, opt, mnist, num_class)
     return Trainer
 
 
@@ -94,9 +99,9 @@ def trainerParallel():
     return tp
 
 
-def start_fashingClassPrarallelTrainer(run_type="debug"):
+def start_fashionClassPrarallelTrainer(run_type="debug"):
     tp = trainerParallel()
     tp.train()
 
 if __name__ == '__main__':
-    start_fashingClassPrarallelTrainer()
+    start_fashionClassPrarallelTrainer()

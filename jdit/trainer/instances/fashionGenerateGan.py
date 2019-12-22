@@ -61,11 +61,11 @@ class Generator(nn.Module):
         return out
 
 
-class FashingGenerateGenerateGanTrainer(GenerateGanTrainer):
+class FashionGenerateGenerateGanTrainer(GenerateGanTrainer):
     d_turn = 1
 
     def __init__(self, logdir, nepochs, gpu_ids_abs, netG, netD, optG, optD, dataset, latent_shape):
-        super(FashingGenerateGenerateGanTrainer, self).__init__(logdir, nepochs, gpu_ids_abs, netG, netD, optG, optD,
+        super(FashionGenerateGenerateGanTrainer, self).__init__(logdir, nepochs, gpu_ids_abs, netG, netD, optG, optD,
                                                                 dataset,
                                                                 latent_shape=latent_shape)
 
@@ -92,7 +92,7 @@ class FashingGenerateGenerateGanTrainer(GenerateGanTrainer):
         return var_dic
 
 
-def start_fashingGenerateGanTrainer(gpus=(), nepochs=50, lr=1e-3, depth_G=32, depth_D=32, latent_shape=(256, 1, 1),
+def start_fashionGenerateGanTrainer(gpus=(), nepochs=50, lr=1e-3, depth_G=32, depth_D=32, latent_shape=(256, 1, 1),
                                     run_type="train"):
     gpus = gpus  # set `gpus = []` to use cpu
     batch_size = 64
@@ -130,7 +130,7 @@ def start_fashingGenerateGanTrainer(gpus=(), nepochs=50, lr=1e-3, depth_G=32, de
     print('===> Training')
     print("using `tensorboard --logdir=log` to see learning curves and net structure."
           "training and valid_epoch data, configures info and checkpoint were save in `log` directory.")
-    Trainer = FashingGenerateGenerateGanTrainer("log/fashion_generate", nepochs, gpus, G, D, opt_G, opt_D, mnist,
+    Trainer = FashionGenerateGenerateGanTrainer("log/fashion_generate", nepochs, gpus, G, D, opt_G, opt_D, mnist,
                                                 latent_shape)
     if run_type == "train":
         Trainer.train()
@@ -139,4 +139,4 @@ def start_fashingGenerateGanTrainer(gpus=(), nepochs=50, lr=1e-3, depth_G=32, de
 
 
 if __name__ == '__main__':
-    start_fashingGenerateGanTrainer()
+    start_fashionGenerateGanTrainer()
