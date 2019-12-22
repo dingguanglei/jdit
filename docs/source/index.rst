@@ -66,7 +66,7 @@ Then you will see something like this as following.
       0%|            | 0/10 [00:00<.., ..epoch/s]
     0step [00:00, step/s]
 
-* It will search a fashing mnist dataset.
+* It will search a fashion mnist dataset.
 * Then build a resnet18 for classification.
 * For training process, you can find learning curves in `tensorboard`.
 * It will create a `log` directory in `example/`, which saves training processing data and configures.

@@ -6,7 +6,7 @@ Assuming that you get a new directory ``example``.
 run this code in ``ipython`` .(Create a ``main.py`` file is also acceptable.)
 
 
-Fashing-mnist Classification
+Fashion-mnist Classification
 ----------------------------
 To start a simple classification task.
 
@@ -46,7 +46,7 @@ Then you will see something like this as following.
 
 
 
-Fashing-mnist Generation GAN
+Fashion-mnist Generation GAN
 ----------------------------
 To start a simple generation gan task.
 

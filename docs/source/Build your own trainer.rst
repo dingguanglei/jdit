@@ -177,7 +177,7 @@ The inherit relation shape is following:
 
     | ``ClassificationTrainer``
 
-        | ``instances.FashingClassTrainer``
+        | ``instances.FashionClassTrainer``
 
     | ``SupGanTrainer``
 
