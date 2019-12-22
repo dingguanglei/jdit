@@ -187,7 +187,7 @@ The inherit relation shape is following:
 
         | ``GenerateGanTrainer``
 
-            | ``instances.FashingGenerateGenerateGanTrainer``
+            | ``instances.FashionGenerateGanTrainer``
 
 Top level ``SupTrainer``
 >>>>>>>>>>>>>>>>>>>>>>>>
@@ -263,7 +263,7 @@ You must using ``self.step`` to record the training step.
 
 The ``compute_loss()`` and ``compute_valid`` should be rewrite in the next template.
 
-Third level ``FashingClassTrainer``
+Third level ``FashionClassTrainer``
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 Up to this level every this is clear. So, inherit the ``ClassificationTrainer``
@@ -271,9 +271,9 @@ and fill the specify methods.
 
 .. code-block:: python
 
-    class FashingClassTrainer(ClassificationTrainer):
+    class FashionClassTrainer(ClassificationTrainer):
         def __init__(self, logdir, nepochs, gpu_ids, net, opt, dataset):
-            super(FashingClassTrainer, self).__init__(logdir, nepochs, gpu_ids, net, opt, dataset)
+            super(FashionClassTrainer, self).__init__(logdir, nepochs, gpu_ids, net, opt, dataset)
             data, label = self.datasets.samples_train
             # show dataset in tensorboard
             self.watcher.embedding(data, data, label, 1)
@@ -323,7 +323,7 @@ You have got everything. Put them together and train it!
     >>> mnist = FashionMNIST(batch_size)
     >>> net = Model(SimpleModel(depth=depth), gpu_ids_abs=gpus, init_method="kaiming")
     >>> opt = Optimizer(net.parameters(), **hparams)
-    >>> Trainer = FashingClassTrainer("log", nepochs, gpus, net, opt, mnist, 10)
+    >>> Trainer = FashionClassTrainer("log", nepochs, gpus, net, opt, mnist, 10)
     >>> Trainer.train()
 
 

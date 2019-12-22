@@ -67,8 +67,8 @@ instances
 .. automodule:: jdit.trainer.instances
 .. currentmodule:: jdit.trainer.instances
 
-instances.FashingClassTrainer
+instances.FashionClassTrainer
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-.. autofunction:: start_fashingClassTrainer
+.. autofunction:: start_fashionClassTrainer
 

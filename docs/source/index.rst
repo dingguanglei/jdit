@@ -39,9 +39,9 @@ run this code in `ipython` cmd.(Create a `main.py` file is also acceptable.)
 
 .. code-block:: python
 
-    from jdit.trainer.instances.fashingClassification
-    import start_fashingClassTrainer
-    start_fashingClassTrainer()
+    from jdit.trainer.instances.fashionClassification
+    import start_fashionClassTrainer
+    start_fashionClassTrainer()
 
 Then you will see something like this as following.
 

@@ -12,8 +12,8 @@ To start a simple classification task.
 
 .. code:: python
 
-    from jdit.trainer.instances.fashingClassification import start_fashingClassTrainer
-    start_fashingClassTrainer()
+    from jdit.trainer.instances.fashionClassification import start_fashionClassTrainer
+    start_fashionClassTrainer()
 
 Then you will see something like this as following.
 
@@ -38,7 +38,7 @@ Then you will see something like this as following.
       0%|            | 0/10 [00:00<?, ?epoch/s]
     0step [00:00, ?step/s]
 
-* It will search a fashing mnist dataset.
+* It will search a fashion mnist dataset.
 * Then build a simple network for classification.
 * For training process, you can find learning curves in ``tensorboard``.
 * It will create a ``log`` directory in ``example/``, which saves training processing data and configures.
@@ -52,8 +52,8 @@ To start a simple generation gan task.
 
 .. code:: python
 
-    from jdit.trainer.instances import start_fashingGenerateGanTrainer
-    start_fashingClassTrainer()
+    from jdit.trainer.instances import start_fashionGenerateGanTrainer
+    start_fashionClassTrainer()
 
 Then you will see something like this as following.
 
