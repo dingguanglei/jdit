@@ -59,22 +59,20 @@ This method is recommended, because you can keep the newest version.
     pip install dist/jdit-x.y.z-py3-none-any.whl
     ```
 
-
-
 ## Quick start
 
 After building and installing jdit package, you can make a new directory
 for a quick test. Assuming that you get a new directory example. run
 this code in ipython cmd.(Create a main.py file is also acceptable.)
 
-``` {.sourceCode .python}
+```python
 from jdit.trainer.instances.fashionClassification import start_fashionClassTrainer
 if __name__ == '__main__':
     start_fashionClassTrainer()
 ```
 The following is the accomplishment of ``start_fashionClassTrainer()``
 
-``` {.sourceCode .python}
+```python
 # coding=utf-8
 import torch
 import torch.nn as nn
@@ -83,7 +81,6 @@ from jdit.trainer.single.classification import ClassificationTrainer
 from jdit import Model
 from jdit.optimizer import Optimizer
 from jdit.dataset import FashionMNIST
-
 
 class SimpleModel(nn.Module):
     def __init__(self, depth=64, num_class=10):
@@ -127,7 +124,6 @@ class FashionClassTrainer(ClassificationTrainer):
         var_dic["ACC"] = acc
         return var_dic
 
-
 def start_fashionClassTrainer(gpus=(), nepochs=10, run_type="train"):
     """" An example of fashing-mnist classification
 
@@ -170,7 +166,7 @@ if __name__ == '__main__':
 
 Then you will see something like this as following.
 
-``` {.sourceCode .python}
+```
 ===> Build dataset
 use 8 thread
 Downloading http://fashion-mnist.s3-website.eu-central-1.amazonaws.com/train-images-idx3-ubyte.gz
