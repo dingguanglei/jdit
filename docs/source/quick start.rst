@@ -53,7 +53,7 @@ To start a simple generation gan task.
 .. code:: python
 
     from jdit.trainer.instances import start_fashionGenerateGanTrainer
-    start_fashionClassTrainer()
+    start_fashionGenerateGanTrainer()
 
 Then you will see something like this as following.
 
