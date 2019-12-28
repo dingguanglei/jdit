@@ -8,6 +8,7 @@
 ![Packagist](https://img.shields.io/hexpm/l/plug.svg)
 ![pypi download](https://img.shields.io/pypi/dm/jdit.svg)
 
+### [Chinese guide is here！(https://dingguanglei.com/jdit/)](https://dingguanglei.com/jdit/)
 **Jdit** is a research processing oriented framework based on pytorch.
 Only care about your ideas. You don't need to build a long boring code
 to run a deep learning project to verify your ideas.
