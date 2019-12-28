@@ -67,8 +67,8 @@ class Generator(nn.Module):
                 nn.ConvTranspose2d(depth, output_nc, 3, 1, 1),  # d,32,32 =>  3,32,32
                 )
 
-    def forward(self, input_data):
-        out = self.latent_to_features(input_data)
+    def forward(self, x):
+        out = self.latent_to_features(x)
         out = self.features_to_image(out)
         return out
 
@@ -81,7 +81,7 @@ class CifarPix2pixGanTrainer(Pix2pixGanTrainer):
                                                      datasets)
 
     def get_data_from_batch(self, batch_data, device):
-        ground_truth_cpu, label = batch_data[0], batch_data[1]
+        ground_truth_cpu, _ = batch_data[0], batch_data[1]
         input_cpu = ground_truth_cpu[:, 0, :, :].unsqueeze(1)  # only use one channel [?,3,32,32] =>[?,1,32,32]
         return input_cpu, ground_truth_cpu
 

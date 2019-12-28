@@ -55,8 +55,8 @@ class Generator(nn.Module):
                 nn.ConvTranspose2d(depth, output_nc, 3, 1, 1),  # 64,32,32 =>  1,32,32
                 )
 
-    def forward(self, input_data):
-        out = self.encoder(input_data)
+    def forward(self, x):
+        out = self.encoder(x)
         out = self.decoder(out)
         return out
 

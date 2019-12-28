@@ -17,8 +17,8 @@ class SimpleModel(nn.Module):
         self.layer4 = nn.ConvTranspose2d(depth * 4, depth * 2, 4, 2, 1)
         self.layer5 = nn.ConvTranspose2d(depth * 2, 1, 4, 2, 1)
 
-    def forward(self, input):
-        out = F.relu(self.layer1(input))
+    def forward(self, x):
+        out = F.relu(self.layer1(x))
         out = F.relu(self.layer2(out))
         out = F.relu(self.layer3(out))
         out = F.relu(self.layer4(out))
